@@ -9,15 +9,15 @@ library(tidyr)
 
 
 rm(list=ls())
-#path_github <- "C:/Users/Denise Laroze/Documents/GitHub/Pensions Website Design/Data and analysis/Online/"
-#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Pilotaje/"
-path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Pilotaje/"
+path_github <- "C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Pilotaje/R/"
+path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Pilotaje/"
+#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Pilotaje/"
 
-setwd(path_datos)
+setwd(path_github)
 
-nombre_archivo<-"datos_piloto_islitas.csv"
+datos_csv<-"datos_piloto_islitas.csv"
 
-df<- read.csv(paste0(path_datos, nombre_archivo))
+df<- read.csv(paste0(path_datos, datos_csv))
 
 
 
@@ -282,13 +282,17 @@ p4<-ggplot(gid.means.zl.t2, aes(x = round, y = mean_extraction, color = as.facto
 p4
 
 grid.arrange(p1, p2, p3, p4, ncol = 2, nrow= 2)
-ggsave("group_means.pdf", plot = p4, device = "pdf", width = 8, height = 6)
+
+ggsave( file=paste0(path_github, "outputs/group_means.pdf") , plot = p4, device = "pdf", width = 8, height = 6)
 
 
 
 ##################
 ### diff in diff
 ##################
+
+
+#missing code to recreate rm
 
 
 diff_amerb_libre <- rm %>%
@@ -307,8 +311,6 @@ diff_amerb_libre_combined <- diff_amerb_libre %>%
     libre = first(na.omit(libre))    # Keep the non-missing T2 value
   )%>%
   mutate(t = "T1") 
-
-
 
 
 
@@ -353,7 +355,7 @@ pdid<-ggplot(combined_df, aes(x = round, y = diff, color = t, group = t)) +
   theme_minimal() +  # Use a minimal theme for better visualization
   theme(legend.position = "top") 
 
-ggsave("plot_difference_amerb_otrazona.pdf", plot = pdid, device = "pdf", width = 8, height = 6)
+ggsave( file=paste0(path_github, "outputs/plot_difference_amerb_otrazona.pdf") , plot = pdid, device = "pdf", width = 8, height = 6)
 
 
 
