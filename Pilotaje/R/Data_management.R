@@ -9,9 +9,10 @@ library(tidyr)
 
 
 rm(list=ls())
-path_github <- "C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Pilotaje/R/"
-path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Pilotaje/"
-#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Pilotaje/"
+#path_github <- "C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Pilotaje/R/"
+path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Pilotaje/R/"
+#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Pilotaje/"
+path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Pilotaje/"
 
 setwd(path_github)
 
@@ -28,6 +29,7 @@ df<- read.csv(paste0(path_datos, datos_csv))
 df$gid.amerb<-paste0(df$participant.zonaT2, ".",df$participant.id_caleta)
 df$gid.treat<-df$participant.zonaT2
 
+
 table(df$gid.amerb)
 ### Regid.amerb### Review decisions by each person over the 10 rounds
 
@@ -37,8 +39,6 @@ names(df)
 #################################################
 ################# Subsets #######################
 #################################################
-
-
 
 # T1
 rounds <- 1:10  # Sequence from 1 to 10
@@ -69,17 +69,48 @@ variable_names2 <- paste0(
   ".player.", combinations$Var1, "_extraccion_", combinations$Var3
 )
 # Print or use the variable_names
-variable_names<-c(variable_names1, variable_names2, "gid.amerb", "gid.treat")
+variable_names<-c(variable_names1, variable_names2, "gid.amerb", "gid.treat", "participant.label")
 
 
+##### Treatment variables subset
 dfs<-(df[, variable_names])
+
+
+#### Long data frame all observations
+dfs_long <- dfs %>%
+  pivot_longer(
+    cols = starts_with("T"),   # All columns starting with "T" (T1 and T2 variables)
+    names_to = c("treatment", "round", "area"),  # Split the names into three parts
+    names_pattern = "(T\\d)juegoalgas\\.(\\d+)\\.player\\..+_extraccion_(.+)",  # Regex to extract treatment, round, and variable
+    values_to = "extraction"   # Name of the column for values
+  ) %>%
+  mutate(round = as.integer(round))  # Ensure round is numeric
+
+
+# Mean by treatment and area, for each round for diff-in-diff 
+
+rm <- dfs_long %>%
+  group_by(treatment, area, round) %>%  # Group by treatment and variable
+  summarise(mean_extraction = mean(extraction, na.rm = TRUE))  # Calculate mean and handle missing values
+
+
+
+
+
+
+
+
+
+#Belief Columns 
+
+
 names(df)
 df$beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini
 df$beliefsT1final.1.player.T1_belief_caleta_en_libre_fin
 df$beliefsT1final.1.player.T1_belief_pm_en_libre_fin
 df$beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini
 
-#
+
 belief_columns <- grep("belief", colnames(df), value = TRUE, ignore.case = TRUE)
 # Now filter to keep only the ones that end in "_ini" or "_fin"
 filtered_belief_columns <- grep("_ini$|_fin$|id", belief_columns, value = TRUE, ignore.case = TRUE)
