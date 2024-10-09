@@ -9,9 +9,10 @@ library(tidyr)
 
 
 rm(list=ls())
-path_github <- "C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Pilotaje/R/"
-path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Pilotaje/"
-#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Pilotaje/"
+#path_github <- "C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Pilotaje/R/"
+path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Pilotaje/R/"
+#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Pilotaje/"
+path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Pilotaje/"
 
 setwd(path_github)
 
@@ -28,6 +29,7 @@ df<- read.csv(paste0(path_datos, datos_csv))
 df$gid.amerb<-paste0(df$participant.zonaT2, ".",df$participant.id_caleta)
 df$gid.treat<-df$participant.zonaT2
 
+
 table(df$gid.amerb)
 ### Regid.amerb### Review decisions by each person over the 10 rounds
 
@@ -37,8 +39,6 @@ names(df)
 #################################################
 ################# Subsets #######################
 #################################################
-
-
 
 # T1
 rounds <- 1:10  # Sequence from 1 to 10
@@ -69,17 +69,43 @@ variable_names2 <- paste0(
   ".player.", combinations$Var1, "_extraccion_", combinations$Var3
 )
 # Print or use the variable_names
-variable_names<-c(variable_names1, variable_names2, "gid.amerb", "gid.treat")
+variable_names<-c(variable_names1, variable_names2, "gid.amerb", "gid.treat", "participant.label")
 
 
+##### Treatment variables subset
 dfs<-(df[, variable_names])
+
+
+#### Long data frame all observations
+dfs_long <- dfs %>%
+  pivot_longer(
+    cols = starts_with("T"),   # All columns starting with "T" (T1 and T2 variables)
+    names_to = c("treatment", "round", "area"),  # Split the names into three parts
+    names_pattern = "(T\\d)juegoalgas\\.(\\d+)\\.player\\..+_extraccion_(.+)",  # Regex to extract treatment, round, and variable
+    values_to = "extraction"   # Name of the column for values
+  ) %>%
+  mutate(round = as.integer(round))  # Ensure round is numeric
+
+
+# Mean by treatment and area, for each round for diff-in-diff 
+
+rm <- dfs_long %>%
+  group_by(treatment, area, round) %>%  # Group by treatment and variable
+  summarise(mean_extraction = mean(extraction, na.rm = TRUE))  # Calculate mean and handle missing values
+
+
+
+
+#Belief Columns 
+
+
 names(df)
 df$beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini
 df$beliefsT1final.1.player.T1_belief_caleta_en_libre_fin
 df$beliefsT1final.1.player.T1_belief_pm_en_libre_fin
 df$beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini
 
-#
+
 belief_columns <- grep("belief", colnames(df), value = TRUE, ignore.case = TRUE)
 # Now filter to keep only the ones that end in "_ini" or "_fin"
 filtered_belief_columns <- grep("_ini$|_fin$|id", belief_columns, value = TRUE, ignore.case = TRUE)
@@ -287,63 +313,65 @@ ggsave( file=paste0(path_github, "outputs/group_means.pdf") , plot = p4, device 
 
 
 
-##################
-### diff in diff
-##################
 
 
-#missing code to recreate rm
+#################################################
+#### Diff between T2 and T1, per extraction area
+#################################################
+
+# rm$area<-ifelse(rm$area=="metat" | rm$area=="libre", "other_area", "amerb")
+# 
+# rm_wide <- rm %>%
+#   pivot_wider(
+#     names_from = treatment,  # Use treatment (T1, T2) to create new columns
+#     values_from = mean_extraction,  # The values for those columns come from mean_extraction
+#   )
+# rm_wide$diff=rm_wide$T2-rm_wide$T1
 
 
-diff_amerb_libre <- rm %>%
-  filter(treatment == "T1") %>%
+rm_wide <- rm %>%
+  mutate(area = ifelse(area %in% c("metat", "libre"), "other_area", "amerb")) %>%  # Update area values
   pivot_wider(
-    names_from = extraction_type,  # Spread T1 and T2 into separate columns
-    values_from = mean_value  # The mean values for amerb
+    names_from = treatment,  # Create columns based on treatment
+    values_from = mean_extraction  # Populate with mean_extraction values
   ) %>%
-  arrange(round)
-
-# Step 2: Combine rows with the same round by filling missing values
-diff_amerb_libre_combined <- diff_amerb_libre %>%
-  group_by(round) %>%
-  summarise(
-    amerb = first(na.omit(amerb)),   # Keep the non-missing T1 value
-    libre = first(na.omit(libre))    # Keep the non-missing T2 value
-  )%>%
-  mutate(t = "T1") 
+  mutate(diff = T2 - T1)  # Add the difference between T2 and T1
 
 
+pdid<-ggplot(rm_wide, aes(x = round, y = diff, color = area, group = area)) +
+  geom_line() +  # Line plot for each extraction type
+  geom_point() +  # Add points to indicate the data
+  labs(
+    title = "Difference between T2 and T1 per Round",
+    x = "Round",
+    y = "Difference (T2 - T1)",
+    color = "Extraction Area"
+  ) +
+  scale_x_continuous(breaks = 1:10) + 
+  theme_minimal() +  # Use a minimal theme for better visualization
+  theme(legend.position = "top") 
+pdid
+ggsave( file=paste0(path_github, "outputs/plot_difference_T2_T1.pdf") , plot = pdid, device = "pdf", width = 8, height = 6)
 
-diff_amerb_metat <- rm %>%
-  filter(treatment == "T2") %>%
+
+
+
+##################################################
+### diff in Amerb - Other area per treatment
+##################################################
+
+diff_area <- rm %>%
   pivot_wider(
-    names_from = extraction_type,  # Spread T1 and T2 into separate columns
-    values_from = mean_value  # The mean values for amerb
-  )  %>%
-  arrange(round)
-
-# Step 2: Combine rows with the same round by filling missing values
-diff_amerb_metat_combined <- diff_amerb_metat %>%
-  group_by(round) %>%
-  summarise(
-    amerb = first(na.omit(amerb)),   # Keep the non-missing T1 value
-    metat = first(na.omit(metat))    # Keep the non-missing T2 value
-  )%>%
-  mutate(t = "T2")
-
-combined_df <- bind_rows(diff_amerb_libre_combined, diff_amerb_metat_combined)
-
-combined_df$otra_zona<-ifelse(!is.na(combined_df$libre), combined_df$libre, combined_df$metat )
-
-
-
-#  Calculate the difference between amerb and other
-combined_df <- combined_df %>%
-  mutate(diff = amerb - otra_zona)  # Calculate the difference between T1 and T2
+    names_from = area,        # Spread area (libre, metat, amerb) into separate columns
+    values_from = mean_extraction  # The mean extraction values
+  ) %>%
+  arrange(round) %>%
+  mutate(otra_zona = coalesce(libre, metat),
+         diff = amerb - otra_zona)  # Calculate the difference between T1 and T2
 
 # Step 3: Plot the difference per round for amerb and libre
-pdid<-ggplot(combined_df, aes(x = round, y = diff, color = t, group = t)) +
-  geom_line(size = 1) +  # Line plot for each extraction type
+pdiff<-ggplot(diff_area , aes(x = round, y = diff, color = treatment, group = treatment)) +
+  geom_line() +  # Line plot for each extraction type
   geom_point() +  # Add points to indicate the data
   labs(
     title = "Difference between T1 and T2 per Round",
@@ -354,8 +382,9 @@ pdid<-ggplot(combined_df, aes(x = round, y = diff, color = t, group = t)) +
   scale_x_continuous(breaks = 1:10) + 
   theme_minimal() +  # Use a minimal theme for better visualization
   theme(legend.position = "top") 
+pdiff
 
-ggsave( file=paste0(path_github, "outputs/plot_difference_amerb_otrazona.pdf") , plot = pdid, device = "pdf", width = 8, height = 6)
+ggsave( file=paste0(path_github, "outputs/plot_difference_amerb_otrazona.pdf") , plot = pdiff, device = "pdf", width = 8, height = 6)
 
 
 
