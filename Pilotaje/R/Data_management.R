@@ -374,7 +374,7 @@ pdiff<-ggplot(diff_area , aes(x = round, y = diff, color = treatment, group = tr
   geom_line() +  # Line plot for each extraction type
   geom_point() +  # Add points to indicate the data
   labs(
-    title = "Difference between T1 and T2 per Round",
+    title = "In and out-group bias ",
     x = "Round",
     y = "Difference (Amerb - otra zona)",
     color = "Tratamiento"
