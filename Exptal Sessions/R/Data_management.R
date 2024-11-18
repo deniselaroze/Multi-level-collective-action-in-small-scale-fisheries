@@ -33,7 +33,7 @@ df<- do.call(rbind, lapply(file_list, read.csv))
 df$gid.treat<-df$participant.zonaT2
 
 df$gid.amerb<-paste0(df$participant.caleta, ".",df$participant.zonaT2, ".",df$participant.id_caleta)
-df$gid.amerb <- gsub(" ", ".", df$ugid)
+#df$gid.amerb <- gsub(" ", ".", df$ugid)
 
 save(df, file = paste0(path_datos, "/Datos_islitas.Rdata"))
 

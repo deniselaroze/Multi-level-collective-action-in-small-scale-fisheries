@@ -99,6 +99,20 @@ summary(df$participant.payoff, na.rm=T)
 table(df$T2juegoalgas.1.player.T2_grupo_mixto)
 table(df$participant.grupo_amerb)
 
+
+#Trust
+table(df$survey1.1.player.confianza_caleta)
+table(df$survey1.1.player.confianza_pm)
+table(df$survey2.1.player.confianza_caleta_conocida1)
+table(df$survey2.1.player.confianza_caleta_conocida2)
+
+#Conflict
+table(df$survey1.1.player.conflicto_caleta)
+table(df$survey1.1.player.conflicto_pm)
+table(df$survey2.1.player.conflicto_caleta_conocida1)
+table(df$survey2.1.player.conflicto_caleta_conocida2)
+
+
 #############
 ### Graphs
 ##############
@@ -180,6 +194,10 @@ ba<-ggplot(df, aes(x = beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini,
     y = "Player Extraction Amerb - T1 Round 1"
   ) +
   theme_minimal()
+ba
+
+lm<-lm(T1juegoalgas.1.player.T1_extraccion_amerb ~ beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini, data=df)
+summary(lm)
 
 ggsave( file=paste0(path_github, "Outputs/Extraction_Amerb_Beliefs.pdf") , plot = ba, device = "pdf", width = 8, height = 6)
 
@@ -211,6 +229,18 @@ boa<-ggplot(df_combined, aes(x = Beliefs, y = Extraction, color = Type, shape = 
   theme_minimal() +
   scale_color_manual(values = c("Ingroup" = "blue", "Outgroup" = "red")) +  # Optional color customization
   scale_shape_manual(values = c("Ingroup" = 16, "Outgroup" = 17))  # Optional shape customization
+boa
+
+lm1<-lm(T1juegoalgas.1.player.T1_extraccion_libre ~ beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini, data=df)
+summary(lm1)
+
+lm2<-lm(T1juegoalgas.1.player.T1_extraccion_libre ~ beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini, data=df)
+summary(lm2)
+
+lm3<-lm(T1juegoalgas.1.player.T1_extraccion_libre ~ beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini+ beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini , data=df)
+summary(lm3)
+
+
 ggsave( file=paste0(path_github, "Outputs/Extraction_OA_Beliefs.pdf") , plot = boa, device = "pdf", width = 8, height = 6)
 
 
