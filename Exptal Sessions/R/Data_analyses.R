@@ -1,6 +1,9 @@
 ###########################
 ### Data Analysis
 ############################
+library(stargazer)
+
+
 
 
 rm(list=ls())
@@ -71,21 +74,13 @@ rm <- dfs_long %>%
 
 
 #Belief Columns 
-
-names(df)
-df$beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini
-df$beliefsT1final.1.player.T1_belief_caleta_en_libre_fin
-df$beliefsT1final.1.player.T1_belief_pm_en_libre_fin
-df$beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini
-
-
 belief_columns <- grep("belief", colnames(df), value = TRUE, ignore.case = TRUE)
 # Now filter to keep only the ones that end in "_ini" or "_fin"
 filtered_belief_columns <- grep("_ini$|_fin$|id", belief_columns, value = TRUE, ignore.case = TRUE)
 
-# View the result
+# subset a dataframe of beliefs 
 print(filtered_belief_columns)
-View(df[,c(filtered_belief_columns,  "gid.treat", "gid.amerb")])
+df.b<-df[, c("participant.code","gid.treat", "gid.amerb", filtered_belief_columns )]
 
 #################################################
 ############### Data Analysis ###################
