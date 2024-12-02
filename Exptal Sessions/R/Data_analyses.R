@@ -3,6 +3,12 @@
 ############################
 library(stargazer)
 
+library(foreign)
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(gridExtra)
+library(tidyr)
 
 
 
@@ -163,8 +169,6 @@ long_df_bfs <- df_bfs %>%
     )
   )
 
-
-
 # Calculate means, SD, and 95% CI
 plot_stats <- long_df_bfs %>%
   group_by(Area, Treatment) %>%
@@ -253,6 +257,93 @@ print(plot_stats)
 # Reorder the table so ingroup_amerb is first
 beliefs_stats_ini <- plot_stats %>%
   arrange(factor(Area, levels = c("ingroup_amerb", "ingroup_OA", "others_OA")), Treatment)
+
+
+
+#########################################
+### Diferences in beliefs
+#########################################
+# Create a new data frame with differences between `fin` and `ini`
+df_diff <- df_bfs %>%
+  mutate(
+    T1_diff_amerb = beliefsT1final.1.player.T1_belief_caleta_en_amerb_fin - 
+      beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini,
+    T1_diff_libre = beliefsT1final.1.player.T1_belief_caleta_en_libre_fin - 
+      beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini,
+    T1_diff_pm = beliefsT1final.1.player.T1_belief_pm_en_libre_fin - 
+      beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini,
+    T2_diff_caleta = beliefsT2final.1.player.T2_belief_caleta_fin - 
+      beliefsT2inicial.1.player.T2_belief_caleta_ini,
+    T2_diff_conocida1 = beliefsT2final.1.player.T2_belief_caleta_conocida1_fin - 
+      beliefsT2inicial.1.player.T2_belief_caleta_conocida1_ini,
+    T2_diff_conocida2 = beliefsT2final.1.player.T2_belief_caleta_conocida2_fin - 
+      beliefsT2inicial.1.player.T2_belief_caleta_conocida2_ini
+  )
+
+# Reshape the differences into a long format for summarization
+long_diff <- df_diff %>%
+  select(starts_with("T1_diff"), starts_with("T2_diff")) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = c("Treatment", "Variable"),
+    names_sep = "_diff_",
+    values_to = "Difference"
+  ) %>%
+  mutate(Treatment = ifelse(str_detect(Treatment, "T1"), "T1", "T2"))
+
+# Calculate mean and SD of the differences
+summary_table <- long_diff %>%
+  group_by(Treatment, Variable) %>%
+  summarize(
+    mean_diff = mean(Difference, na.rm = TRUE),
+    sd_diff = sd(Difference, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+
+# Add confidence intervals to the summary table
+summary_table <- summary_table %>%
+  mutate(
+    n = nrow(df_diff),  # Use the total number of rows as n
+    lower_ci = mean_diff - 1.96 * (sd_diff / sqrt(n)),
+    upper_ci = mean_diff + 1.96 * (sd_diff / sqrt(n))
+  )
+
+# Create a combined sorting key (to ensure T1 precedes T2 for each variable)
+summary_table <- summary_table %>%
+  arrange(desc(mean_diff)) %>% # Sort by mean_diff in descending order
+  mutate(
+    x_order = factor(paste(Treatment, Variable), 
+                     levels = unique(paste(Treatment, Variable)))
+  )
+
+# Create the plot with ordered x-axis
+ggplot(summary_table, aes(x = x_order, y = mean_diff, fill = Treatment)) +
+  geom_bar(stat = "identity", position = position_dodge(0.8), width = 0.7) +
+  geom_errorbar(
+    aes(ymin = lower_ci, ymax = upper_ci),
+    position = position_dodge(0.8),
+    width = 0.25
+  ) +
+  labs(
+    title = "",
+    x = "",
+    y = "Mean Difference in beliefs (End minus Beggining)"
+  ) +
+  scale_fill_manual(values = c("T1" = "blue", "T2" = "red")) +
+  scale_x_discrete(labels = c(
+    "T1 amerb" = "Ingroup in Amerb",
+    "T1 libre" = "Ingroup in Open Access",
+    "T1 pm" = "Strangers in Open Access",
+    "T2 caleta" = "Ingroup in Metaturf",
+    "T2 conocida1" = "Named fishers 1 in Metaturf", 
+    "T2 conocida2" = "Named fishers 2 in Metaturf"
+  )) +  # Custom x-axis labels
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels
+    plot.title = element_text(hjust = 0.5)  # Center the title
+  )
 
 
 
