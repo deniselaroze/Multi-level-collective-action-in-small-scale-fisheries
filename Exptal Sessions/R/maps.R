@@ -112,6 +112,7 @@ valparaiso_cities_filtered$Color <- factor(valparaiso_cities_filtered$Color,
                                              "Session 6"
                                            ))
 
+# Updated Plot with geom_text_repel (no box around city names)
 ggplot() +
   # Plot filtered region polygons only
   geom_sf(data = valparaiso_region, fill = "wheat1", color = "black") +
@@ -123,17 +124,16 @@ ggplot() +
     size = 2
   ) +
   
-  # Annotate city names using geom_label_repel with updated parameters
-  geom_label_repel(
+  # Annotate city names using geom_text_repel (no box, colored text)
+  geom_text_repel(
     data = valparaiso_cities_filtered, 
-    aes(x = X_jitter, y = Y_jitter, label = Nombre, fill = Color),
-    size = 3, # Slightly reduced text size for compactness
-    fontface = "bold", # Make text bold
+    aes(x = X_jitter, y = Y_jitter, label = Nombre, color = Color),
+    size = 3, # Text size
+    fontface = "bold", # Bold text
     show.legend = FALSE,
-    box.padding = 0.8, # Increase padding around labels
-    point.padding = 0.8, # Increase padding around points
-    segment.color = "grey50", # Line color for segments
-    max.overlaps = 15 # Limit overlaps for better readability
+    box.padding = 0.5, # Padding around text for clearer spacing
+    point.padding = 0.5, # Padding around points
+    segment.color = "grey50" # Line color for segments
   ) +
   
   # Add zoomed limits for the last 1/3 of the x-axis and last 1/4 of the y-axis
@@ -141,7 +141,6 @@ ggplot() +
   
   # Apply ColorBrewer RdBu palette
   scale_color_brewer(palette = "Set1") +
-  scale_fill_brewer(palette = "Set1") +
   
   # Add labels and minimal theme
   labs(
@@ -161,7 +160,10 @@ ggplot() +
     legend.text = element_text(size = 12) # Legend text
   )
 
-  
+
+
+
+
   
   
   
