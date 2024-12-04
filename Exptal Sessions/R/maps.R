@@ -1,6 +1,15 @@
 library(sf)
 library(ggplot2)
 library(dplyr) # For data manipulation
+library(ggrepel)
+
+
+rm(list=ls())
+path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Geo"
+
+
+
 
 # Paths to the shapefiles
 region_shp_path <- paste0(path_datos, "/Regional.shp")
@@ -41,24 +50,47 @@ valparaiso_cities_filtered <- valparaiso_cities[
     !(valparaiso_cities$Nombre == "LOS MOLLES" & valparaiso_cities$Comuna != "LA LIGUA"),
 ]
 
-# Duplicate "HORCÓN" for different colors
+# Add coordinates to the city dataset
+city_coords <- st_coordinates(valparaiso_cities_filtered)
+valparaiso_cities_filtered <- cbind(valparaiso_cities_filtered, city_coords)
+
+#Clean up names and add duplicated for extra sessions
+valparaiso_cities_filtered <- valparaiso_cities_filtered %>%
+  mutate(Nombre = if_else(Nombre == "ESTERO DE LA BALLENA", "LA BALLENA", Nombre))
 horcon_row <- valparaiso_cities_filtered[valparaiso_cities_filtered$Nombre == "HORCÓN", ]
-valparaiso_cities_filtered <- bind_rows(valparaiso_cities_filtered, horcon_row)
+horcon_row <- horcon_row %>%
+  mutate(Nombre = "HORCÓN 2")
+quintero_row <- valparaiso_cities_filtered[valparaiso_cities_filtered$Nombre == "QUINTERO", ]
+quintero_row <- quintero_row %>%
+  mutate(Nombre = "QUINTERO EL MANZANO")
+
+valparaiso_cities_filtered <- bind_rows(valparaiso_cities_filtered, horcon_row, quintero_row)
+
+
+# Jitter coordinates for overlapping points
+set.seed(123) # Ensure reproducibility
+
+
+valparaiso_cities_filtered <- valparaiso_cities_filtered %>%
+  mutate(
+    X_jitter = X + rnorm(n(), mean = 0, sd = 0.02), # Increased jitter range
+    Y_jitter = Y + rnorm(n(), mean = 0, sd = 0.02)
+  )
+
 
 # Assign colors to each city name
 valparaiso_cities_filtered <- valparaiso_cities_filtered %>%
   mutate(Color = case_when(
     Nombre %in% c("LAS CRUCES", "EL QUISCO") ~ "Session 1 and 2",
     Nombre %in% c("ALGARROBO", "HORCÓN") & !duplicated(Nombre) ~ "Session 3",
-    Nombre %in% c("VALPARAÍSO", "QUINTERO") ~ "Session 4",
-    Nombre %in% c("LOS MOLLES", "ESTERO DE LA BALLENA", "PAPUDO") ~ "Session 5",
-    Nombre %in% c("HORCÓN") & duplicated(Nombre) ~ "Session 6",
-    Nombre %in% c("CACHAGUA", "MAITENCILLO")  ~ "Session 6"
+    Nombre %in% c("VALPARAÍSO", "QUINTERO", "QUINTERO EL MANZANO") ~ "Session 4",
+    Nombre %in% c("LOS MOLLES", "LA BALLENA", "PAPUDO") ~ "Session 5",
+    Nombre %in% c("HORCÓN 2", "CACHAGUA", "MAITENCILLO") ~ "Session 6"
   ))
 
-# Add coordinates to the city dataset
-city_coords <- st_coordinates(valparaiso_cities_filtered)
-valparaiso_cities_filtered <- cbind(valparaiso_cities_filtered, city_coords)
+
+#table(valparaiso_cities_filtered$Nombre)
+
 
 # Calculate the last third of the x-axis range
 x_min <- st_bbox(valparaiso_region)$xmin
@@ -80,29 +112,36 @@ valparaiso_cities_filtered$Color <- factor(valparaiso_cities_filtered$Color,
                                              "Session 6"
                                            ))
 
-# Plot the filtered map with RdBu palette
 ggplot() +
   # Plot filtered region polygons only
   geom_sf(data = valparaiso_region, fill = "wheat1", color = "black") +
   
   # Plot filtered city points with colors
-  geom_sf(data = valparaiso_cities_filtered, aes(geometry = geometry, color = Color), size = 2) +
-  
-  # Annotate city names with larger, bold text
-  geom_text(
+  geom_point(
     data = valparaiso_cities_filtered, 
-    aes(x = X, y = Y, label = Nombre, color = Color), 
-    size = 5, # Increase text size
+    aes(x = X_jitter, y = Y_jitter, color = Color), 
+    size = 2
+  ) +
+  
+  # Annotate city names using geom_label_repel with updated parameters
+  geom_label_repel(
+    data = valparaiso_cities_filtered, 
+    aes(x = X_jitter, y = Y_jitter, label = Nombre, fill = Color),
+    size = 3, # Slightly reduced text size for compactness
     fontface = "bold", # Make text bold
-    vjust = -1, 
-    show.legend = FALSE
+    show.legend = FALSE,
+    box.padding = 0.8, # Increase padding around labels
+    point.padding = 0.8, # Increase padding around points
+    segment.color = "grey50", # Line color for segments
+    max.overlaps = 15 # Limit overlaps for better readability
   ) +
   
   # Add zoomed limits for the last 1/3 of the x-axis and last 1/4 of the y-axis
   coord_sf(xlim = x_last_bit, ylim = y_first_quarter) +
   
   # Apply ColorBrewer RdBu palette
-  scale_color_brewer(palette = "Dark2") +
+  scale_color_brewer(palette = "Set1") +
+  scale_fill_brewer(palette = "Set1") +
   
   # Add labels and minimal theme
   labs(
@@ -121,3 +160,10 @@ ggplot() +
     legend.title = element_text(size = 12, face = "bold"), # Legend title
     legend.text = element_text(size = 12) # Legend text
   )
+
+  
+  
+  
+  
+  
+  
