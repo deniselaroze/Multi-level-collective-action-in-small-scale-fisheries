@@ -29,68 +29,21 @@ load(paste0(path_datos, "/Datos_islitas.Rdata"))
 ################# Subsets #######################
 #################################################
 
-# T1
-rounds <- 1:8  # Sequence from 1 to 10
-treats <- c("T1")  # Time periods T1 and T2
-vars <- c("amerb", "libre")  # Extraction types
-
-# Generate the list of variables using expand.grid to generate all combinations
-combinations <- expand.grid(treats, rounds, vars)
-
-# Create the final object with formatted strings
-variable_names1 <- paste0(
-  "", combinations$Var1, "juegoalgas.", combinations$Var2, 
-  ".player.", combinations$Var1, "_extraccion_", combinations$Var3
-)
-
-
-# T2"
-rounds <- 1:8  # Sequence from 1 to 10
-treats <- c("T2")  # Time periods T1 and T2
-vars <- c("amerb", "metat")  # Extraction types
-
-# Generate the list of variables using expand.grid to generate all combinations
-combinations <- expand.grid(treats, rounds, vars)
-
-# Create the final object with formatted strings
-variable_names2 <- paste0(
-  "", combinations$Var1, "juegoalgas.", combinations$Var2, 
-  ".player.", combinations$Var1, "_extraccion_", combinations$Var3
-)
-# Print or use the variable_names
-variable_names<-c(variable_names1, variable_names2, "gid.amerb", "gid.treat")
-
-
-##### Treatment variables subset
-dfs<-(df[, variable_names])
-
-
-#### Long data frame all observations
-dfs_long <- dfs %>%
-  pivot_longer(
-    cols = starts_with("T"),   # All columns starting with "T" (T1 and T2 variables)
-    names_to = c("treatment", "round", "area"),  # Split the names into three parts
-    names_pattern = "(T\\d)juegoalgas\\.(\\d+)\\.player\\..+_extraccion_(.+)",  # Regex to extract treatment, round, and variable
-    values_to = "extraction"   # Name of the column for values
-  ) %>%
-  mutate(round = as.integer(round))  # Ensure round is numeric
-
-
 # Mean by treatment and area, for each round for diff-in-diff 
 
-rm <- dfs_long %>%
+#rm <- dfs_long %>%
   group_by(treatment, area, round) %>%  # Group by treatment and variable
   summarise(mean_extraction = mean(extraction, na.rm = TRUE))  # Calculate mean and handle missing values
 
 
 #Belief Columns 
-belief_columns <- grep("belief", colnames(df), value = TRUE, ignore.case = TRUE)
+#belief_columns <- grep("belief", colnames(df), value = TRUE, ignore.case = TRUE)
 # Now filter to keep only the ones that end in "_ini" or "_fin"
-filtered_belief_columns <- grep("_ini$|_fin$|id", belief_columns, value = TRUE, ignore.case = TRUE)
+#filtered_belief_columns <- grep("_ini$|_fin$|id", belief_columns, value = TRUE, ignore.case = TRUE)
 
 # subset a dataframe of beliefs 
-print(filtered_belief_columns)
-df.b<-df[, c("participant.code","gid.treat", "gid.amerb", filtered_belief_columns )]
+#print(filtered_belief_columns)
+#df.b<-df[, c("participant.code","gid.treat", "gid.amerb", filtered_belief_columns )]
 
 #################################################
 ############### Data Analysis ###################
@@ -146,7 +99,7 @@ df<- df %>%
     ))/8/3
   )
 
-# Difference in beliefs and agregates for caleta conocida 1 and 2
+# Difference in beliefs and aggregates for caleta conocida 1 and 2
 
 df<- df %>%
   mutate(
@@ -194,6 +147,139 @@ df$survey2.1.player.conflicto_caleta_conocida_mean <- ifelse(
   (df$survey2.1.player.conflicto_caleta_conocida1 + df$survey2.1.player.conflicto_caleta_conocida2) / 2,
   df$survey2.1.player.conflicto_caleta_conocida1
 )
+
+
+# Generate group_size column with NA
+df$group_size <- NA_integer_
+
+# Assign values based on conditions
+df$group_size[!is.na(df$participant.zonaT2) & grepl("Z123", df$participant.zonaT2)] <- 3
+df$group_size[!is.na(df$participant.zonaT2) & grepl("Z12A|Z12B|Z12C|Z23", df$participant.zonaT2)] <- 2
+
+#table(df$participant.zonaT2, df$group_size)
+
+
+#########################3
+#### Pivot datasets long
+##########################
+
+# T1
+rounds <- 1:8  # Sequence from 1 to 10
+treats <- c("T1")  # Time periods T1 and T2
+vars <- c("amerb", "libre")  # Extraction types
+
+# Generate the list of variables using expand.grid to generate all combinations
+combinations <- expand.grid(treats, rounds, vars)
+
+# Create the final object with formatted strings
+variable_names1 <- paste0(
+  "", combinations$Var1, "juegoalgas.", combinations$Var2, 
+  ".player.", combinations$Var1, "_extraccion_", combinations$Var3
+)
+
+
+# T2"
+rounds <- 1:8  # Sequence from 1 to 10
+treats <- c("T2")  # Time periods T1 and T2
+vars <- c("amerb", "metat")  # Extraction types
+
+# Generate the list of variables using expand.grid to generate all combinations
+combinations <- expand.grid(treats, rounds, vars)
+
+# Create the final object with formatted strings
+variable_names2 <- paste0(
+  "", combinations$Var1, "juegoalgas.", combinations$Var2, 
+  ".player.", combinations$Var1, "_extraccion_", combinations$Var3
+)
+
+belief_columns <- c(
+  "participant.code",  # Add participant or player identifier for merging
+  "beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini",
+  "beliefsT1final.1.player.T1_belief_caleta_en_amerb_fin",
+  "beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini",
+  "beliefsT1final.1.player.T1_belief_caleta_en_libre_fin",
+  "beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini",
+  "beliefsT1final.1.player.T1_belief_pm_en_libre_fin",
+  "beliefsT2inicial.1.player.T2_belief_caleta_ini",
+  "beliefsT2final.1.player.T2_belief_caleta_fin",
+  "beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini",
+  "beliefsT2final.1.player.T2_belief_caleta_conocida_mean_fin"
+)
+
+
+
+variable_names<-c("participant.code", "gid.amerb", "gid.treat", variable_names1, variable_names2, belief_columns )
+
+
+##### Treatment variables subset
+dfs<-(df[, variable_names])
+dfs2<-(df[, c("participant.code",variable_names1, variable_names2)])
+
+# Reshape for 'amerb' area
+dfs_amerb <- dfs %>%
+  pivot_longer(
+    cols = starts_with("T"),
+    names_to = c("treatment", "round", "area"),
+    names_pattern = "(T\\d)juegoalgas\\.(\\d+)\\.player\\..+_extraccion_(.+)",
+    values_to = "extraction"
+  ) %>%
+  filter(area == "amerb") %>%  # Filter only 'amerb'
+  mutate(round = as.integer(round)) %>%
+  select(-area) %>%  # Drop the 'area' column
+  rename(extraction_amerb = extraction)
+
+# Reshape for 'libre' or 'metat' (OA)
+dfs_oa <- dfs2 %>%
+  pivot_longer(
+    cols = starts_with("T"),
+    names_to = c("treatment", "round", "area"),
+    names_pattern = "(T\\d)juegoalgas\\.(\\d+)\\.player\\..+_extraccion_(.+)",
+    values_to = "extraction"
+  ) %>%
+  filter(area %in% c("libre", "metat")) %>%  # Filter only 'libre' and 'metat'
+  mutate(round = as.integer(round)) %>%
+  select(-area) %>%  # Drop the 'area' column
+  rename(extraction_OA = extraction)
+
+
+
+subset_df <- df %>%
+  select(participant.code, matches("extraccion_otros"))
+# Reshape for 'amerb' (otros)
+dfs_otros_amerb <- subset_df %>%
+  pivot_longer(
+    cols = -participant.code,  # Exclude participant.code from pivoting
+    names_to = c("treatment", "round", "area"),
+    names_pattern = "(T\\d)juegoalgas\\.(\\d+)\\.player\\..+_extraccion_otros_(.+)",
+    values_to = "extraction_amerb"
+  ) %>%
+  filter(area == "amerb") %>%  # Filter only 'amerb'
+  mutate(round = as.integer(round)) %>%  # Ensure round is numeric
+  select(participant.code, treatment, round, extraction_amerb)  # Retain participant.code
+
+# Reshape for 'libre' or 'metat' (otros)
+dfs_otros_oa <- subset_df %>%
+  pivot_longer(
+    cols = -participant.code,  # Exclude participant.code from pivoting
+    names_to = c("treatment", "round", "area"),
+    names_pattern = "(T\\d)juegoalgas\\.(\\d+)\\.player\\..+_extraccion_otros_(.+)",
+    values_to = "extraction_OA"
+  ) %>%
+  filter(area %in% c("libre", "metat")) %>%  # Filter only 'libre' and 'metat'
+  mutate(round = as.integer(round)) %>%  # Ensure round is numeric
+  select(participant.code, treatment, round, extraction_OA)  # Retain participant.code
+
+
+# Merge all data frames step-by-step
+dfs_long <- dfs_amerb %>%
+  full_join(dfs_oa, by = c("participant.code", "treatment", "round")) %>%
+  full_join(dfs_otros_amerb, by = c("participant.code", "treatment", "round")) %>%
+  full_join(dfs_otros_oa, by = c("participant.code", "treatment", "round"))
+
+
+
+
+
 
 
 
@@ -312,13 +398,32 @@ stargazer(lm1, lm2, lm3, lm4, out=paste0(path_github,"Outputs/Diff_Beliefs.html"
 
 
 
+#############################
+### Regressions with group ID
+#############################
+
+# identify if person is in a group of 2 or 3 out of this data by identifying  123 %in%  Z123 Z123B Z123C  Z12A  Z12B  Z12C   Z23
+
+# reg on 
+
+# extraction in t
+# lag mean extraction by others
+# number of figures on the screen (2 v 3)  by identifying   123 %in% df$participant.zonaT2 (Z123 Z123B Z123C  Z12A  Z12B  Z12C   Z23)
+# generate a lagged beliefs variable with beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini as t0 and updating the beliefs as by adding the difference between the lagged beliefs and the mean observed extraction by others  df$T1juegoalgas.1.player.T1_extraccion_otros_libre or df$T1juegoalgas.1.player.T1_extraccion_otros_metat depending on the treatment
+
+
+
+
+
+
+
 #############
 ### Graphs
 ##############
 
 
 ##############################################
-#### Data for plots of beliefs mean (ini+fin)
+#### Data for plots of beliefs mean (ini+fin/2)
 ##################################
 
 
