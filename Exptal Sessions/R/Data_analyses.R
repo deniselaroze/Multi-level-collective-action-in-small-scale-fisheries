@@ -2,7 +2,6 @@
 ### Data Analysis
 ############################
 library(stargazer)
-
 library(foreign)
 library(dplyr)
 library(stringr)
@@ -15,6 +14,11 @@ library(tidyr)
 rm(list=ls())
 path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
 path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+
+path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+
+
 
 setwd(path_github)
 
@@ -112,6 +116,200 @@ table(df$survey1.1.player.conflicto_caleta)
 table(df$survey1.1.player.conflicto_pm)
 table(df$survey2.1.player.conflicto_caleta_conocida1)
 table(df$survey2.1.player.conflicto_caleta_conocida2)
+
+############################
+### Data Management
+############################
+
+# Add variables for aggregated row sums based on categories
+df<- df %>%
+  mutate(
+    # Sum of `amerb` for T1
+    otros_amerb_t1_mean = rowSums(across(
+      starts_with("T1juegoalgas") & ends_with("extraccion_otros_amerb"),
+      na.rm = TRUE
+    ))/8/3,
+    # Sum of `amerb` for T2
+    otros_amerb_t2_mean = rowSums(across(
+      starts_with("T2juegoalgas") & ends_with("extraccion_otros_amerb"),
+      na.rm = TRUE
+    ))/8/3,
+    # Sum of `libre` for T1
+    otros_libre_t1_mean = rowSums(across(
+      starts_with("T1juegoalgas") & ends_with("extraccion_otros_libre"),
+      na.rm = TRUE
+    ))/8/3,
+    # Sum of `metat` for T2
+    otros_metat_t2_mean = rowSums(across(
+      starts_with("T2juegoalgas") & ends_with("extraccion_otros_metat"),
+      na.rm = TRUE
+    ))/8/3
+  )
+
+# Difference in beliefs and agregates for caleta conocida 1 and 2
+
+df<- df %>%
+  mutate(
+    T1_diff_ingroup_amerb = beliefsT1final.1.player.T1_belief_caleta_en_amerb_fin - 
+      beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini,
+    T1_diff_ingroup_OA = beliefsT1final.1.player.T1_belief_caleta_en_libre_fin - 
+      beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini,
+    T1_diff_others_OA = beliefsT1final.1.player.T1_belief_pm_en_libre_fin - 
+      beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini,
+    T2_diff_ingroup_metat = beliefsT2final.1.player.T2_belief_caleta_fin - 
+      beliefsT2inicial.1.player.T2_belief_caleta_ini,
+    T2_diff_others_metat = if_else(
+      is.na(beliefsT2final.1.player.T2_belief_caleta_conocida2_fin) | 
+        is.na(beliefsT2inicial.1.player.T2_belief_caleta_conocida2_ini),
+      as.double(beliefsT2final.1.player.T2_belief_caleta_conocida1_fin - 
+                  beliefsT2inicial.1.player.T2_belief_caleta_conocida1_ini),
+      as.double((beliefsT2final.1.player.T2_belief_caleta_conocida1_fin - 
+                   beliefsT2inicial.1.player.T2_belief_caleta_conocida1_ini + 
+                   beliefsT2final.1.player.T2_belief_caleta_conocida2_fin - 
+                   beliefsT2inicial.1.player.T2_belief_caleta_conocida2_ini) / 2)
+    ),
+    beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini = if_else(
+      !is.na(beliefsT2inicial.1.player.T2_belief_caleta_conocida2_ini),
+      as.double((beliefsT2inicial.1.player.T2_belief_caleta_conocida1_ini + 
+                   beliefsT2inicial.1.player.T2_belief_caleta_conocida2_ini) / 2),
+      as.double(beliefsT2inicial.1.player.T2_belief_caleta_conocida1_ini)
+    ),
+    beliefsT2final.1.player.T2_belief_caleta_conocida_mean_fin = if_else(
+      !is.na(beliefsT2final.1.player.T2_belief_caleta_conocida2_fin),
+      as.double((beliefsT2final.1.player.T2_belief_caleta_conocida1_fin + 
+                   beliefsT2final.1.player.T2_belief_caleta_conocida2_fin) / 2),
+      as.double(beliefsT2final.1.player.T2_belief_caleta_conocida1_fin)
+    )
+  )
+
+# Create the mean variables
+df$survey2.1.player.confianza_caleta_conocida_mean <- ifelse(
+  !is.na(df$survey2.1.player.confianza_caleta_conocida2),
+  (df$survey2.1.player.confianza_caleta_conocida1 + df$survey2.1.player.confianza_caleta_conocida2) / 2,
+  df$survey2.1.player.confianza_caleta_conocida1
+)
+
+df$survey2.1.player.conflicto_caleta_conocida_mean <- ifelse(
+  !is.na(df$survey2.1.player.conflicto_caleta_conocida2),
+  (df$survey2.1.player.conflicto_caleta_conocida1 + df$survey2.1.player.conflicto_caleta_conocida2) / 2,
+  df$survey2.1.player.conflicto_caleta_conocida1
+)
+
+
+
+############################
+#### Regressions on beliefs
+#############################
+
+#Initial beliefs
+
+# What correlates with Beliefs in-group
+
+lm1<-lm(beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini ~ survey1.1.player.confianza_caleta +survey1.1.player.conflicto_caleta , data=df)
+
+lm2<-lm(beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini ~ as.character(survey1.1.player.confianza_caleta) + as.character(survey1.1.player.conflicto_caleta) , data=df)
+
+lm3<-lm(beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini ~  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta , data=df)
+lm4<-lm(beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini ~  as.factor(survey1.1.player.confianza_caleta) + as.factor(survey1.1.player.conflicto_caleta) , data=df)
+
+
+## What correlates with beliefs out-group
+lm5<-lm(beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini ~ survey1.1.player.confianza_pm + survey1.1.player.conflicto_pm , data=df)
+
+lm6<-lm(beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini ~ as.factor(survey1.1.player.confianza_pm) + as.factor(survey1.1.player.conflicto_pm) , data=df)
+
+lm7<-lm(beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini ~ survey2.1.player.confianza_caleta_conocida_mean + survey2.1.player.conflicto_caleta_conocida_mean , data=df)
+
+lm8<-lm(beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini ~ as.factor(survey2.1.player.confianza_caleta_conocida_mean) + as.factor(survey2.1.player.conflicto_caleta_conocida_mean) , data=df)
+
+#stargazer(lm1, lm2, out=paste0(path_github,"Outputs/Beliefs_ini_1.html"),type="html")
+#stargazer(lm3, lm4, out=paste0(path_github,"Outputs/Beliefs_ini_2.html"),type="html")
+#stargazer(lm5, lm6, out=paste0(path_github,"Outputs/Beliefs_ini_3.html"),type="html")
+#stargazer(lm7, lm8, out=paste0(path_github,"Outputs/Beliefs_ini_4.html"),type="html")
+
+dep_var_labels <- c(
+  "Initial Beliefs Ingroup-Amerb T1 ",
+  "Initial Beliefs Ingroup-OA T1",
+  "Initial Beliefs Ingroup-Metat T2",
+  "Initial Beliefs Others-Metat T2"
+)
+
+
+
+# Export the models to an HTML table
+stargazer(
+  lm1, lm3, lm5, lm7, # Select the models to include
+  type = "html",
+  dep.var.labels = dep_var_labels, # Use custom dependent variable labels
+  covariate.labels = c("Trust Ingroup","Conflict Ingroup",
+                       "Trust Others (T1)","Conflict Others (T1)",
+                       "Trust Others (T2)","Conflict Others (T2)"
+  ),
+  out = paste0(path_github, "Outputs/Beliefs_Ini.html")
+)
+
+
+
+#### Beliefs at the end
+lm1<-lm(beliefsT1final.1.player.T1_belief_caleta_en_amerb_fin ~ survey1.1.player.confianza_caleta +survey1.1.player.conflicto_caleta + otros_amerb_t1_mean , data=df)
+
+lm2<-lm(beliefsT1final.1.player.T1_belief_caleta_en_amerb_fin ~ as.character(survey1.1.player.confianza_caleta) + as.character(survey1.1.player.conflicto_caleta) +otros_amerb_t1_mean , data=df)
+
+lm3<-lm(beliefsT1final.1.player.T1_belief_caleta_en_libre_fin ~  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta + otros_libre_t1_mean , data=df)
+lm4<-lm(beliefsT1final.1.player.T1_belief_caleta_en_libre_fin ~  as.factor(survey1.1.player.confianza_caleta) + as.factor(survey1.1.player.conflicto_caleta) + otros_libre_t1_mean , data=df)
+
+
+
+lm5<-lm(beliefsT1final.1.player.T1_belief_pm_en_libre_fin ~ survey1.1.player.confianza_pm + survey1.1.player.conflicto_pm + otros_libre_t1_mean , data=df)
+
+lm6<-lm(beliefsT1final.1.player.T1_belief_pm_en_libre_fin ~ as.factor(survey1.1.player.confianza_pm) + as.factor(survey1.1.player.conflicto_pm) + otros_libre_t1_mean, data=df)
+
+lm7<-lm(beliefsT2final.1.player.T2_belief_caleta_conocida_mean_fin ~ survey2.1.player.confianza_caleta_conocida_mean + survey2.1.player.conflicto_caleta_conocida_mean + otros_metat_t2_mean, data=df)
+
+lm8<-lm(beliefsT2final.1.player.T2_belief_caleta_conocida_mean_fin ~ as.factor(survey2.1.player.confianza_caleta_conocida_mean) + as.factor(survey2.1.player.conflicto_caleta_conocida1) + otros_metat_t2_mean , data=df)
+
+stargazer(lm1, lm3, lm5, lm7, out=paste0(path_github,"Outputs/Beliefs_fin.html"),type="html")
+
+
+library(stargazer)
+
+# Rename dependent variables for clarity
+dep_var_labels <- c(
+  "End Beliefs Ingroup-Amerb T1 ",
+  "End Beliefs Ingroup-OA T1",
+  "End Beliefs Ingroup-Metat T2",
+  "End Beliefs Others-Metat T2"
+)
+
+# Export the models to an HTML table
+stargazer(
+  lm1, lm3, lm5, lm7, # Select the models to include
+  type = "html",
+  dep.var.labels = dep_var_labels, # Use custom dependent variable labels
+  covariate.labels = c("Trust Ingroup","Conflict Ingroup",
+                       "Mean extraction group Amerb (T1)",
+                       "Trust Others (T1)","Conflict Others (T1)",
+                       "Mean extraction group OA (T1)",
+                       "Trust Others (T2)","Conflict Others (T2)",
+                       "Mean extraction group Metat (T2)" ),
+  out = paste0(path_github, "Outputs/Beliefs_fin.html")
+)
+
+
+
+
+#### Diferences in Beliefs
+lm1<-lm(T1_diff_ingroup_OA ~  survey1.1.player.confianza_caleta +survey1.1.player.conflicto_caleta + otros_libre_t1_mean, data=df)
+lm2<-lm(T1_diff_others_OA ~  survey1.1.player.confianza_pm +survey1.1.player.conflicto_pm + otros_libre_t1_mean, data=df)
+
+
+lm3<-lm(T2_diff_ingroup_metat ~  survey1.1.player.confianza_caleta +survey1.1.player.conflicto_caleta + otros_metat_t2_mean, data=df)
+lm4<-lm(T2_diff_others_metat ~  survey2.1.player.confianza_caleta_conocida_mean +survey2.1.player.conflicto_caleta_conocida_mean + otros_metat_t2_mean, data=df)
+
+stargazer(lm1, lm2, lm3, lm4, out=paste0(path_github,"Outputs/Diff_Beliefs.html"),type="html")
+
+
+
 
 
 #############
@@ -261,7 +459,7 @@ beliefs_stats_ini <- plot_stats %>%
 
 
 #########################################
-### Diferences in beliefs
+### Differences in beliefs
 #########################################
 # Create a new data frame with differences between `fin` and `ini`
 df_diff <- df_bfs %>%
@@ -274,11 +472,19 @@ df_diff <- df_bfs %>%
       beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini,
     T2_diff_caleta = beliefsT2final.1.player.T2_belief_caleta_fin - 
       beliefsT2inicial.1.player.T2_belief_caleta_ini,
-    T2_diff_conocida1 = beliefsT2final.1.player.T2_belief_caleta_conocida1_fin - 
-      beliefsT2inicial.1.player.T2_belief_caleta_conocida1_ini,
-    T2_diff_conocida2 = beliefsT2final.1.player.T2_belief_caleta_conocida2_fin - 
-      beliefsT2inicial.1.player.T2_belief_caleta_conocida2_ini
+    T2_diff_pm = if_else(
+      is.na(beliefsT2final.1.player.T2_belief_caleta_conocida2_fin) | 
+        is.na(beliefsT2inicial.1.player.T2_belief_caleta_conocida2_ini),
+      as.double(beliefsT2final.1.player.T2_belief_caleta_conocida1_fin - 
+                  beliefsT2inicial.1.player.T2_belief_caleta_conocida1_ini),
+      as.double((beliefsT2final.1.player.T2_belief_caleta_conocida1_fin - 
+                   beliefsT2inicial.1.player.T2_belief_caleta_conocida1_ini + 
+                   beliefsT2final.1.player.T2_belief_caleta_conocida2_fin - 
+                   beliefsT2inicial.1.player.T2_belief_caleta_conocida2_ini) / 2)
+    )
   )
+
+
 
 # Reshape the differences into a long format for summarization
 long_diff <- df_diff %>%
@@ -336,8 +542,8 @@ ggplot(summary_table, aes(x = x_order, y = mean_diff, fill = Treatment)) +
     "T1 libre" = "Ingroup in Open Access",
     "T1 pm" = "Strangers in Open Access",
     "T2 caleta" = "Ingroup in Metaturf",
-    "T2 conocida1" = "Named fishers 1 in Metaturf", 
-    "T2 conocida2" = "Named fishers 2 in Metaturf"
+    "T2 pm" = "Named fishers in Metaturf"#, 
+    #"T2 conocida2" = "Named fishers 2 in Metaturf"
   )) +  # Custom x-axis labels
   theme_minimal() +
   theme(
