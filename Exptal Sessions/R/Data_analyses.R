@@ -193,7 +193,7 @@ variable_names2 <- paste0(
 )
 
 belief_columns <- c(
-  "participant.code",  # Add participant or player identifier for merging
+  "participant.code", "group_size",  # Add participant or player identifier for merging and groupsize for regressions
   "beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini",
   "beliefsT1final.1.player.T1_belief_caleta_en_amerb_fin",
   "beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini",
@@ -251,11 +251,11 @@ dfs_otros_amerb <- subset_df %>%
     cols = -participant.code,  # Exclude participant.code from pivoting
     names_to = c("treatment", "round", "area"),
     names_pattern = "(T\\d)juegoalgas\\.(\\d+)\\.player\\..+_extraccion_otros_(.+)",
-    values_to = "extraction_amerb"
+    values_to = "extraction_others_amerb"
   ) %>%
   filter(area == "amerb") %>%  # Filter only 'amerb'
   mutate(round = as.integer(round)) %>%  # Ensure round is numeric
-  select(participant.code, treatment, round, extraction_amerb)  # Retain participant.code
+  select(participant.code, treatment, round, extraction_others_amerb)  # Retain participant.code
 
 # Reshape for 'libre' or 'metat' (otros)
 dfs_otros_oa <- subset_df %>%
@@ -263,11 +263,11 @@ dfs_otros_oa <- subset_df %>%
     cols = -participant.code,  # Exclude participant.code from pivoting
     names_to = c("treatment", "round", "area"),
     names_pattern = "(T\\d)juegoalgas\\.(\\d+)\\.player\\..+_extraccion_otros_(.+)",
-    values_to = "extraction_OA"
+    values_to = "extraction_others_OA"
   ) %>%
   filter(area %in% c("libre", "metat")) %>%  # Filter only 'libre' and 'metat'
   mutate(round = as.integer(round)) %>%  # Ensure round is numeric
-  select(participant.code, treatment, round, extraction_OA)  # Retain participant.code
+  select(participant.code, treatment, round, extraction_others_OA)  # Retain participant.code
 
 
 # Merge all data frames step-by-step
@@ -278,7 +278,8 @@ dfs_long <- dfs_amerb %>%
 
 
 
-
+dfs_long$extraction_others_amerb_mean<-dfs_long$extraction_others_amerb/3
+dfs_long$extraction_others_OA_mean<-dfs_long$extraction_others_OA/3
 
 
 
