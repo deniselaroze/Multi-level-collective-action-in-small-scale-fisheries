@@ -15,8 +15,8 @@ rm(list=ls())
 path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
 path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
-path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+#path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 
 
@@ -32,8 +32,8 @@ load(paste0(path_datos, "/Datos_islitas.Rdata"))
 # Mean by treatment and area, for each round for diff-in-diff 
 
 #rm <- dfs_long %>%
-  group_by(treatment, area, round) %>%  # Group by treatment and variable
-  summarise(mean_extraction = mean(extraction, na.rm = TRUE))  # Calculate mean and handle missing values
+#  group_by(treatment, area, round) %>%  # Group by treatment and variable
+#  summarise(mean_extraction = mean(extraction, na.rm = TRUE))  # Calculate mean and handle missing values
 
 
 #Belief Columns 
@@ -75,29 +75,30 @@ table(df$survey2.1.player.conflicto_caleta_conocida2)
 ############################
 
 # Add variables for aggregated row sums based on categories
-df<- df %>%
+df <- df %>%
   mutate(
     # Sum of `amerb` for T1
-    otros_amerb_t1_mean = rowSums(across(
-      starts_with("T1juegoalgas") & ends_with("extraccion_otros_amerb"),
+    otros_amerb_t1_mean = rowSums(
+      across(starts_with("T1juegoalgas") & ends_with("extraccion_otros_amerb")),
       na.rm = TRUE
-    ))/8/3,
+    ) / 8 / 3,
     # Sum of `amerb` for T2
-    otros_amerb_t2_mean = rowSums(across(
-      starts_with("T2juegoalgas") & ends_with("extraccion_otros_amerb"),
+    otros_amerb_t2_mean = rowSums(
+      across(starts_with("T2juegoalgas") & ends_with("extraccion_otros_amerb")),
       na.rm = TRUE
-    ))/8/3,
+    ) / 8 / 3,
     # Sum of `libre` for T1
-    otros_libre_t1_mean = rowSums(across(
-      starts_with("T1juegoalgas") & ends_with("extraccion_otros_libre"),
+    otros_libre_t1_mean = rowSums(
+      across(starts_with("T1juegoalgas") & ends_with("extraccion_otros_libre")),
       na.rm = TRUE
-    ))/8/3,
+    ) / 8 / 3,
     # Sum of `metat` for T2
-    otros_metat_t2_mean = rowSums(across(
-      starts_with("T2juegoalgas") & ends_with("extraccion_otros_metat"),
+    otros_metat_t2_mean = rowSums(
+      across(starts_with("T2juegoalgas") & ends_with("extraccion_otros_metat")),
       na.rm = TRUE
-    ))/8/3
+    ) / 8 / 3
   )
+
 
 # Difference in beliefs and aggregates for caleta conocida 1 and 2
 
@@ -160,7 +161,7 @@ df$group_size[!is.na(df$participant.zonaT2) & grepl("Z12A|Z12B|Z12C|Z23", df$par
 
 
 #########################3
-#### Pivot datasets long
+#### Reshape datasets long
 ##########################
 
 # T1
@@ -280,6 +281,43 @@ dfs_long <- dfs_amerb %>%
 
 dfs_long$extraction_others_amerb_mean<-dfs_long$extraction_others_amerb/3
 dfs_long$extraction_others_OA_mean<-dfs_long$extraction_others_OA/3
+
+
+
+# Generate beliefs_amerb_updated for round 1
+dfs_long2 <- dfs_long %>%
+  mutate(beliefs_amerb_updated = ifelse(
+    round == 1,
+    beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini + (extraction_others_amerb_mean- beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini) / 2,
+    NA
+  ))
+
+
+dfs_long2 <- dfs_long %>%
+  arrange(participant.code, treatment, round) %>%
+  group_by(participant.code, treatment) %>%
+  mutate(beliefs_amerb_updated = {
+    # Initialize the variable
+    beliefs_updated <- numeric(n())
+    
+    # Calculate for round 1
+    beliefs_updated[1] <-  beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini[1] + 
+      ( extraction_others_amerb_mean[1] - beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini[1])  / 2
+    
+    # Calculate for rounds 2 to 8 iteratively
+    for (i in 2:n()) {
+      beliefs_updated[i] <- beliefs_updated[i - 1] + 
+        (extraction_others_amerb_mean[i] -beliefs_updated[i - 1]) / 2
+    }
+    
+    beliefs_updated
+  }) %>%
+  ungroup()
+
+
+
+View(dfs_long2[, c("beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini", "extraction_others_amerb_mean","beliefs_amerb_updated")])
+
 
 
 
