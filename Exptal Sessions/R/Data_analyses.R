@@ -12,11 +12,11 @@ library(tidyr)
 
 
 rm(list=ls())
-path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+#path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
-#path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 
 
@@ -277,37 +277,29 @@ dfs_long <- dfs_amerb %>%
   full_join(dfs_otros_amerb, by = c("participant.code", "treatment", "round")) %>%
   full_join(dfs_otros_oa, by = c("participant.code", "treatment", "round"))
 
+# Calculate mean extractions by others
+dfs_long <- dfs_long %>%
+  mutate(
+    extraction_others_amerb_mean = extraction_others_amerb / 3,
+    extraction_others_OA_mean = extraction_others_OA / 3
+  )
 
-
-dfs_long$extraction_others_amerb_mean<-dfs_long$extraction_others_amerb/3
-dfs_long$extraction_others_OA_mean<-dfs_long$extraction_others_OA/3
-
-
-
-# Generate beliefs_amerb_updated for round 1
-dfs_long2 <- dfs_long %>%
-  mutate(beliefs_amerb_updated = ifelse(
-    round == 1,
-    beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini + (extraction_others_amerb_mean- beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini) / 2,
-    NA
-  ))
-
-
-dfs_long2 <- dfs_long %>%
-  arrange(participant.code, treatment, round) %>%
-  group_by(participant.code, treatment) %>%
+# Update beliefs iteratively
+dfs_long <- dfs_long %>%
+  arrange(participant.code, treatment, round) %>%  # Sort by key columns
+  group_by(participant.code, treatment) %>%  # Group by participant and treatment
   mutate(beliefs_amerb_updated = {
-    # Initialize the variable
+    # Initialize a vector for updated beliefs
     beliefs_updated <- numeric(n())
     
-    # Calculate for round 1
-    beliefs_updated[1] <-  beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini[1] + 
-      ( extraction_others_amerb_mean[1] - beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini[1])  / 2
+    # Round 1 belief update
+    beliefs_updated[1] <- beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini[1] +
+      (extraction_others_amerb_mean[1] - beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini[1]) / 2
     
-    # Calculate for rounds 2 to 8 iteratively
+    # Iterative belief update for rounds 2 to n
     for (i in 2:n()) {
-      beliefs_updated[i] <- beliefs_updated[i - 1] + 
-        (extraction_others_amerb_mean[i] -beliefs_updated[i - 1]) / 2
+      beliefs_updated[i] <- beliefs_updated[i - 1] +
+        (extraction_others_amerb_mean[i] - beliefs_updated[i - 1]) / 2
     }
     
     beliefs_updated
@@ -315,8 +307,69 @@ dfs_long2 <- dfs_long %>%
   ungroup()
 
 
+dfs_long <- dfs_long %>%
+  arrange(participant.code, treatment, round) %>%  # Ensure correct order
+  group_by(participant.code, treatment) %>%  # Group by participant and treatment
+  mutate(lag_beliefs_amerb_updated = lag(beliefs_amerb_updated),
+         lag_extraction_others_amerb_mean = lag(extraction_others_amerb_mean),
+         lag_extraction_others_OA_mean = lag(extraction_others_OA_mean)
+  ) %>%  # Create lagged column
+  ungroup()
 
-View(dfs_long2[, c("beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini", "extraction_others_amerb_mean","beliefs_amerb_updated")])
+
+dfs_long <- dfs_long %>%
+  mutate(
+    lag_beliefs_amerb_updated = if_else(
+      is.na(lag_beliefs_amerb_updated) & round == 1,
+      as.numeric(beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini),  # Convert to numeric
+      lag_beliefs_amerb_updated
+    )
+  )
+
+
+
+
+dfs_long <- dfs_long %>%
+  mutate(
+    # Generate beliefs_OA_caleta
+    beliefs_OA_caleta = if_else(
+      treatment == "T1",
+      as.numeric(beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini),
+      as.numeric(beliefsT2inicial.1.player.T2_belief_caleta_ini)
+    ),
+    # Generate beliefs_OA_others
+    beliefs_OA_others = if_else(
+      treatment == "T1",
+      as.numeric(beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini),
+      as.numeric(beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini)
+    )
+  )
+
+
+#View(dfs_long[, c("beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini", "extraction_others_amerb_mean","beliefs_amerb_updated")])
+
+
+dfs_long_t1 <- dfs_long %>%
+  filter(treatment == "T1")
+
+
+
+lm<-lm(extraction_amerb ~ lag_beliefs_amerb_updated, data=dfs_long_t1)
+summary(lm)
+
+
+lm<-lm(extraction_amerb ~ lag_extraction_others_amerb_mean + beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini , data=dfs_long)
+summary(lm)
+
+lm1<-lm(extraction_OA ~ lag_extraction_others_OA_mean + beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini + beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini + treatment, data=dfs_long)
+summary(lm1)
+
+lm2<-lm(extraction_OA ~ lag_extraction_others_OA_mean + beliefs_OA_caleta + beliefs_OA_others
+        + treatment, data=dfs_long)
+summary(lm2)
+
+
+
 
 
 
