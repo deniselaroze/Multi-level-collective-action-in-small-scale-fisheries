@@ -317,6 +317,7 @@ dfs_long <- dfs_long %>%
   ungroup()
 
 
+#### Updating beliefs --- imputation 
 dfs_long <- dfs_long %>%
   mutate(
     lag_beliefs_amerb_updated = if_else(
@@ -327,8 +328,7 @@ dfs_long <- dfs_long %>%
   )
 
 
-
-
+#### Generating one long beliefs variables that has the beliefs for extraction in OA
 dfs_long <- dfs_long %>%
   mutate(
     # Generate beliefs_OA_caleta
@@ -342,12 +342,32 @@ dfs_long <- dfs_long %>%
       treatment == "T1",
       as.numeric(beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini),
       as.numeric(beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini)
+    ),
+    # Categorical version of beliefs_OA_caleta
+    beliefs_OA_caleta_cat = case_when(
+      beliefs_OA_caleta == 0 ~ "UC",
+      beliefs_OA_caleta > 0 & beliefs_OA_caleta < 50 ~ "NC or CC",
+      beliefs_OA_caleta == 50 ~ "FR",
+      TRUE ~ NA_character_  # Handle unexpected cases
+    ),
+    # Categorical version of beliefs_OA_others
+    beliefs_OA_others_cat = case_when(
+      beliefs_OA_others == 0 ~ "UC",
+      beliefs_OA_others > 0 & beliefs_OA_others < 50 ~ "NC or CC",
+      beliefs_OA_others == 50 ~ "FR",
+      TRUE ~ NA_character_  # Handle unexpected cases
     )
   )
 
+group_counts <- table(dfs_long$beliefs_OA_others_cat)
+group_proportions <- prop.table(group_counts)
+group_proportions
 
 #View(dfs_long[, c("beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini", "extraction_others_amerb_mean","beliefs_amerb_updated")])
 
+#################################################
+##### Preliminary regression analysis on beliefs
+#################################################
 
 dfs_long_t1 <- dfs_long %>%
   filter(treatment == "T1")
@@ -364,9 +384,195 @@ summary(lm)
 lm1<-lm(extraction_OA ~ lag_extraction_others_OA_mean + beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini + beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini + treatment, data=dfs_long)
 summary(lm1)
 
+
 lm2<-lm(extraction_OA ~ lag_extraction_others_OA_mean + beliefs_OA_caleta + beliefs_OA_others
         + treatment, data=dfs_long)
 summary(lm2)
+
+
+
+lm2<-lm(extraction_OA ~ lag_extraction_others_OA_mean + beliefs_OA_caleta + beliefs_OA_others
+        + treatment, data=dfs_long[dfs_long$treatment=="T1", ])
+summary(lm2)
+
+lm3<-lm(extraction_OA ~ lag_extraction_others_OA_mean + beliefs_OA_caleta + beliefs_OA_others
+        + treatment, data=dfs_long[dfs_long$treatment=="T2",])
+summary(lm3)
+
+
+
+
+
+# Subset the data for treatment == "T1"
+dfs_long_t1 <- dfs_long %>%
+  filter(treatment == "T1")
+
+# Fit the linear model using the subsetted data
+lm2 <- lm(
+  extraction_OA ~ lag_extraction_others_OA_mean + beliefs_OA_caleta + beliefs_OA_others,
+  data = dfs_long_t1
+)
+
+# Display the summary of the model
+summary(lm2)
+
+
+
+
+dfs_long_t2 <- dfs_long %>%
+  filter(treatment == "T2")
+
+# Fit the linear model using the subsetted data
+lm3 <- lm(
+  extraction_OA ~ lag_extraction_others_OA_mean + beliefs_OA_caleta + beliefs_OA_others,
+  data = dfs_long_t2
+)
+
+# Display the summary of the model
+summary(lm3)
+
+stargazer(
+  lm2, lm3, # Select the models to include
+  type = "html",
+  out = paste0(path_github, "Outputs/extraction_long.html")
+)
+
+
+
+
+
+
+lm3<-lm(extraction_OA ~ lag_extraction_others_OA_mean*treatment + beliefs_OA_caleta + beliefs_OA_others, data=dfs_long)
+summary(lm3)
+
+
+
+
+###################################################################
+#### Plot for mean over extraction in OA by categories of beliefs 
+##################################################################
+
+
+##### Beliefs about how outsiders will behave in OA
+
+# Calculate mean and confidence intervals
+mean_extraction_round <- dfs_long %>%
+  group_by(treatment, round, beliefs_OA_others_cat) %>%
+  summarize(
+    extraction_OA_mean = mean(extraction_OA, na.rm = TRUE),
+    extraction_OA_se = sd(extraction_OA, na.rm = TRUE) / sqrt(n()),  # Standard Error
+    .groups = "drop"
+  ) %>%
+  mutate(
+    lower_ci = extraction_OA_mean - qt(0.975, df = n() - 1) * extraction_OA_se,  # 95% CI lower bound
+    upper_ci = extraction_OA_mean + qt(0.975, df = n() - 1) * extraction_OA_se   # 95% CI upper bound
+  )
+
+# Plot with confidence intervals
+plot<-ggplot(mean_extraction_round, aes(x = round, y = extraction_OA_mean, color = beliefs_OA_others_cat)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = beliefs_OA_others_cat), alpha = 0.2, color = NA) +
+  facet_wrap(~treatment) +
+  labs(
+    title = "Mean Extraction OA with Confidence Intervals, by Beliefs in Outgroup",
+    x = "Round",
+    y = "Mean Extraction OA"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom"
+  )
+
+plot
+
+ggsave(file=paste0(path_github, "Outputs/Plot_cat_beliefs_others_extraction_OA.pdf") , plot = plot, device = "pdf", width = 12, height = 6)
+
+
+##### Beliefs about how outsiders will behave in OA
+
+# Calculate mean and confidence intervals
+mean_extraction_round <- dfs_long %>%
+  group_by(treatment, round, beliefs_OA_caleta_cat) %>%
+  summarize(
+    extraction_OA_mean = mean(extraction_OA, na.rm = TRUE),
+    extraction_OA_se = sd(extraction_OA, na.rm = TRUE) / sqrt(n()),  # Standard Error
+    .groups = "drop"
+  ) %>%
+  mutate(
+    lower_ci = extraction_OA_mean - qt(0.975, df = n() - 1) * extraction_OA_se,  # 95% CI lower bound
+    upper_ci = extraction_OA_mean + qt(0.975, df = n() - 1) * extraction_OA_se   # 95% CI upper bound
+  )
+
+# Plot with confidence intervals
+plot<-ggplot(mean_extraction_round, aes(x = round, y = extraction_OA_mean, color = beliefs_OA_caleta_cat)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = beliefs_OA_caleta_cat), alpha = 0.2, color = NA) +
+  facet_wrap(~treatment) +
+  labs(
+    title = "Mean Extraction OA with Confidence Intervals, by Beliefs in ingroup",
+    x = "Round",
+    y = "Mean Extraction OA"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom"
+  )
+
+plot
+
+ggsave(file=paste0(path_github, "Outputs/Plot_cat_beliefs__caleta_extraction_OA.pdf") , plot = plot, device = "pdf", width = 12, height = 6)
+
+
+
+
+
+
+
+##### Beliefs about how ingroup will behave in OA
+# Calculate mean and confidence intervals
+mean_extraction_round <- dfs_long %>%
+  group_by(treatment, round, beliefs_OA_others_cat) %>%
+  summarize(
+    extraction_OA_mean = mean(extraction_OA, na.rm = TRUE),
+    extraction_OA_se = sd(extraction_OA, na.rm = TRUE) / sqrt(n()),  # Standard Error
+    .groups = "drop"
+  ) %>%
+  mutate(
+    lower_ci = extraction_OA_mean - qt(0.975, df = n() - 1) * extraction_OA_se,  # 95% CI lower bound
+    upper_ci = extraction_OA_mean + qt(0.975, df = n() - 1) * extraction_OA_se   # 95% CI upper bound
+  )
+
+# Plot with confidence intervals
+plot<-ggplot(mean_extraction_round, aes(x = round, y = extraction_OA_mean, color = beliefs_OA_amerb_cat)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = beliefs_OA_others_cat), alpha = 0.2, color = NA) +
+  facet_wrap(~treatment) +
+  labs(
+    title = "Mean Extraction OA with Confidence Intervals",
+    x = "Round",
+    y = "Mean Extraction OA"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom"
+  )
+
+
+
+ggsave(file=paste0(path_github, "Outputs/Plot_cat_beliefs_others_extraction.pdf") , plot = plot, device = "pdf", width = 12, height = 6)
+
+
+
+
 
 
 
@@ -756,17 +962,23 @@ ggplot(summary_table, aes(x = x_order, y = mean_diff, fill = Treatment)) +
 
 # Calculate mean, SD, and 95% CI for each treatment and area
 extraction_stats <- dfs_long %>%
-  group_by(treatment, area) %>%  # Group by treatment and area
+  group_by(treatment) %>%  # Group by treatment and area
   summarise(
-    mean_extraction = mean(extraction, na.rm = TRUE),
-    sd_extraction = sd(extraction, na.rm = TRUE),
-    n = sum(!is.na(extraction)),  # Count of non-missing values
-    .groups = "drop"  # Avoid nested grouping
+    mean_extraction_amerb = mean(extraction_amerb, na.rm = TRUE),
+    sd_extraction = sd(extraction_amerb, na.rm = TRUE),
+    n_amerb = sum(!is.na(extraction_amerb)),  # Count of non-missing values
+    mean_extraction_OA = mean(extraction_OA, na.rm = TRUE),
+    sd_extraction_OA = sd(extraction_OA, na.rm = TRUE),
+    n_OA = sum(!is.na(extraction_OA)),  # Count of non-missing values
+    
+        .groups = "drop"  # Avoid nested grouping
   ) %>%
   mutate(
-    lower_ci = mean_extraction - 1.96 * (sd_extraction / sqrt(n)),  # Lower bound of 95% CI
-    upper_ci = mean_extraction + 1.96 * (sd_extraction / sqrt(n))   # Upper bound of 95% CI
-  )
+    lower_ci_amerb = mean_extraction_amerb - 1.96 * (sd_extraction_amerb / sqrt(n_amerb)),  # Lower bound of 95% CI
+    upper_ci_amerb = mean_extraction_amerb + 1.96 * (sd_extraction_amerb / sqrt(n_amerb)),   # Upper bound of 95% CI
+    lower_ci_OA = mean_extraction_OA - 1.96 * (sd_extraction_OA / sqrt(n_OA)),  # Lower bound of 95% CI
+    upper_ci_OA = mean_extraction_OA + 1.96 * (sd_extraction_OA / sqrt(n_OA))   # Upper bound of 95% CI
+    )
 
 # View the resulting subset
 print(extraction_stats)
