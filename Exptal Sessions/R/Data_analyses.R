@@ -8,15 +8,18 @@ library(stringr)
 library(ggplot2)
 library(gridExtra)
 library(tidyr)
+library(sandwich)   # For robust and clustered standard errors
+library(lmtest)     # For coeftest
+library(stargazer)  # For model output tables
 
 
 
 rm(list=ls())
-#path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
-path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+#path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 
 
@@ -207,9 +210,22 @@ belief_columns <- c(
   "beliefsT2final.1.player.T2_belief_caleta_conocida_mean_fin"
 )
 
+experience <- c("survey1.1.player.confianza_caleta", "survey1.1.player.confianza_pm", 
+                "survey1.1.player.conflicto_caleta", "survey1.1.player.conflicto_pm", 
+                "survey1.1.player.experiencia_caleta", "survey1.1.player.experiencia_pm", 
+                "survey1.1.player.T1_motiv_legit_amerb", "survey1.1.player.T1_motiv_instr_amerb", 
+                "survey1.1.player.T1_motiv_socnorm_amerb", "survey1.1.player.T1_motiv_legit_pm", 
+                "survey1.1.player.T1_motiv_instr_pm", "survey1.1.player.T1_motiv_socnorm_ingroup_pm", 
+                "survey1.1.player.T1_motiv_socnorm_outgroup_pm", "survey3.1.player.sexo", 
+                "survey3.1.player.nacimiento", "survey3.1.player.estudios", 
+                "survey3.1.player.horas_trabajo", "survey3.1.player.liderazgo", 
+                "survey3.1.player.experiencia", "survey3.1.player.motivinstrum_amerb", 
+                "survey3.1.player.motivinstrum_libre", "survey3.1.player.motivlegit_amerb", 
+                "survey3.1.player.motivlegit_libre", "survey3.1.player.awareness_amerb", 
+                "survey3.1.player.awareness_libre", "survey3.1.player.pregunta_abierta")
 
 
-variable_names<-c("participant.code", "gid.amerb", "gid.treat", variable_names1, variable_names2, belief_columns )
+variable_names<-c("participant.code", "gid.amerb", "gid.treat", variable_names1, variable_names2, belief_columns, experience )
 
 
 ##### Treatment variables subset
@@ -359,20 +375,108 @@ dfs_long <- dfs_long %>%
     )
   )
 
+
+
 group_counts <- table(dfs_long$beliefs_OA_others_cat)
 group_proportions <- prop.table(group_counts)
 group_proportions
 
+# Dummy variables for ingrouo/outgroup experience, trust and conflict
+dfs_long <- dfs_long %>%
+  mutate(
+    # Create dummy for confianza_caleta
+    dummy_confianza_caleta = if_else(survey1.1.player.confianza_caleta > 1, 1, 0),
+    
+    # Create dummy for confianza_pm
+    dummy_confianza_pm = if_else(survey1.1.player.confianza_pm  > 1, 1, 0),
+    
+    # Create dummy for conflicto_caleta
+    dummy_conflicto_caleta = if_else(survey1.1.player.conflicto_caleta == 1, 0, 1),
+    
+    # Create dummy for conflicto_pm
+    dummy_conflicto_pm = if_else(survey1.1.player.conflicto_pm == 1, 0, 1),
+    
+    # Create dummy for experiencia_caleta
+    dummy_experiencia_caleta = if_else(survey1.1.player.experiencia_caleta >1, 1, 0),
+    
+    # Create dummy for experiencia_pm
+    dummy_experiencia_pm = if_else(survey1.1.player.experiencia_pm >1, 1, 0)
+  )
+
 #View(dfs_long[, c("beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini", "extraction_others_amerb_mean","beliefs_amerb_updated")])
 
-#################################################
-##### Preliminary regression analysis on beliefs
-#################################################
+###############################################################
+##### Preliminary regression analysis on extraction given beliefs
+###############################################################
+
+
+# Run models with individual clustered s.e.
+lm1 <- lm(extraction_OA ~ beliefs_OA_caleta + beliefs_OA_others + treatment, data = dfs_long)
+lm2 <- lm(extraction_OA ~ survey1.1.player.confianza_caleta + survey1.1.player.confianza_pm +  
+            survey1.1.player.conflicto_caleta + survey1.1.player.conflicto_pm + treatment, data = dfs_long)
+lm3 <- lm(extraction_OA ~ beliefs_OA_caleta + beliefs_OA_others +  
+            survey1.1.player.confianza_caleta + survey1.1.player.confianza_pm +  
+            survey1.1.player.conflicto_caleta + survey1.1.player.conflicto_pm + treatment, data = dfs_long)
+lm4 <- lm(extraction_OA ~ lag_extraction_others_OA_mean + beliefs_OA_caleta + beliefs_OA_others + 
+            survey1.1.player.confianza_caleta + survey1.1.player.confianza_pm +  
+            survey1.1.player.conflicto_caleta + survey1.1.player.conflicto_pm + treatment, data = dfs_long)
+
+# Calculate clustered standard errors by 'participant.code'
+clustered_se_lm1 <- sqrt(diag(vcovCL(lm1, cluster = ~participant.code)))
+clustered_se_lm2 <- sqrt(diag(vcovCL(lm2, cluster = ~participant.code)))
+clustered_se_lm3 <- sqrt(diag(vcovCL(lm3, cluster = ~participant.code)))
+clustered_se_lm4 <- sqrt(diag(vcovCL(lm4, cluster = ~participant.code)))
+
+# Export to stargazer with clustered standard errors
+stargazer(lm1, lm2, lm3, lm4,
+          se = list(clustered_se_lm1, clustered_se_lm2, clustered_se_lm3, clustered_se_lm4),
+          type = "html",
+          out = paste0(path_github, "Outputs/extraction_clustered_se.html"),
+          title = "Regression Results with Clustered Standard Errors",
+          dep.var.labels = "Extraction OA",
+          #covariate.labels = c("Beliefs Caleta", "Beliefs Others", "Treatment",
+          #                     "Confianza Caleta", "Confianza PM", 
+          #                     "Conflicto Caleta", "Conflicto PM", 
+          #                     "Lag Extraction Others Mean"),
+          notes = "Clustered standard errors by participant code are reported in parentheses.")
+
+#### with group clustered s.e.
+# Run models
+lm1 <- lm(extraction_OA ~ beliefs_OA_caleta + beliefs_OA_others + treatment, data = dfs_long)
+lm2 <- lm(extraction_OA ~ survey1.1.player.confianza_caleta + survey1.1.player.confianza_pm +  
+            survey1.1.player.conflicto_caleta + survey1.1.player.conflicto_pm + treatment, data = dfs_long)
+lm3 <- lm(extraction_OA ~ beliefs_OA_caleta + beliefs_OA_others +  
+            survey1.1.player.confianza_caleta + survey1.1.player.confianza_pm +  
+            survey1.1.player.conflicto_caleta + survey1.1.player.conflicto_pm + treatment, data = dfs_long)
+lm4 <- lm(extraction_OA ~ lag_extraction_others_OA_mean + beliefs_OA_caleta + beliefs_OA_others + 
+            survey1.1.player.confianza_caleta + survey1.1.player.confianza_pm +  
+            survey1.1.player.conflicto_caleta + survey1.1.player.conflicto_pm + treatment, data = dfs_long)
+
+# Calculate clustered standard errors by 'participant.code'
+clustered_se_lm1 <- sqrt(diag(vcovCL(lm1, cluster = ~gid.amerb)))
+clustered_se_lm2 <- sqrt(diag(vcovCL(lm2, cluster = ~gid.amerb)))
+clustered_se_lm3 <- sqrt(diag(vcovCL(lm3, cluster = ~gid.amerb)))
+clustered_se_lm4 <- sqrt(diag(vcovCL(lm4, cluster = ~gid.amerb)))
+
+# Export to stargazer with clustered standard errors
+stargazer(lm1, lm2, lm3, lm4,
+          se = list(clustered_se_lm1, clustered_se_lm2, clustered_se_lm3, clustered_se_lm4),
+          type = "html",
+          out = paste0(path_github, "Outputs/extraction_clustered_se.html"),
+          title = "Regression Results with Clustered Standard Errors",
+          dep.var.labels = "Extraction OA",
+          #covariate.labels = c("Beliefs Caleta", "Beliefs Others", "Treatment",
+          #                     "Confianza Caleta", "Confianza PM", 
+          #                     "Conflicto Caleta", "Conflicto PM", 
+          #                     "Lag Extraction Others Mean"),
+          notes = "Clustered standard errors by participant code are reported in parentheses.")
+
+
+
+
 
 dfs_long_t1 <- dfs_long %>%
   filter(treatment == "T1")
-
-
 
 lm<-lm(extraction_amerb ~ lag_beliefs_amerb_updated, data=dfs_long_t1)
 summary(lm)
@@ -444,6 +548,9 @@ stargazer(
 
 lm3<-lm(extraction_OA ~ lag_extraction_others_OA_mean*treatment + beliefs_OA_caleta + beliefs_OA_others, data=dfs_long)
 summary(lm3)
+
+
+
 
 
 
@@ -632,6 +739,76 @@ stargazer(
   out = paste0(path_github, "Outputs/Beliefs_Ini.html")
 )
 
+##### Beliefs with experience
+# Initial beliefs regressions
+lm1 <- lm(beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini ~ 
+            survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta + 
+            survey1.1.player.experiencia_caleta, 
+          data = df)
+
+lm2 <- lm(beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini ~ 
+            as.character(survey1.1.player.confianza_caleta) + as.character(survey1.1.player.conflicto_caleta) + 
+            as.character(survey1.1.player.experiencia_caleta),  
+          data = df)
+
+lm3 <- lm(beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini ~ 
+            survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta + 
+            survey1.1.player.experiencia_caleta + survey1.1.player.experiencia_pm,  
+          data = df)
+
+lm4 <- lm(beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini ~ 
+            as.factor(survey1.1.player.confianza_caleta) + as.factor(survey1.1.player.conflicto_caleta) + 
+            as.factor(survey1.1.player.experiencia_caleta) , 
+          data = df)
+
+# Beliefs out-group regressions
+lm5 <- lm(beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini ~ 
+            survey1.1.player.confianza_pm + survey1.1.player.conflicto_pm + survey1.1.player.experiencia_pm, 
+          data = df)
+
+lm6 <- lm(beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini ~ 
+            as.factor(survey1.1.player.confianza_pm) + as.factor(survey1.1.player.conflicto_pm) + as.factor(survey1.1.player.experiencia_pm), 
+          data = df)
+
+lm7 <- lm(beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini ~ 
+            survey2.1.player.confianza_caleta_conocida_mean + survey2.1.player.conflicto_caleta_conocida_mean +
+            survey2.1.player.experiencia_caleta_conocida1, 
+          data = df)
+
+lm8 <- lm(beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini ~ 
+            as.factor(survey2.1.player.confianza_caleta_conocida_mean) + as.factor(survey2.1.player.conflicto_caleta_conocida_mean)+
+            as.factor(survey2.1.player.experiencia_caleta_conocida1), 
+          data = df)
+
+# Heteroskedasticity-robust clustered standard errors (HC1) by participant.code
+clustered_se <- list(
+  sqrt(diag(vcovCL(lm1, cluster = ~participant.code, type = "HC1"))),
+  sqrt(diag(vcovCL(lm3, cluster = ~participant.code, type = "HC1"))),
+  sqrt(diag(vcovCL(lm5, cluster = ~participant.code, type = "HC1"))),
+  sqrt(diag(vcovCL(lm7, cluster = ~participant.code, type = "HC1")))
+)
+
+# Dependent variable labels
+dep_var_labels <- c(
+  "Initial Beliefs Ingroup-Amerb T1",
+  "Initial Beliefs Ingroup-OA T1",
+  "Initial Beliefs Others-Metat T2",
+  "Initial Beliefs Others-Metat T2"
+)
+
+# Export the models to an HTML table with robust SEs
+stargazer(
+  lm1, lm3, lm5, lm7,
+  se = clustered_se,  # Include robust standard errors
+  type = "html",
+  dep.var.labels = dep_var_labels,
+  #covariate.labels = c("Trust Ingroup", "Conflict Ingroup",
+  #                     "Trust Others (T1)", "Conflict Others (T1)",
+  #                     "Trust Others (T2)", "Conflict Others (T2)"),
+  out = paste0(path_github, "Outputs/Beliefs_Ini_HC1.html")
+)
+
+
 
 
 #### Beliefs at the end
@@ -696,28 +873,76 @@ stargazer(lm1, lm2, lm3, lm4, out=paste0(path_github,"Outputs/Diff_Beliefs.html"
 
 
 
-#############################
-### Regressions with group ID
-#############################
-
-# identify if person is in a group of 2 or 3 out of this data by identifying  123 %in%  Z123 Z123B Z123C  Z12A  Z12B  Z12C   Z23
-
-# reg on 
-
-# extraction in t
-# lag mean extraction by others
-# number of figures on the screen (2 v 3)  by identifying   123 %in% df$participant.zonaT2 (Z123 Z123B Z123C  Z12A  Z12B  Z12C   Z23)
-# generate a lagged beliefs variable with beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini as t0 and updating the beliefs as by adding the difference between the lagged beliefs and the mean observed extraction by others  df$T1juegoalgas.1.player.T1_extraccion_otros_libre or df$T1juegoalgas.1.player.T1_extraccion_otros_metat depending on the treatment
-
-
-
-
-
-
 
 #############
 ### Graphs
 ##############
+
+#####################################################
+### Plots for experience/trust/conflict with others
+####################################################
+
+# List of dummy variables and corresponding plot titles
+dummy_vars <- c("dummy_confianza_caleta", "dummy_confianza_pm", 
+                "dummy_conflicto_caleta", "dummy_conflicto_pm", 
+                "dummy_experiencia_caleta", "dummy_experiencia_pm")
+
+plot_titles <- c("Confianza Caleta", "Confianza PM", 
+                 "Conflicto Caleta", "Conflicto PM", 
+                 "Experiencia Caleta", "Experiencia PM")
+
+# Loop through each dummy variable
+for (i in seq_along(dummy_vars)) {
+  var_name <- dummy_vars[i]
+  plot_title <- paste("Mean Extraction OA with Confidence Intervals, by", plot_titles[i])
+  
+  # Summarize data: mean extraction and confidence intervals
+  summarized_data <- dfs_long %>%
+    group_by(treatment, round, !!sym(var_name)) %>%
+    summarize(
+      extraction_OA_mean = mean(extraction_OA, na.rm = TRUE),
+      extraction_OA_se = sd(extraction_OA, na.rm = TRUE) / sqrt(n()), # Standard Error
+      .groups = "drop"
+    ) %>%
+    mutate(
+      lower_ci = extraction_OA_mean - qt(0.975, df = n() - 1) * extraction_OA_se,
+      upper_ci = extraction_OA_mean + qt(0.975, df = n() - 1) * extraction_OA_se
+    )
+  
+  # Convert dummy variable to a factor for plotting
+  summarized_data[[var_name]] <- as.factor(summarized_data[[var_name]])
+  
+  # Generate the plot
+  plot <- ggplot(summarized_data, aes(x = round, y = extraction_OA_mean, color = !!sym(var_name))) +
+    geom_line(size = 1) +
+    geom_point(size = 2) +
+    geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = !!sym(var_name)), alpha = 0.2, color = NA) +
+    facet_wrap(~treatment) +
+    labs(
+      title = plot_title,
+      x = "Round",
+      y = "Mean Extraction OA",
+      color = plot_titles[i],
+      fill = plot_titles[i]
+    ) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(hjust = 0.5),
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      legend.position = "bottom"
+    )
+  
+  # Display the plot
+  print(plot)
+  
+  # Save each plot as a PDF
+  ggsave(
+    filename = paste0(path_github, "Outputs/Plot_extraction_", var_name, ".pdf"),
+    plot = plot, device = "pdf", width = 12, height = 6
+  )
+}
+
+
 
 
 ##############################################
@@ -957,7 +1182,7 @@ ggplot(summary_table, aes(x = x_order, y = mean_diff, fill = Treatment)) +
 
 
 ###########################################################################
-#### Data management plots of mean extraction (all 8 rounds per treatment) 
+#### Data management for plots of mean extraction (all 8 rounds per treatment) 
 ###########################################################################
 
 # Calculate mean, SD, and 95% CI for each treatment and area
@@ -1009,7 +1234,7 @@ ggplot(extraction_stats, aes(x = area, y = mean_extraction, fill = treatment)) +
 
 
 ########################################################
-#### Data management plots of mean extraction by others
+#### Data management for plots of mean extraction by others
 ########################################################
 
 df_o<- df %>%
@@ -1164,11 +1389,6 @@ print(combined_plot2)
 
 
 ggsave( file=paste0(path_github, "Outputs/Plot_beliefs_extraction.pdf") , plot = combined_plot2, device = "pdf", width = 12, height = 6)
-
-
-
-
-
 
 
 
