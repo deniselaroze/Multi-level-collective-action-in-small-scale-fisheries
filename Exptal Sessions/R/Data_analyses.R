@@ -11,6 +11,7 @@ library(tidyr)
 library(sandwich)   # For robust and clustered standard errors
 library(lmtest)     # For coeftest
 library(stargazer)  # For model output tables
+library(ggeffects)
 
 
 
@@ -21,12 +22,13 @@ path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 #path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
 #path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
-
-
 setwd(path_github)
 
 
-load(paste0(path_datos, "/Datos_islitas.Rdata"))
+#load(paste0(path_datos, "/Datos_islitas.Rdata"))
+load(paste0(path_datos, "/Datos_islitas_recode.Rdata"))
+load(paste0(path_datos, "/Datos_islitas_long.Rdata"))
+
 
 #################################################
 ################# Subsets #######################
@@ -52,7 +54,10 @@ load(paste0(path_datos, "/Datos_islitas.Rdata"))
 ############### Data Analysis ###################
 #################################################
 
+########################
 #Descriptive statistics
+########################
+
 20000+mean(df$participant.payoff, na.rm=T)
 summary(df$participant.payoff, na.rm=T)
 
@@ -73,405 +78,9 @@ table(df$survey1.1.player.conflicto_pm)
 table(df$survey2.1.player.conflicto_caleta_conocida1)
 table(df$survey2.1.player.conflicto_caleta_conocida2)
 
-############################
-### Data Management
-############################
-
-# Add variables for aggregated row sums based on categories
-df <- df %>%
-  mutate(
-    # Sum of `amerb` for T1
-    otros_amerb_t1_mean = rowSums(
-      across(starts_with("T1juegoalgas") & ends_with("extraccion_otros_amerb")),
-      na.rm = TRUE
-    ) / 8 / 3,
-    # Sum of `amerb` for T2
-    otros_amerb_t2_mean = rowSums(
-      across(starts_with("T2juegoalgas") & ends_with("extraccion_otros_amerb")),
-      na.rm = TRUE
-    ) / 8 / 3,
-    # Sum of `libre` for T1
-    otros_libre_t1_mean = rowSums(
-      across(starts_with("T1juegoalgas") & ends_with("extraccion_otros_libre")),
-      na.rm = TRUE
-    ) / 8 / 3,
-    # Sum of `metat` for T2
-    otros_metat_t2_mean = rowSums(
-      across(starts_with("T2juegoalgas") & ends_with("extraccion_otros_metat")),
-      na.rm = TRUE
-    ) / 8 / 3
-  )
-
-
-# Difference in beliefs and aggregates for caleta conocida 1 and 2
-
-df<- df %>%
-  mutate(
-    T1_diff_ingroup_amerb = beliefsT1final.1.player.T1_belief_caleta_en_amerb_fin - 
-      beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini,
-    T1_diff_ingroup_OA = beliefsT1final.1.player.T1_belief_caleta_en_libre_fin - 
-      beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini,
-    T1_diff_others_OA = beliefsT1final.1.player.T1_belief_pm_en_libre_fin - 
-      beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini,
-    T2_diff_ingroup_metat = beliefsT2final.1.player.T2_belief_caleta_fin - 
-      beliefsT2inicial.1.player.T2_belief_caleta_ini,
-    T2_diff_others_metat = if_else(
-      is.na(beliefsT2final.1.player.T2_belief_caleta_conocida2_fin) | 
-        is.na(beliefsT2inicial.1.player.T2_belief_caleta_conocida2_ini),
-      as.double(beliefsT2final.1.player.T2_belief_caleta_conocida1_fin - 
-                  beliefsT2inicial.1.player.T2_belief_caleta_conocida1_ini),
-      as.double((beliefsT2final.1.player.T2_belief_caleta_conocida1_fin - 
-                   beliefsT2inicial.1.player.T2_belief_caleta_conocida1_ini + 
-                   beliefsT2final.1.player.T2_belief_caleta_conocida2_fin - 
-                   beliefsT2inicial.1.player.T2_belief_caleta_conocida2_ini) / 2)
-    ),
-    beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini = if_else(
-      !is.na(beliefsT2inicial.1.player.T2_belief_caleta_conocida2_ini),
-      as.double((beliefsT2inicial.1.player.T2_belief_caleta_conocida1_ini + 
-                   beliefsT2inicial.1.player.T2_belief_caleta_conocida2_ini) / 2),
-      as.double(beliefsT2inicial.1.player.T2_belief_caleta_conocida1_ini)
-    ),
-    beliefsT2final.1.player.T2_belief_caleta_conocida_mean_fin = if_else(
-      !is.na(beliefsT2final.1.player.T2_belief_caleta_conocida2_fin),
-      as.double((beliefsT2final.1.player.T2_belief_caleta_conocida1_fin + 
-                   beliefsT2final.1.player.T2_belief_caleta_conocida2_fin) / 2),
-      as.double(beliefsT2final.1.player.T2_belief_caleta_conocida1_fin)
-    )
-  )
-
-# Create the mean variables
-df$survey2.1.player.confianza_caleta_conocida_mean <- ifelse(
-  !is.na(df$survey2.1.player.confianza_caleta_conocida2),
-  (df$survey2.1.player.confianza_caleta_conocida1 + df$survey2.1.player.confianza_caleta_conocida2) / 2,
-  df$survey2.1.player.confianza_caleta_conocida1
-)
-
-df$survey2.1.player.conflicto_caleta_conocida_mean <- ifelse(
-  !is.na(df$survey2.1.player.conflicto_caleta_conocida2),
-  (df$survey2.1.player.conflicto_caleta_conocida1 + df$survey2.1.player.conflicto_caleta_conocida2) / 2,
-  df$survey2.1.player.conflicto_caleta_conocida1
-)
-
-
-# Generate group_size column with NA
-df$group_size <- NA_integer_
-
-# Assign values based on conditions
-df$group_size[!is.na(df$participant.zonaT2) & grepl("Z123", df$participant.zonaT2)] <- 3
-df$group_size[!is.na(df$participant.zonaT2) & grepl("Z12A|Z12B|Z12C|Z23", df$participant.zonaT2)] <- 2
-
-
-#table(df$participant.zonaT2, df$group_size)
-
-
-#########################3
-#### Reshape datasets long
-##########################
-
-# T1
-rounds <- 1:8  # Sequence from 1 to 10
-treats <- c("T1")  # Time periods T1 and T2
-vars <- c("amerb", "libre")  # Extraction types
-
-# Generate the list of variables using expand.grid to generate all combinations
-combinations <- expand.grid(treats, rounds, vars)
-
-# Create the final object with formatted strings
-variable_names1 <- paste0(
-  "", combinations$Var1, "juegoalgas.", combinations$Var2, 
-  ".player.", combinations$Var1, "_extraccion_", combinations$Var3
-)
-
-
-# T2"
-rounds <- 1:8  # Sequence from 1 to 10
-treats <- c("T2")  # Time periods T1 and T2
-vars <- c("amerb", "metat")  # Extraction types
-
-# Generate the list of variables using expand.grid to generate all combinations
-combinations <- expand.grid(treats, rounds, vars)
-
-# Create the final object with formatted strings
-variable_names2 <- paste0(
-  "", combinations$Var1, "juegoalgas.", combinations$Var2, 
-  ".player.", combinations$Var1, "_extraccion_", combinations$Var3
-)
-
-belief_columns <- c(
-  "participant.code", "group_size",  # Add participant or player identifier for merging and groupsize for regressions
-  "beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini",
-  "beliefsT1final.1.player.T1_belief_caleta_en_amerb_fin",
-  "beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini",
-  "beliefsT1final.1.player.T1_belief_caleta_en_libre_fin",
-  "beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini",
-  "beliefsT1final.1.player.T1_belief_pm_en_libre_fin",
-  "beliefsT2inicial.1.player.T2_belief_caleta_ini",
-  "beliefsT2final.1.player.T2_belief_caleta_fin",
-  "beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini",
-  "beliefsT2final.1.player.T2_belief_caleta_conocida_mean_fin"
-)
-
-experience <- c("survey1.1.player.confianza_caleta", "survey1.1.player.confianza_pm", 
-                "survey1.1.player.conflicto_caleta", "survey1.1.player.conflicto_pm", 
-                "survey1.1.player.experiencia_caleta", "survey1.1.player.experiencia_pm", 
-                "survey1.1.player.T1_motiv_legit_amerb", "survey1.1.player.T1_motiv_instr_amerb", 
-                "survey1.1.player.T1_motiv_socnorm_amerb", "survey1.1.player.T1_motiv_legit_pm", 
-                "survey1.1.player.T1_motiv_instr_pm", "survey1.1.player.T1_motiv_socnorm_ingroup_pm", 
-                "survey1.1.player.T1_motiv_socnorm_outgroup_pm", "survey3.1.player.sexo", 
-                "survey3.1.player.nacimiento", "survey3.1.player.estudios", 
-                "survey3.1.player.horas_trabajo", "survey3.1.player.liderazgo", 
-                "survey3.1.player.experiencia", "survey3.1.player.motivinstrum_amerb", 
-                "survey3.1.player.motivinstrum_libre", "survey3.1.player.motivlegit_amerb", 
-                "survey3.1.player.motivlegit_libre", "survey3.1.player.awareness_amerb", 
-                "survey3.1.player.awareness_libre", "survey3.1.player.pregunta_abierta")
-
-
-variable_names<-c("participant.code", "gid.amerb", "gid.treat", variable_names1, variable_names2, belief_columns, experience )
-
-
-##### Treatment variables subset
-dfs<-(df[, variable_names])
-dfs2<-(df[, c("participant.code",variable_names1, variable_names2)])
-
-# Reshape for 'amerb' area
-dfs_amerb <- dfs %>%
-  pivot_longer(
-    cols = starts_with("T"),
-    names_to = c("treatment", "round", "area"),
-    names_pattern = "(T\\d)juegoalgas\\.(\\d+)\\.player\\..+_extraccion_(.+)",
-    values_to = "extraction"
-  ) %>%
-  filter(area == "amerb") %>%  # Filter only 'amerb'
-  mutate(round = as.integer(round)) %>%
-  select(-area) %>%  # Drop the 'area' column
-  rename(extraction_amerb = extraction)
-
-# Reshape for 'libre' or 'metat' (OA)
-dfs_oa <- dfs2 %>%
-  pivot_longer(
-    cols = starts_with("T"),
-    names_to = c("treatment", "round", "area"),
-    names_pattern = "(T\\d)juegoalgas\\.(\\d+)\\.player\\..+_extraccion_(.+)",
-    values_to = "extraction"
-  ) %>%
-  filter(area %in% c("libre", "metat")) %>%  # Filter only 'libre' and 'metat'
-  mutate(round = as.integer(round)) %>%
-  select(-area) %>%  # Drop the 'area' column
-  rename(extraction_OA = extraction)
-
-
-
-subset_df <- df %>%
-  select(participant.code, matches("extraccion_otros"))
-# Reshape for 'amerb' (otros)
-dfs_otros_amerb <- subset_df %>%
-  pivot_longer(
-    cols = -participant.code,  # Exclude participant.code from pivoting
-    names_to = c("treatment", "round", "area"),
-    names_pattern = "(T\\d)juegoalgas\\.(\\d+)\\.player\\..+_extraccion_otros_(.+)",
-    values_to = "extraction_others_amerb"
-  ) %>%
-  filter(area == "amerb") %>%  # Filter only 'amerb'
-  mutate(round = as.integer(round)) %>%  # Ensure round is numeric
-  select(participant.code, treatment, round, extraction_others_amerb)  # Retain participant.code
-
-# Reshape for 'libre' or 'metat' (otros)
-dfs_otros_oa <- subset_df %>%
-  pivot_longer(
-    cols = -participant.code,  # Exclude participant.code from pivoting
-    names_to = c("treatment", "round", "area"),
-    names_pattern = "(T\\d)juegoalgas\\.(\\d+)\\.player\\..+_extraccion_otros_(.+)",
-    values_to = "extraction_others_OA"
-  ) %>%
-  filter(area %in% c("libre", "metat")) %>%  # Filter only 'libre' and 'metat'
-  mutate(round = as.integer(round)) %>%  # Ensure round is numeric
-  select(participant.code, treatment, round, extraction_others_OA)  # Retain participant.code
-
-
-# Merge all data frames step-by-step
-dfs_long <- dfs_amerb %>%
-  full_join(dfs_oa, by = c("participant.code", "treatment", "round")) %>%
-  full_join(dfs_otros_amerb, by = c("participant.code", "treatment", "round")) %>%
-  full_join(dfs_otros_oa, by = c("participant.code", "treatment", "round"))
-
-
-#### Recode variables 
-
-# number of colors (identities) on the screen 2 or 3
-
-dfs_long$n_identities<-ifelse(dfs_long$treatment=="T1", 2, dfs_long$group_size)
-
-
-# Calculate mean extractions by others
-dfs_long <- dfs_long %>%
-  mutate(
-    extraction_others_amerb_mean = extraction_others_amerb / 3,
-    extraction_others_OA_mean = extraction_others_OA / 3
-  )
-
-# Update beliefs iteratively
-dfs_long <- dfs_long %>%
-  arrange(participant.code, treatment, round) %>%  # Sort by key columns
-  group_by(participant.code, treatment) %>%  # Group by participant and treatment
-  mutate(beliefs_amerb_updated = {
-    # Initialize a vector for updated beliefs
-    beliefs_updated <- numeric(n())
-    
-    # Round 1 belief update
-    beliefs_updated[1] <- beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini[1] +
-      (extraction_others_amerb_mean[1] - beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini[1]) / 2
-    
-    # Iterative belief update for rounds 2 to n
-    for (i in 2:n()) {
-      beliefs_updated[i] <- beliefs_updated[i - 1] +
-        (extraction_others_amerb_mean[i] - beliefs_updated[i - 1]) / 2
-    }
-    
-    beliefs_updated
-  }) %>%
-  ungroup()
-
-# Update beliefs ingroup in OA iteratively
-dfs_long <- dfs_long %>%
-  arrange(participant.code, treatment, round) %>%  # Sort by key columns
-  group_by(participant.code, treatment) %>%  # Group by participant and treatment
-  mutate(beliefs_ingroup_OA_updated = {
-    # Initialize a vector for updated beliefs
-    beliefs_updated <- numeric(n())
-    
-    # Round 1 belief update based on treatment
-    if (treatment[1] == "T1") {
-      beliefs_updated[1] <- beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini[1] +
-        (extraction_others_OA_mean[1] - beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini[1]) / 2
-    } else if (treatment[1] == "T2") {
-      beliefs_updated[1] <- beliefsT2inicial.1.player.T2_belief_caleta_ini[1] +
-        (extraction_others_OA_mean[1] - beliefsT2inicial.1.player.T2_belief_caleta_ini[1]) / 2
-    }
-    
-    # Iterative belief update for rounds 2 to n
-    for (i in 2:n()) {
-      beliefs_updated[i] <- beliefs_updated[i - 1] +
-        (extraction_others_OA_mean[i] - beliefs_updated[i - 1]) / 2
-    }
-    
-    beliefs_updated
-  }) %>%
-  ungroup()
-
-# Update beliefs outgroup in OA iteratively
-dfs_long <- dfs_long %>%
-  arrange(participant.code, treatment, round) %>%  # Sort by key columns
-  group_by(participant.code, treatment) %>%  # Group by participant and treatment
-  mutate(beliefs_outgroup_OA_updated = {
-    # Initialize a vector for updated beliefs
-    beliefs_updated <- numeric(n())
-    
-    # Round 1 belief update based on treatment
-    if (treatment[1] == "T1") {
-      beliefs_updated[1] <- beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini[1] +
-        (extraction_others_OA_mean[1] - beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini[1]) / 2
-    } else if (treatment[1] == "T2") {
-      beliefs_updated[1] <- beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini[1] +
-        (extraction_others_OA_mean[1] - beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini[1]) / 2
-    }
-    
-    # Iterative belief update for rounds 2 to n
-    for (i in 2:n()) {
-      beliefs_updated[i] <- beliefs_updated[i - 1] +
-        (extraction_others_OA_mean[i] - beliefs_updated[i - 1]) / 2
-    }
-    
-    beliefs_updated
-  }) %>%
-  ungroup()
-
-
-dfs_long <- dfs_long %>%
-  arrange(participant.code, treatment, round) %>%  # Ensure correct order
-  group_by(participant.code, treatment) %>%  # Group by participant and treatment
-  mutate(lag_beliefs_amerb_updated = lag(beliefs_amerb_updated),
-         lag_beliefs_ingroup_OA_updated = lag(beliefs_ingroup_OA_updated),
-         lag_beliefs_outgroup_OA_updated = lag(beliefs_outgroup_OA_updated),
-         lag_extraction_others_amerb_mean = lag(extraction_others_amerb_mean),
-         lag_extraction_others_OA_mean = lag(extraction_others_OA_mean)
-  ) %>%  # Create lagged column
-  ungroup()
-
-#### Updating beliefs --- imputation 
-dfs_long <- dfs_long %>%
-  mutate(
-    lag_beliefs_amerb_updated = if_else(
-      is.na(lag_beliefs_amerb_updated) & round == 1,
-      as.numeric(beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini),  # Convert to numeric
-      lag_beliefs_amerb_updated
-    )
-  )
-
-
-#### Generating one long beliefs variables that has the beliefs for extraction in OA
-dfs_long <- dfs_long %>%
-  mutate(
-    # Generate beliefs_OA_caleta
-    beliefs_OA_caleta = if_else(
-      treatment == "T1",
-      as.numeric(beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini),
-      as.numeric(beliefsT2inicial.1.player.T2_belief_caleta_ini)
-    ),
-    # Generate beliefs_OA_others
-    beliefs_OA_others = if_else(
-      treatment == "T1",
-      as.numeric(beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini),
-      as.numeric(beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini)
-    ),
-    # Categorical version of beliefs_OA_caleta
-    beliefs_OA_caleta_cat = case_when(
-      beliefs_OA_caleta == 0 ~ "UC",
-      beliefs_OA_caleta > 0 & beliefs_OA_caleta < 50 ~ "NC or CC",
-      beliefs_OA_caleta == 50 ~ "FR",
-      TRUE ~ NA_character_  # Handle unexpected cases
-    ),
-    # Categorical version of beliefs_OA_others
-    beliefs_OA_others_cat = case_when(
-      beliefs_OA_others == 0 ~ "UC",
-      beliefs_OA_others > 0 & beliefs_OA_others < 50 ~ "NC or CC",
-      beliefs_OA_others == 50 ~ "FR",
-      TRUE ~ NA_character_  # Handle unexpected cases
-    )
-  )
-
-
-
-group_counts <- table(dfs_long$beliefs_OA_others_cat)
-group_proportions <- prop.table(group_counts)
-group_proportions
-
-# Dummy variables for ingrouo/outgroup experience, trust and conflict
-dfs_long <- dfs_long %>%
-  mutate(
-    # Create dummy for confianza_caleta
-    dummy_confianza_caleta = if_else(survey1.1.player.confianza_caleta > 1, 1, 0),
-    
-    # Create dummy for confianza_pm
-    dummy_confianza_pm = if_else(survey1.1.player.confianza_pm  > 1, 1, 0),
-    
-    # Create dummy for conflicto_caleta
-    dummy_conflicto_caleta = if_else(survey1.1.player.conflicto_caleta == 1, 0, 1),
-    
-    # Create dummy for conflicto_pm
-    dummy_conflicto_pm = if_else(survey1.1.player.conflicto_pm == 1, 0, 1),
-    
-    # Create dummy for experiencia_caleta
-    dummy_experiencia_caleta = if_else(survey1.1.player.experiencia_caleta >1, 1, 0),
-    
-    # Create dummy for experiencia_pm
-    dummy_experiencia_pm = if_else(survey1.1.player.experiencia_pm >1, 1, 0)
-  )
-
-#View(dfs_long[, c("beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini", "extraction_others_amerb_mean","beliefs_amerb_updated")])
-
-###############################################################
+########################################################################
 ##### Preliminary regression analysis on extraction in OA given beliefs
-###############################################################
+########################################################################
 
 
 # Run models with individual clustered s.e.
@@ -536,10 +145,6 @@ stargazer(lm1, lm2, lm3, lm4,
           #                     "Lag Extraction Others Mean"),
           notes = "Clustered standard errors by matching group are reported in parentheses.")
 
-
-
-
-
 dfs_long_t1 <- dfs_long %>%
   filter(treatment == "T1")
 
@@ -559,7 +164,6 @@ lm2<-lm(extraction_OA ~ lag_extraction_others_OA_mean + beliefs_OA_caleta + beli
 summary(lm2)
 
 
-
 lm2<-lm(extraction_OA ~ lag_extraction_others_OA_mean + beliefs_OA_caleta + beliefs_OA_others
         + treatment, data=dfs_long[dfs_long$treatment=="T1", ])
 summary(lm2)
@@ -567,9 +171,6 @@ summary(lm2)
 lm3<-lm(extraction_OA ~ lag_extraction_others_OA_mean + beliefs_OA_caleta + beliefs_OA_others
         + treatment, data=dfs_long[dfs_long$treatment=="T2",])
 summary(lm3)
-
-
-
 
 
 # Subset the data for treatment == "T1"
@@ -584,9 +185,6 @@ lm2 <- lm(
 
 # Display the summary of the model
 summary(lm2)
-
-
-
 
 dfs_long_t2 <- dfs_long %>%
   filter(treatment == "T2")
@@ -605,7 +203,6 @@ stargazer(
   type = "html",
   out = paste0(path_github, "Outputs/extraction_long.html")
 )
-
 
 
 # controlling for the number identities people see on screen -- produces the same results
@@ -650,6 +247,56 @@ stargazer(lm1,lm2, lm3, lm4,
           notes = "Clustered standard errors by participant code are reported in parentheses.")
 
 
+### Robustness checks on the number/ minority status in the round
+
+# Run models on extraction with number of out_group participants in the area and matching group clustered s.e.
+lm1 <- lm(extraction_OA ~ lag_extraction_others_OA_mean + beliefs_OA_caleta + beliefs_OA_others + treatment + n_identities, data = dfs_long)
+
+lm2 <- lm(extraction_OA ~ lag_extraction_others_OA_mean + beliefs_OA_caleta + beliefs_OA_others + treatment + minority + n_identities, data = dfs_long)
+
+lm3 <- lm(extraction_OA ~ lag_extraction_others_OA_mean + beliefs_OA_caleta + beliefs_OA_others*minority + treatment + n_identities, data = dfs_long)
+
+lm4 <- lm(extraction_OA ~ lag_extraction_others_OA_mean + beliefs_OA_caleta*minority  + beliefs_OA_others + treatment + n_identities, data = dfs_long)
+
+
+# Calculate clustered standard errors by 'participant.code'
+clustered_se_lm1 <- sqrt(diag(vcovCL(lm1, cluster = ~gid.treat)))
+clustered_se_lm2 <- sqrt(diag(vcovCL(lm2, cluster = ~gid.treat)))
+clustered_se_lm3 <- sqrt(diag(vcovCL(lm3, cluster = ~gid.treat)))
+clustered_se_lm4 <- sqrt(diag(vcovCL(lm4, cluster = ~gid.treat)))
+
+# Export to stargazer with clustered standard errors
+stargazer(lm1, lm2, lm3, lm4,
+          se = list(clustered_se_lm1, clustered_se_lm2, clustered_se_lm3, clustered_se_lm4),
+          type = "html",
+          out = paste0(path_github, "Outputs/extraction_clustered_se_n_ingroup.html"),
+          title = "Regression Results with Clustered Standard Errors",
+          dep.var.labels = "Extraction OA",
+          #covariate.labels = c("Beliefs Caleta", "Beliefs Others", "Treatment",
+          #                     "Confianza Caleta", "Confianza PM", 
+          #                     "Conflicto Caleta", "Conflicto PM", 
+          #                     "Lag Extraction Others Mean"),
+          notes = "Clustered standard errors by matching group are reported in parentheses.")
+
+
+
+interaction_data <- ggpredict(lm3, terms = c("beliefs_OA_others", "minority"))
+
+# Plot the interaction using ggplot2
+ggplot(interaction_data, aes(x = x, y = predicted, color = group)) +
+  geom_line(size = 1) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = group), alpha = 0.2) +
+  labs(
+    title = "Interaction Effect: beliefs_OA_others * minority",
+    x = "Beliefs about Others in OA",
+    y = "Predicted Extraction in OA",
+    color = "Minority",
+    fill = "Minority"
+  ) +
+  theme_minimal()
+
+
+
 ##### Regressions with imputed beliefs
 lm1 <- lm(extraction_OA ~ beliefs_OA_caleta + beliefs_OA_others + treatment, data = dfs_long)
 lm2 <- lm(extraction_OA ~ lag_beliefs_ingroup_OA_updated + lag_beliefs_outgroup_OA_updated + 
@@ -662,10 +309,10 @@ lm4 <- lm(extraction_OA ~ lag_extraction_others_OA_mean +
 
 
 # Calculate clustered standard errors by 'participant.code'
-clustered_se_lm1 <- sqrt(diag(vcovCL(lm1, cluster = ~participant.code)))
-clustered_se_lm2 <- sqrt(diag(vcovCL(lm2, cluster = ~participant.code)))
-clustered_se_lm3 <- sqrt(diag(vcovCL(lm3, cluster = ~participant.code)))
-clustered_se_lm4 <- sqrt(diag(vcovCL(lm4, cluster = ~participant.code)))
+clustered_se_lm1 <- sqrt(diag(vcovCL(lm1, cluster = ~gid.treat)))
+clustered_se_lm2 <- sqrt(diag(vcovCL(lm2, cluster = ~gid.treat)))
+clustered_se_lm3 <- sqrt(diag(vcovCL(lm3, cluster = ~gid.treat)))
+clustered_se_lm4 <- sqrt(diag(vcovCL(lm4, cluster = ~gid.treat)))
 
 # Export to stargazer with clustered standard errors
 stargazer(lm1, lm2, lm3, lm4, 
