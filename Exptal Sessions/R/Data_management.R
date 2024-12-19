@@ -466,6 +466,63 @@ dfs_long <- dfs_long %>%
     )
   )
 
+# Imputing beliefs based on the difference between the beggining and the end.
+dfs_long <- dfs_long %>%
+  mutate(
+    # For T1 - Caleta
+    imputed_belief_T1_caleta = if_else(
+      round == 1,
+      beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini,
+      beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini + 
+        ((beliefsT1final.1.player.T1_belief_caleta_en_libre_fin - 
+            beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini) / 8) * round
+    ),
+    
+    # For T1 - PM
+    imputed_belief_T1_pm = if_else(
+      round == 1,
+      beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini,
+      beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini + 
+        ((beliefsT1final.1.player.T1_belief_pm_en_libre_fin - 
+            beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini) / 8) * round
+    ),
+    
+    # For T2 - Caleta Conocida Mean
+    imputed_belief_T2_caleta_conocida_mean = if_else(
+      round == 1,
+      beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini,
+      beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini + 
+        ((beliefsT2final.1.player.T2_belief_caleta_conocida_mean_fin - 
+            beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini) / 8) * round
+    ),
+    
+    # For T2 - Caleta
+    imputed_belief_T2_caleta = if_else(
+      round == 1,
+      beliefsT2inicial.1.player.T2_belief_caleta_ini,
+      beliefsT2inicial.1.player.T2_belief_caleta_ini + 
+        ((beliefsT2final.1.player.T2_belief_caleta_fin - 
+            beliefsT2inicial.1.player.T2_belief_caleta_ini) / 8) * round
+    )
+  )
+
+# Create new variables based on the treatment
+dfs_long <- dfs_long %>%
+  mutate(
+    # Impute beliefs for OA Caleta
+    imputed_beliefs_OA_caleta = if_else(
+      treatment == "T1",
+      imputed_belief_T1_caleta,
+      imputed_belief_T2_caleta
+    ),
+    
+    # Impute beliefs for OA Others
+    imputed_beliefs_OA_others = if_else(
+      treatment == "T1",
+      imputed_belief_T1_pm,
+      imputed_belief_T2_caleta_conocida_mean
+    )
+  )
 
 
 group_counts <- table(dfs_long$beliefs_OA_others_cat)

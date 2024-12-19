@@ -127,10 +127,10 @@ lm4 <- lm(extraction_OA ~ lag_extraction_others_OA_mean + beliefs_OA_caleta + be
             survey1.1.player.conflicto_caleta + survey1.1.player.conflicto_pm + treatment, data = dfs_long)
 
 # Calculate clustered standard errors by 'participant.code'
-clustered_se_lm1 <- sqrt(diag(vcovCL(lm1, cluster = ~gid.amerb)))
-clustered_se_lm2 <- sqrt(diag(vcovCL(lm2, cluster = ~gid.amerb)))
-clustered_se_lm3 <- sqrt(diag(vcovCL(lm3, cluster = ~gid.amerb)))
-clustered_se_lm4 <- sqrt(diag(vcovCL(lm4, cluster = ~gid.amerb)))
+clustered_se_lm1 <- sqrt(diag(vcovCL(lm1, cluster = ~gid.treat)))
+clustered_se_lm2 <- sqrt(diag(vcovCL(lm2, cluster = ~gid.treat)))
+clustered_se_lm3 <- sqrt(diag(vcovCL(lm3, cluster = ~gid.treat)))
+clustered_se_lm4 <- sqrt(diag(vcovCL(lm4, cluster = ~gid.treat)))
 
 # Export to stargazer with clustered standard errors
 stargazer(lm1, lm2, lm3, lm4,
@@ -278,8 +278,6 @@ stargazer(lm1, lm2, lm3, lm4,
           #                     "Lag Extraction Others Mean"),
           notes = "Clustered standard errors by matching group are reported in parentheses.")
 
-
-
 interaction_data <- ggpredict(lm3, terms = c("beliefs_OA_others", "minority"))
 
 # Plot the interaction using ggplot2
@@ -295,9 +293,7 @@ ggplot(interaction_data, aes(x = x, y = predicted, color = group)) +
   ) +
   theme_minimal()
 
-
-
-##### Regressions with imputed beliefs
+##### Regressions with updated beliefs
 lm1 <- lm(extraction_OA ~ beliefs_OA_caleta + beliefs_OA_others + treatment, data = dfs_long)
 lm2 <- lm(extraction_OA ~ lag_beliefs_ingroup_OA_updated + lag_beliefs_outgroup_OA_updated + 
             treatment, data = dfs_long)
@@ -327,6 +323,55 @@ stargazer(lm1, lm2, lm3, lm4,
           #                     "Lag Extraction Others Mean"),
           notes = "Clustered standard errors by participant code are reported in parentheses.")
 
+##### regressions with imputed beliefs
+
+# Run models on extraction with number of out_group participants in the area and matching group clustered s.e.
+lm1 <- lm(extraction_OA ~ lag_extraction_others_OA_mean +  imputed_beliefs_OA_caleta + imputed_beliefs_OA_others + treatment + n_identities, data = dfs_long)
+
+lm2 <- lm(extraction_OA ~ lag_extraction_others_OA_mean +  imputed_beliefs_OA_caleta + imputed_beliefs_OA_others + treatment + minority + n_identities, data = dfs_long)
+
+lm3 <- lm(extraction_OA ~ lag_extraction_others_OA_mean +  imputed_beliefs_OA_caleta + imputed_beliefs_OA_others*minority + treatment + n_identities, data = dfs_long)
+
+lm4 <- lm(extraction_OA ~ lag_extraction_others_OA_mean +  imputed_beliefs_OA_caleta*minority + imputed_beliefs_OA_others + treatment + n_identities, data = dfs_long)
+
+
+# Calculate clustered standard errors by 'participant.code'
+clustered_se_lm1 <- sqrt(diag(vcovCL(lm1, cluster = ~gid.treat)))
+clustered_se_lm2 <- sqrt(diag(vcovCL(lm2, cluster = ~gid.treat)))
+clustered_se_lm3 <- sqrt(diag(vcovCL(lm3, cluster = ~gid.treat)))
+clustered_se_lm4 <- sqrt(diag(vcovCL(lm4, cluster = ~gid.treat)))
+
+# Export to stargazer with clustered standard errors
+stargazer(lm1, lm2, lm3, lm4,
+          se = list(clustered_se_lm1, clustered_se_lm2, clustered_se_lm3, clustered_se_lm4),
+          type = "html",
+          out = paste0(path_github, "Outputs/extraction_imputed_beliefs_cl_se.html"),
+          title = "Regression Results with Clustered Standard Errors",
+          dep.var.labels = "Extraction OA",
+          #covariate.labels = c("Beliefs Caleta", "Beliefs Others", "Treatment",
+          #                     "Confianza Caleta", "Confianza PM", 
+          #                     "Conflicto Caleta", "Conflicto PM", 
+          #                     "Lag Extraction Others Mean"),
+          notes = "Clustered standard errors by matching group are reported in parentheses.")
+
+
+
+interaction_data <- ggpredict(lm3, terms = c("imputed_beliefs_OA_others", "minority"))
+
+# Plot the interaction using ggplot2
+p<-ggplot(interaction_data, aes(x = x, y = predicted, color = group)) +
+  geom_line(size = 1) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high, fill = group), alpha = 0.2) +
+  labs(
+    title = "Interaction Effect: imputed_beliefs_OA_others * minority",
+    x = "Beliefs about Others in OA",
+    y = "Predicted Extraction in OA",
+    color = "Minority",
+    fill = "Minority"
+  ) +
+  theme_minimal()
+
+ggsave( file=paste0(path_github, "Outputs/interaction_minority_beliefs.pdf") , plot = p, device = "pdf", width = 12, height = 6)
 
 
 ###################################################################
@@ -602,7 +647,6 @@ stargazer(lm1, lm2, lm3, lm4, out=paste0(path_github,"Outputs/Diff_Beliefs.html"
 #############
 ### Graphs
 ##############
-
 #####################################################
 ### Plots for experience/trust/conflict with others
 ####################################################
