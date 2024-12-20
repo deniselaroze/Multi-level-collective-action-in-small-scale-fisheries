@@ -16,11 +16,11 @@ library(ggeffects)
 
 
 rm(list=ls())
-path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+#path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
-#path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 setwd(path_github)
 
@@ -375,14 +375,27 @@ ggsave( file=paste0(path_github, "Outputs/interaction_minority_beliefs.pdf") , p
 
 
 ###################################################################
-#### Plot for mean over extraction in OA by categories of beliefs 
+#### Plots for mean over extraction in OA by categories of beliefs 
 ##################################################################
 
+# Define a common theme and aesthetics
+common_theme <- theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "right",  # Place legend on the side
+    legend.box = "vertical"  # Arrange legend items vertically
+  )
 
-##### Beliefs about how outsiders will behave in OA
+common_color_values <- c("FR" = "red", "NC or CC" = "blue", "UC" = "darkgreen")
+common_labels <- c(
+  "FR" = "Others extract 50",
+  "NC or CC" = "Others extract <50 and >0",
+  "UC" = "Others extract 0"
+)
 
-# Calculate mean and confidence intervals
-mean_extraction_round <- dfs_long %>%
+# Beliefs about how outsiders will behave in OA
+mean_extraction_round_others <- dfs_long %>%
   group_by(treatment, round, beliefs_OA_others_cat) %>%
   summarize(
     extraction_OA_mean = mean(extraction_OA, na.rm = TRUE),
@@ -394,33 +407,26 @@ mean_extraction_round <- dfs_long %>%
     upper_ci = extraction_OA_mean + qt(0.975, df = n() - 1) * extraction_OA_se   # 95% CI upper bound
   )
 
-# Plot with confidence intervals
-plot<-ggplot(mean_extraction_round, aes(x = round, y = extraction_OA_mean, color = beliefs_OA_others_cat)) +
+plot_others <- ggplot(mean_extraction_round_others, aes(x = round, y = extraction_OA_mean, color = beliefs_OA_others_cat, fill = beliefs_OA_others_cat)) +
   geom_line(size = 1) +
   geom_point(size = 2) +
-  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = beliefs_OA_others_cat), alpha = 0.2, color = NA) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.2, color = NA) +
   facet_wrap(~treatment) +
   labs(
-    title = "Mean Extraction OA with Confidence Intervals, by Beliefs in Outgroup",
+    title = "Mean Extraction by Outgroup in OA with Confidence Intervals",
     x = "Round",
-    y = "Mean Extraction OA"
+    y = "Mean Extraction OA",
+    color = "Beliefs about Outgroup",
+    fill = "Beliefs about Outgroup"
   ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    legend.position = "bottom"
-  )
+  scale_color_manual(values = common_color_values, labels = common_labels) +
+  scale_fill_manual(values = common_color_values, labels = common_labels) +
+  common_theme
 
-plot
+ggsave(file = paste0(path_github, "Outputs/Plot_cat_beliefs_others_extraction_OA.pdf"), plot = plot_others, device = "pdf", width = 12, height = 6)
 
-ggsave(file=paste0(path_github, "Outputs/Plot_cat_beliefs_others_extraction_OA.pdf") , plot = plot, device = "pdf", width = 12, height = 6)
-
-
-##### Beliefs about how outsiders will behave in OA
-
-# Calculate mean and confidence intervals
-mean_extraction_round <- dfs_long %>%
+# Beliefs about how ingroup will behave in OA
+mean_extraction_round_ingroup <- dfs_long %>%
   group_by(treatment, round, beliefs_OA_caleta_cat) %>%
   summarize(
     extraction_OA_mean = mean(extraction_OA, na.rm = TRUE),
@@ -432,77 +438,23 @@ mean_extraction_round <- dfs_long %>%
     upper_ci = extraction_OA_mean + qt(0.975, df = n() - 1) * extraction_OA_se   # 95% CI upper bound
   )
 
-# Plot with confidence intervals
-plot<-ggplot(mean_extraction_round, aes(x = round, y = extraction_OA_mean, color = beliefs_OA_caleta_cat)) +
+plot_ingroup <- ggplot(mean_extraction_round_ingroup, aes(x = round, y = extraction_OA_mean, color = beliefs_OA_caleta_cat, fill = beliefs_OA_caleta_cat)) +
   geom_line(size = 1) +
   geom_point(size = 2) +
-  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = beliefs_OA_caleta_cat), alpha = 0.2, color = NA) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.2, color = NA) +
   facet_wrap(~treatment) +
   labs(
-    title = "Mean Extraction OA with Confidence Intervals, by Beliefs in ingroup",
+    title = "Mean Extraction by Ingroup in OA with Confidence Intervals",
     x = "Round",
-    y = "Mean Extraction OA"
+    y = "Mean Extraction OA",
+    color = "Beliefs about Ingroup",
+    fill = "Beliefs about Ingroup"
   ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    legend.position = "bottom"
-  )
+  scale_color_manual(values = common_color_values, labels = common_labels) +
+  scale_fill_manual(values = common_color_values, labels = common_labels) +
+  common_theme
 
-plot
-
-ggsave(file=paste0(path_github, "Outputs/Plot_cat_beliefs__caleta_extraction_OA.pdf") , plot = plot, device = "pdf", width = 12, height = 6)
-
-
-
-
-
-
-
-##### Beliefs about how ingroup will behave in OA
-# Calculate mean and confidence intervals
-mean_extraction_round <- dfs_long %>%
-  group_by(treatment, round, beliefs_OA_others_cat) %>%
-  summarize(
-    extraction_OA_mean = mean(extraction_OA, na.rm = TRUE),
-    extraction_OA_se = sd(extraction_OA, na.rm = TRUE) / sqrt(n()),  # Standard Error
-    .groups = "drop"
-  ) %>%
-  mutate(
-    lower_ci = extraction_OA_mean - qt(0.975, df = n() - 1) * extraction_OA_se,  # 95% CI lower bound
-    upper_ci = extraction_OA_mean + qt(0.975, df = n() - 1) * extraction_OA_se   # 95% CI upper bound
-  )
-
-# Plot with confidence intervals
-plot<-ggplot(mean_extraction_round, aes(x = round, y = extraction_OA_mean, color = beliefs_OA_amerb_cat)) +
-  geom_line(size = 1) +
-  geom_point(size = 2) +
-  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = beliefs_OA_others_cat), alpha = 0.2, color = NA) +
-  facet_wrap(~treatment) +
-  labs(
-    title = "Mean Extraction OA with Confidence Intervals",
-    x = "Round",
-    y = "Mean Extraction OA"
-  ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    legend.position = "bottom"
-  )
-
-
-
-ggsave(file=paste0(path_github, "Outputs/Plot_cat_beliefs_others_extraction.pdf") , plot = plot, device = "pdf", width = 12, height = 6)
-
-
-
-
-
-
-
-
+ggsave(file = paste0(path_github, "Outputs/Plot_cat_beliefs_ingroup_extraction_OA.pdf"), plot = plot_ingroup, device = "pdf", width = 12, height = 6)
 
 
 
