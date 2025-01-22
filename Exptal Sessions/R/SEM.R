@@ -125,10 +125,11 @@ df$average_compliance<- 1-(df$average_extraction/50)
 
 df$belief_compliance_pm<-1-(df$beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini/50)
 df$belief_compliance_union<-1-(df$beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini/50)
+df$real_compliance_others<- 1-(df$otros_libre_t1_mean/50)
 
 # View the first few rows of the updated data frame
-head(df$average_extraction)
-head(df$average_compliance)
+#head(df$average_extraction)
+#head(df$average_compliance)
 
 
 # Specify the SEM model
@@ -138,7 +139,7 @@ sem_model <- '
   belief_compliance_union   ~  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta
   
   # Relationship for extraction
-  average_compliance ~ belief_compliance_pm + belief_compliance_union +   survey1.1.player.confianza_pm + survey1.1.player.conflicto_pm + survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta   
+  average_compliance ~ belief_compliance_pm + belief_compliance_union +   survey1.1.player.confianza_pm + survey1.1.player.conflicto_pm + survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta  + real_compliance_others 
 '
 
 # Fit the SEM model
@@ -159,7 +160,8 @@ node_labels <- c(belief_compliance_pm =   "Beliefs Compliance Others OA" ,
                  survey1.1.player.confianza_pm  =   "Trust Others" ,
                  survey1.1.player.conflicto_pm =   "Conflict Others" ,
                  survey1.1.player.confianza_caleta =   "Trust Union", 
-                 survey1.1.player.conflicto_caleta =   "Conflict Union" 
+                 survey1.1.player.conflicto_caleta =   "Conflict Union",
+                 real_compliance_others = "Observed Compliance OA"
 )
 
 # Extract parameter estimates from the fitted SEM model
@@ -187,11 +189,11 @@ if (length(edge_colors) < n_edges) {
 
 
 # Save the SEM plot as a PDF
-pdf(paste0(path_github, "Outputs/SEM_compliance_plot.pdf"), width = 12, height = 8)  # Set dimensions in inches
+pdf(paste0(path_github, "Outputs/SEM_compliance_plot_controling_experience.pdf"), width = 12, height = 8)  # Set dimensions in inches
 semPaths(
   fit,
   what = "std",
-  layout = "tree",
+  #layout = "tree",
   edge.label.cex = 1,
   nodeLabels = node_labels,
   sizeMan = 9,
