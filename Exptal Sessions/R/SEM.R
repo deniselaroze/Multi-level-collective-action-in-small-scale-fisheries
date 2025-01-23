@@ -1,5 +1,13 @@
 
 
+
+
+
+
+
+
+
+
 if (!requireNamespace("semPlot", quietly = TRUE)) install.packages("semPlot")
 if (!requireNamespace("lavaan", quietly = TRUE)) install.packages("lavaan")
 
@@ -7,9 +15,24 @@ library(lavaan)
 library(semPlot)
 
 
+rm(list=ls())
+#path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+
+path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+
+setwd(path_github)
+
+
+#load(paste0(path_datos, "/Datos_islitas.Rdata"))
+load(paste0(path_datos, "/Datos_islitas_recode.Rdata"))
+load(paste0(path_datos, "/Datos_islitas_long.Rdata"))
+
+
 
 ####################################
-#### SEM --- Average extraction OA
+#### SEM --- Average extraction OA 
 #####################################
 
 # Ensure your data frame has the relevant columns
@@ -110,11 +133,9 @@ semPaths(
 dev.off()  # Close the PDF device
 
 
-
-
-####################################
-#### SEM --- Average compliance OA
-#####################################
+############################################################
+#### SEM --- Average compliance OA with observed compliance
+########################################################
 
 # Ensure your data frame has the relevant columns
 variable_subset <- df[, grep("^T1juegoalgas\\.\\d+\\.player\\.T1_extraccion_libre$", names(df))]
@@ -213,6 +234,204 @@ dev.off()  # Close the PDF device
 
 
 
+
+
+#################################################
+#### Compliance by different subsets of rounds T1
+###############################################
+
+# Loop through N from 1 to 8
+for (N in 2:8) {
+  # Subset variables dynamically
+  variable_subset <- df[, grep("^T1juegoalgas\\.\\d+\\.player\\.T1_extraccion_libre$", names(df))]
+  variable_subset <- variable_subset[, 1:N]  # Select columns for current N
+  
+  # Calculate the row-wise mean for selected columns
+  df$average_extraction_ini <- rowMeans(variable_subset, na.rm = TRUE)
+  df$average_compliance_ini <- 1 - (df$average_extraction_ini / 50)
+  
+  # Belief compliance
+  df$belief_compliance_pm <- 1 - (df$beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini / 50)
+  df$belief_compliance_union <- 1 - (df$beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini / 50)
+  
+  # Observed compliance
+  variable_subset <- df[, grep("(T\\d)juegoalgas\\.(\\d+)\\.player\\..+_extraccion_otros_libre$", names(df))]
+  variable_subset <- variable_subset[, 1:N]
+  df$average_extraction_observed_ini <- rowMeans(variable_subset, na.rm = TRUE)
+  df$average_compliance_observed_ini <- 1 - (df$average_extraction_observed_ini / 150)
+
+  
+  
+  # Specify the SEM model
+  sem_model <- '
+  # Relationships for beliefs
+  belief_compliance_pm  ~  survey1.1.player.confianza_pm + survey1.1.player.conflicto_pm
+  belief_compliance_union   ~  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta
+  
+  # Relationship for extraction
+  average_compliance_ini ~ belief_compliance_pm + belief_compliance_union +   
+  survey1.1.player.confianza_pm + survey1.1.player.conflicto_pm + survey1.1.player.confianza_caleta + 
+  survey1.1.player.conflicto_caleta  + average_compliance_observed_ini 
+'
+  #name variable so that there are comprensible
+  node_labels <- c(belief_compliance_pm =   "Beliefs Compliance Others OA" ,
+                   belief_compliance_union =   "Beliefs Compliance Union OA", 
+                   average_compliance_ini = "Mean Compliance OA early rounds" ,
+                   survey1.1.player.confianza_pm  =   "Trust Others" ,
+                   survey1.1.player.conflicto_pm =   "Conflict Others" ,
+                   survey1.1.player.confianza_caleta =   "Trust Union", 
+                   survey1.1.player.conflicto_caleta =   "Conflict Union",
+                   average_compliance_observed_ini = "Observed Compliance OA"
+  )
+  
+  
+  # Fit the SEM model
+  fit <- sem(sem_model, data = df)
+  
+  # Extract path results and edge colors dynamically
+  path_results <- parameterEstimates(fit, standardized = TRUE)
+  regression_paths <- path_results[path_results$op == "~", ]
+  param_labels <- paste(regression_paths$lhs, regression_paths$op, regression_paths$rhs, sep = " ")
+  edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "red"), param_labels)
+  edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "red")
+  
+  # Ensure edge_colors matches the number of paths
+  n_edges <- length(regression_paths$lhs)
+  if (length(edge_colors) < n_edges) {
+    edge_colors <- c(edge_colors, rep("gray", n_edges - length(edge_colors)))
+  }
+  
+  # Save each SEM plot with a dynamic filename
+  output_file <- paste0(path_github, "Outputs/SEM_compliance_T1_plot_Rounds_1_to_", N, ".pdf")
+  pdf(output_file, width = 12, height = 8)
+  
+  # Generate SEM plot
+  semPaths(
+    fit,
+    what = "std",
+    layout = "spring",
+    edge.label.cex = 1,
+    nodeLabels = node_labels,
+    sizeMan = 9,
+    label.cex = 1,
+    node.width = 2, 
+    node.height = 0.7,
+    shapeMan = "ellipse", 
+    edge.color = edge_colors,
+    residuals = FALSE,
+    intercepts = FALSE,
+    optimizeLatRes = TRUE
+  )
+  
+  # Add dynamic title
+  title(main = paste("DV: Mean Compliance T1 Rounds 1 to", N), line = 2, cex.main = 1.5)
+  
+  # Close the PDF device
+  dev.off()
+}
+
+# End of script
+
+
+
+
+
+
+
+######################################################
+#### Compliance byt different subsets of rounds T2
+#######################################################
+
+
+# Loop through N from 1 to 8
+for (N in 2:8) {
+  # Subset variables dynamically
+  variable_subset <- df[, grep("^T2juegoalgas\\.\\d+\\.player\\.T2_extraccion_metat$", names(df))]
+  variable_subset <- variable_subset[, 1:N]  # Select columns for current N
+  
+  # Calculate the row-wise mean for selected columns
+  df$average_extraction_ini <- rowMeans(variable_subset, na.rm = TRUE)
+  df$average_compliance_ini <- 1 - (df$average_extraction_ini / 50)
+  
+  # Belief compliance
+  df$belief_compliance_metat <- 1 - (df$beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini / 50)
+  df$belief_compliance_union <- 1 - (df$beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini / 50)
+  
+  # Observed compliance
+  variable_subset <- df[, grep("(T\\d)juegoalgas\\.(\\d+)\\.player\\..+_extraccion_otros_metat$", names(df))]
+  variable_subset <- variable_subset[, 1:N]
+  df$average_extraction_observed_ini <- rowMeans(variable_subset, na.rm = TRUE)
+  df$average_compliance_observed_ini <- 1 - (df$average_extraction_observed_ini / 150)
+  
+  
+  sem_model <- '
+  # Relationships for beliefs
+  belief_compliance_metat  ~   survey2.1.player.confianza_caleta_conocida1 + survey2.1.player.conflicto_caleta_conocida1
+  belief_compliance_union   ~  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta
+  
+  # Relationship for extraction
+  average_compliance_ini ~ belief_compliance_metat + belief_compliance_union +   
+  survey2.1.player.confianza_caleta_conocida1 + survey2.1.player.conflicto_caleta_conocida1 + survey1.1.player.confianza_caleta + 
+  survey1.1.player.conflicto_caleta  + average_compliance_observed_ini 
+'
+  
+  node_labels <- c(belief_compliance_metat =   "Beliefs Compliance Others OA" ,
+                   belief_compliance_union =   "Beliefs Compliance Union OA", 
+                   average_compliance_ini = "Mean Compliance T2 early rounds" ,
+                   survey2.1.player.confianza_caleta_conocida1  =   "Trust Others 1 T2" ,
+                   survey2.1.player.conflicto_caleta_conocida1 =   "Conflict Others 1 T2" ,
+                   survey1.1.player.confianza_caleta =   "Trust Union", 
+                   survey1.1.player.conflicto_caleta =   "Conflict Union",
+                   average_compliance_observed_ini = "Observed Compliance OA"
+  )
+  
+  
+  # Fit the SEM model
+  fit <- sem(sem_model, data = df)
+  
+  # Extract path results and edge colors dynamically
+  path_results <- parameterEstimates(fit, standardized = TRUE)
+  regression_paths <- path_results[path_results$op == "~", ]
+  param_labels <- paste(regression_paths$lhs, regression_paths$op, regression_paths$rhs, sep = " ")
+  edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "red"), param_labels)
+  edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "red")
+  
+  # Ensure edge_colors matches the number of paths
+  n_edges <- length(regression_paths$lhs)
+  if (length(edge_colors) < n_edges) {
+    edge_colors <- c(edge_colors, rep("gray", n_edges - length(edge_colors)))
+  }
+  
+  # Save each SEM plot with a dynamic filename
+  output_file <- paste0(path_github, "Outputs/SEM_compliance_T2_plot_Rounds_1_to_", N, ".pdf")
+  pdf(output_file, width = 12, height = 8)
+  
+  # Generate SEM plot
+  semPaths(
+    fit,
+    what = "std",
+    layout = "spring",
+    edge.label.cex = 1,
+    nodeLabels = node_labels,
+    sizeMan = 9,
+    label.cex = 1,
+    node.width = 2, 
+    node.height = 0.7,
+    shapeMan = "ellipse", 
+    edge.color = edge_colors,
+    residuals = FALSE,
+    intercepts = FALSE,
+    optimizeLatRes = TRUE
+  )
+  
+  # Add dynamic title
+  title(main = paste("DV: Mean Compliance T2 Rounds 1 to", N), line = 2, cex.main = 1.5)
+  
+  # Close the PDF device
+  dev.off()
+}
+
+# End of script
 
 
 ###############################
