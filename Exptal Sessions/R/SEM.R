@@ -309,7 +309,7 @@ for (N in 2:8) {
   semPaths(
     fit,
     what = "std",
-    layout = "spring",
+    layout = "circle2",
     edge.label.cex = 1,
     nodeLabels = node_labels,
     sizeMan = 9,
@@ -410,7 +410,7 @@ for (N in 2:8) {
   semPaths(
     fit,
     what = "std",
-    layout = "spring",
+    layout = "circle2",
     edge.label.cex = 1,
     nodeLabels = node_labels,
     sizeMan = 9,
