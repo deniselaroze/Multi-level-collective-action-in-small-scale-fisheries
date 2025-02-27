@@ -16,11 +16,11 @@ library(ggeffects)
 
 
 rm(list=ls())
-#path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
-path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+#path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 setwd(path_github)
 
@@ -228,7 +228,7 @@ lm4 <- lm(extraction_amerb ~ lag_extraction_others_amerb_mean + beliefs_OA_calet
           data = dfs_long)
 
 
-# Calculate clustered standard errors by 'participant.code'
+# Calculate clustered standard errors by 'matching group'
 clustered_se_lm1 <- sqrt(diag(vcovCL(lm1, cluster = ~gid.treat)))
 clustered_se_lm2 <- sqrt(diag(vcovCL(lm2, cluster = ~gid.treat)))
 clustered_se_lm3 <- sqrt(diag(vcovCL(lm3, cluster = ~gid.treat)))
@@ -251,23 +251,7 @@ stargazer(lm1,lm2, lm3,
 # AMERB Extraction controlling for the number identities people see on screen -- produces the same results
 
 lm1 <- lm(extraction_OA ~ lag_extraction_others_OA_mean +  beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini + treatment, data = dfs_long)
-lm2 <- lm(extraction_OA ~ lag_extraction_others_OA_mean + beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini + treatment + n_identities + survey3.1.player.sexo + 
-            survey3.1.player.horas_trabajo, data = dfs_long)
-lm3 <- lm(extraction_OA ~ lag_extraction_others_OA_mean + beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini + treatment + n_identities +  
-            + survey3.1.player.horas_trabajo + survey3.1.player.estudios + survey3.1.player.liderazgo, data = dfs_long)
 
-lm4 <- lm(extraction_OA ~ lag_extraction_others_OA_mean + beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini +
-            treatment + n_identities + survey1.1.player.T1_motiv_legit_pm + survey1.1.player.T1_motiv_instr_pm + 
-            survey1.1.player.T1_motiv_socnorm_ingroup_pm + survey1.1.player.T1_motiv_socnorm_outgroup_pm, 
-          data = dfs_long)
-
-
-
-# Calculate clustered standard errors by 'participant.code'
-clustered_se_lm1 <- sqrt(diag(vcovCL(lm1, cluster = ~gid.amerb)))
-clustered_se_lm2 <- sqrt(diag(vcovCL(lm2, cluster = ~gid.amerb)))
-clustered_se_lm3 <- sqrt(diag(vcovCL(lm3, cluster = ~gid.amerb)))
-clustered_se_lm4 <- sqrt(diag(vcovCL(lm4, cluster = ~gid.amerb)))
 
 # Export to stargazer with clustered standard errors
 

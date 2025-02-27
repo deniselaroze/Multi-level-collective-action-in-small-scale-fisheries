@@ -617,6 +617,15 @@ dfs_long <- dfs_long %>%
   mutate(across(all_of(vars_to_transform), scale_to_01, .names = "compliance_{.col}"))
 
 
+dfs_long$compliance_beliefs_OA_caleta<-ifelse(dfs_long$treatment=="T1", dfs_long$compliance_beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini,
+                                              dfs_long$compliance_beliefsT2inicial.1.player.T2_belief_caleta_ini) 
+
+
+dfs_long$compliance_beliefs_OA_others<-ifelse(dfs_long$treatment=="T1", dfs_long$compliance_beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini,
+                                              dfs_long$compliance_beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini) 
+
+
+
 save(df, file = paste0(path_datos, "/Datos_islitas_recode.Rdata"))
 save(dfs_long, file = paste0(path_datos, "/Datos_islitas_long.Rdata"))
 
