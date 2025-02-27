@@ -15,12 +15,12 @@ library(R.matlab)
 
 
 rm(list=ls())
-path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+#path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 
-#path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 
 setwd(path_github)
@@ -53,10 +53,10 @@ df$gid.amerb<-paste0(df$participant.caleta, ".",df$participant.zonaT2, ".",df$pa
 #########################
 ### Export Raw Data 
 #########################
-save(df, file = paste0(path_datos, "/Datos_islitas.Rdata"))
+#save(df, file = paste0(path_datos, "/Datos_islitas.Rdata"))
 
-write.csv(df, paste0(path_datos, "/Datos_islitas_base.csv"), row.names = FALSE)
-write.table(df, paste0(path_datos, "/Datos_islitas_tab_base.txt"), sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+#write.csv(df, paste0(path_datos, "/Datos_islitas_base.csv"), row.names = FALSE)
+#write.table(df, paste0(path_datos, "/Datos_islitas_tab_base.txt"), sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
 
 
 #####################################
@@ -153,6 +153,27 @@ df$group_size[!is.na(df$participant.zonaT2) & grepl("Z12A|Z12B|Z12C|Z23", df$par
 
 
 #table(df$participant.zonaT2, df$group_size)
+
+# Transformation of relevant variables from extraction to Compliance 
+
+#Extraction for the T1 OA
+variable_subset <- df[, grep("^T1juegoalgas\\.\\d+\\.player\\.T1_extraccion_libre$", names(df))]
+
+# Calculate the row-wise mean for the selected columns
+df$average_extraction <- rowMeans(variable_subset, na.rm = TRUE)
+df$average_compliance<- 1-(df$average_extraction/50) 
+
+df$belief_compliance_pm<-1-(df$beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini/50)
+df$belief_compliance_union<-1-(df$beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini/50)
+
+df$real_compliance_others_OA_t1_mean<- 1-(df$otros_libre_t1_mean/50)
+df$real_compliance_others_OA_t2_mean<- 1-(df$otros_metat_t2_mean/50)
+df$real_compliance_others_amerb_t1_mean<- 1-(df$otros_amerb_t1_mean/50)
+df$real_compliance_others_amerb_t2_mean<- 1-(df$otros_amerb_t2_mean/50)
+
+
+# Save file df at the end
+
 
 
 #########################3
@@ -466,63 +487,63 @@ dfs_long <- dfs_long %>%
     )
   )
 
-# Imputing beliefs based on the difference between the beggining and the end.
-dfs_long <- dfs_long %>%
-  mutate(
-    # For T1 - Caleta
-    imputed_belief_T1_caleta = if_else(
-      round == 1,
-      beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini,
-      beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini + 
-        ((beliefsT1final.1.player.T1_belief_caleta_en_libre_fin - 
-            beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini) / 8) * round
-    ),
-    
-    # For T1 - PM
-    imputed_belief_T1_pm = if_else(
-      round == 1,
-      beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini,
-      beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini + 
-        ((beliefsT1final.1.player.T1_belief_pm_en_libre_fin - 
-            beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini) / 8) * round
-    ),
-    
-    # For T2 - Caleta Conocida Mean
-    imputed_belief_T2_caleta_conocida_mean = if_else(
-      round == 1,
-      beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini,
-      beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini + 
-        ((beliefsT2final.1.player.T2_belief_caleta_conocida_mean_fin - 
-            beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini) / 8) * round
-    ),
-    
-    # For T2 - Caleta
-    imputed_belief_T2_caleta = if_else(
-      round == 1,
-      beliefsT2inicial.1.player.T2_belief_caleta_ini,
-      beliefsT2inicial.1.player.T2_belief_caleta_ini + 
-        ((beliefsT2final.1.player.T2_belief_caleta_fin - 
-            beliefsT2inicial.1.player.T2_belief_caleta_ini) / 8) * round
-    )
-  )
-
-# Create new variables based on the treatment
-dfs_long <- dfs_long %>%
-  mutate(
-    # Impute beliefs for OA Caleta
-    imputed_beliefs_OA_caleta = if_else(
-      treatment == "T1",
-      imputed_belief_T1_caleta,
-      imputed_belief_T2_caleta
-    ),
-    
-    # Impute beliefs for OA Others
-    imputed_beliefs_OA_others = if_else(
-      treatment == "T1",
-      imputed_belief_T1_pm,
-      imputed_belief_T2_caleta_conocida_mean
-    )
-  )
+# # Imputing beliefs based on the difference between the begining and the end.
+# dfs_long <- dfs_long %>%
+#   mutate(
+#     # For T1 - Caleta
+#     imputed_belief_T1_caleta = if_else(
+#       round == 1,
+#       beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini,
+#       beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini + 
+#         ((beliefsT1final.1.player.T1_belief_caleta_en_libre_fin - 
+#             beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini) / 8) * round
+#     ),
+#     
+#     # For T1 - PM
+#     imputed_belief_T1_pm = if_else(
+#       round == 1,
+#       beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini,
+#       beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini + 
+#         ((beliefsT1final.1.player.T1_belief_pm_en_libre_fin - 
+#             beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini) / 8) * round
+#     ),
+#     
+#     # For T2 - Caleta Conocida Mean
+#     imputed_belief_T2_caleta_conocida_mean = if_else(
+#       round == 1,
+#       beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini,
+#       beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini + 
+#         ((beliefsT2final.1.player.T2_belief_caleta_conocida_mean_fin - 
+#             beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini) / 8) * round
+#     ),
+#     
+#     # For T2 - Caleta
+#     imputed_belief_T2_caleta = if_else(
+#       round == 1,
+#       beliefsT2inicial.1.player.T2_belief_caleta_ini,
+#       beliefsT2inicial.1.player.T2_belief_caleta_ini + 
+#         ((beliefsT2final.1.player.T2_belief_caleta_fin - 
+#             beliefsT2inicial.1.player.T2_belief_caleta_ini) / 8) * round
+#     )
+#   )
+# 
+# # Create new variables based on the treatment
+# dfs_long <- dfs_long %>%
+#   mutate(
+#     # Impute beliefs for OA Caleta
+#     imputed_beliefs_OA_caleta = if_else(
+#       treatment == "T1",
+#       imputed_belief_T1_caleta,
+#       imputed_belief_T2_caleta
+#     ),
+#     
+#     # Impute beliefs for OA Others
+#     imputed_beliefs_OA_others = if_else(
+#       treatment == "T1",
+#       imputed_belief_T1_pm,
+#       imputed_belief_T2_caleta_conocida_mean
+#     )
+#   )
 
 
 group_counts <- table(dfs_long$beliefs_OA_others_cat)
@@ -560,6 +581,41 @@ dfs_long$minority<- ifelse(dfs_long$n_ingroup<2, 1, 0)
 
 
 #View(dfs_long[, c("beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini", "extraction_others_amerb_mean","beliefs_amerb_updated")])
+
+#### Transforming main extraction and belief variables into compliance:
+# Define transformation function
+scale_to_01 <- function(x) {
+  return(1 - (x / 50))
+}
+
+# List of variables to transform
+vars_to_transform <- c("beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini",     
+                       "beliefsT1final.1.player.T1_belief_caleta_en_amerb_fin",        
+                       "beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini",     
+                       "beliefsT1final.1.player.T1_belief_caleta_en_libre_fin",        
+                       "beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini",         
+                       "beliefsT1final.1.player.T1_belief_pm_en_libre_fin",            
+                       "beliefsT2inicial.1.player.T2_belief_caleta_ini",              
+                       "beliefsT2final.1.player.T2_belief_caleta_fin",                 
+                       "beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini",
+                       "beliefsT2final.1.player.T2_belief_caleta_conocida_mean_fin",
+                       "extraction_amerb",                                            
+                       "extraction_OA",                                      
+                       "extraction_others_amerb_mean",                                 
+                       "extraction_others_OA_mean",                                   
+                       "beliefs_amerb_updated",                                       
+                       "beliefs_ingroup_OA_updated",                                  
+                       "beliefs_outgroup_OA_updated",                                  
+                       "lag_beliefs_amerb_updated",                                   
+                       "lag_beliefs_ingroup_OA_updated",                              
+                       "lag_beliefs_outgroup_OA_updated",                             
+                       "lag_extraction_others_amerb_mean",                             
+                       "lag_extraction_others_OA_mean")    
+
+# Apply transformation with new column names
+dfs_long <- dfs_long %>%
+  mutate(across(all_of(vars_to_transform), scale_to_01, .names = "compliance_{.col}"))
+
 
 save(df, file = paste0(path_datos, "/Datos_islitas_recode.Rdata"))
 save(dfs_long, file = paste0(path_datos, "/Datos_islitas_long.Rdata"))
