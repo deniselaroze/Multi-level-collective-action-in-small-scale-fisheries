@@ -243,7 +243,7 @@ dev.off()  # Close the PDF device
 R<-1 # From which round to start###########
 
 # Loop through N from 1 to 8
-for (N in (R+1):8) {
+for (N in (R+1):2) {
   # Subset variables dynamically
   variable_subset <- df[, grep("^T1juegoalgas\\.\\d+\\.player\\.T1_extraccion_libre$", names(df))]
   variable_subset <- variable_subset[, R:N]  # Select columns for current N
@@ -351,7 +351,7 @@ for (N in (R+1):8) {
   df$average_compliance_ini <- 1 - (df$average_extraction_ini / 50)
   
   # Belief compliance
-  df$belief_compliance_metat <- 1 - (df$beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini / 50)
+  df$belief_compliance_metat <- 1 - (df$beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini / 50)
   df$belief_compliance_union <- 1 - (df$beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini / 50)
   
   # Observed compliance
