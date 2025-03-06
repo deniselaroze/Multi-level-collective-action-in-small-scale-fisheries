@@ -291,7 +291,7 @@ stargazer(lm1, lm2,
 
 
 ########################
-### SEM Round 1 - OA
+### SEM in OA Scenario 1 Round 1
 ########################
 
 
@@ -349,7 +349,7 @@ if (length(edge_colors) < n_edges) {
 }
 
 # Save SEM plot with a dynamic filename
-output_file <- paste0(path_github, "Outputs/SEM_compliance_T1_plot_Round_1.png")
+output_file <- paste0(path_github, "Outputs/SEM_compliance_OA_T1_plot_Round_1.png")
 png(output_file, width = 1200, height = 800, res = 300)
 
 # Generate SEM plot
@@ -372,17 +372,17 @@ semPaths(
 )
 
 # Add title
-title(main = "Mean Compliance Open Access Round 1", line = 3.5, cex.main = 0.8)
+title(main = "Mean Compliance Scenario 1 Open Access Round 1", line = 3.5, cex.main = 0.8)
 
 # Close the PDF device
 dev.off()
 
 
 ########################################
-#### For final rounds of Scenario T1
+#### SEM in OA Scenario 1 Rounds (5:8)
 ########################################
 
-R<-5 # From which round to start###########
+R<-5 # From which round to start
 
 # Loop through N from 1 to 8
 for (N in (R+1):8) {
@@ -399,10 +399,10 @@ for (N in (R+1):8) {
   df$belief_compliance_union <- 1 - (df$beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini / 50)
   
   # Observed compliance
-  variable_subset <- df[, grep("(T\\d)juegoalgas\\.(\\d+)\\.player\\..+_extraccion_otros_libre$", names(df))]
-  variable_subset <- variable_subset[, R:N]
+  variable_subset <- df[, grep("T1juegoalgas\\.(\\d+)\\.player\\..+_extraccion_otros_libre$", names(df))]
+  variable_subset <- variable_subset[, R:N-1]
   df$average_extraction_observed_ini <- rowMeans(variable_subset, na.rm = TRUE)
-  df$average_compliance_observed_ini <- 1 - (df$average_extraction_observed_ini / 150)
+  df$average_compliance_observed_ini_lag <- 1 - (df$average_extraction_observed_ini / 150)
 } 
   
   
@@ -415,7 +415,7 @@ for (N in (R+1):8) {
   # Relationship for extraction
   average_compliance_ini ~ belief_compliance_pm + belief_compliance_union +   
   survey1.1.player.confianza_pm + survey1.1.player.conflicto_pm + survey1.1.player.confianza_caleta + 
-  survey1.1.player.conflicto_caleta  + average_compliance_observed_ini 
+  survey1.1.player.conflicto_caleta  + average_compliance_observed_ini_lag 
 '
   #name variable so that there are comprensible
   node_labels <- c(belief_compliance_pm =   "Beliefs Compl. Others" ,
@@ -425,7 +425,7 @@ for (N in (R+1):8) {
                    survey1.1.player.conflicto_pm =   "Conflict Others" ,
                    survey1.1.player.confianza_caleta =   "Trust Union", 
                    survey1.1.player.conflicto_caleta =   "Conflict Union",
-                   average_compliance_observed_ini = "Observed Compliance"
+                   average_compliance_observed_ini_lag = "Observed Compliance (t-1)"
   )
   
   
@@ -446,7 +446,7 @@ for (N in (R+1):8) {
   }
   
   # Save each SEM plot with a dynamic filename
-  output_file <- paste0(path_github, "Outputs/SEM_compliance_T1_plot_Rounds_", R, "_to_", N, ".png")
+  output_file <- paste0(path_github, "Outputs/SEM_compliance_OA_T1_plot_Rounds_", R, "_to_", N, ".png")
   png(output_file, width = 1200, height = 800, res = 300)
   
   # Generate SEM plot
@@ -469,7 +469,7 @@ for (N in (R+1):8) {
   )
   
   # Add dynamic title
-  title(main = paste("Mean Compliance Open Access Rounds ", R ," to ", N),line = 3.5, cex.main = 0.8)
+  title(main = paste("Mean Compliance Scenario 1 Open Access Rounds ", R ," to ", N),line = 3.5, cex.main = 0.8)
   
   # Close the PDF device
   dev.off()
@@ -478,7 +478,7 @@ for (N in (R+1):8) {
 # End of script
 
 ########################################
-### Analyses in AMERB
+### SEM in TURF Scenario 1 Round 1
 ########################################
   
   
@@ -561,9 +561,9 @@ for (N in (R+1):8) {
   dev.off()
   
   
-  #########################
-  ### SEM Amerb round 5:8
-  #########################
+#########################
+### SEM in TURF Scenario 1 rounds (5:8)
+#########################
   
   
   
@@ -586,10 +586,10 @@ for (N in (R+1):8) {
     
     
     # Observed compliance
-    variable_subset <- df[, grep("(T\\d)juegoalgas\\.(\\d+)\\.player\\..+_extraccion_otros_amerb$", names(df))]
-    variable_subset <- variable_subset[, R:N]
+    variable_subset <- df[, grep("T1juegoalgas\\.(\\d+)\\.player\\..+_extraccion_otros_amerb$", names(df))]
+    variable_subset <- variable_subset[, R:N-1]
     df$average_extraction_observed_ini <- rowMeans(variable_subset, na.rm = TRUE)
-    df$average_compliance_observed_ini <- 1 - (df$average_extraction_observed_ini / 150)
+    df$average_compliance_observed_ini_lag <- 1 - (df$average_extraction_observed_ini / 150)
   } 
   
   # Define the SEM model for amerb
@@ -599,7 +599,7 @@ for (N in (R+1):8) {
   
   # Relationship for extraction
   average_compliance_ini ~ belief_compliance_amerb +  
-  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta + average_compliance_observed_ini
+  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta + average_compliance_observed_ini_lag
 '
   
   # Node labels
@@ -608,7 +608,7 @@ for (N in (R+1):8) {
     average_compliance_ini = "Compliance",
     survey1.1.player.confianza_caleta = "Trust Union",
     survey1.1.player.conflicto_caleta = "Conflict Union",
-    average_compliance_observed_ini = "Observed Compliance"
+    average_compliance_observed_ini_lag = "Observed Compliance (t-1)"
   )
   
   # Fit the SEM model
@@ -651,7 +651,7 @@ for (N in (R+1):8) {
   )
   
   # Add dynamic title
-  title(main = paste("Mean Compliance TURF Rounds ", R ," to ", N), line = 3.5, cex.main = 0.8)
+  title(main = paste("Mean Compliance Scenario 1 TURF Rounds  ", R ," to ", N), line = 3.5, cex.main = 0.8)
   
   # Close the P
   # Close the PDF device
@@ -667,6 +667,378 @@ for (N in (R+1):8) {
 
 
 
+
+
+
+
+  
+##################################
+### SEM in OA Scenario 2 Round 1
+##################################
+  
+  
+  # Set R to 1
+  R <- 1
+  
+  # Subset variables dynamically
+  variable_subset <- df[, grep("^T2juegoalgas\\.\\d+\\.player\\.T2_extraccion_metat$", names(df))]
+  variable_subset <- variable_subset[, R, drop = FALSE]  # Select only the first round
+  
+  # Calculate the row-wise mean for the selected column
+  df$average_extraction_ini <- rowMeans(variable_subset, na.rm = TRUE)
+  df$average_compliance_ini <- 1 - (df$average_extraction_ini / 50)
+  
+  # Belief compliance
+  df$belief_compliance_pm <- 1 - (df$beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini / 50)
+  df$belief_compliance_union <- 1 - (df$beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini / 50)
+  
+  # Define the SEM model
+  sem_model <- '
+  # Relationships for beliefs
+  belief_compliance_pm  ~  survey2.1.player.confianza_caleta_conocida_mean + survey2.1.player.conflicto_caleta_conocida_mean
+  belief_compliance_union   ~  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta
+
+  # Relationship for extraction
+  average_compliance_ini ~ belief_compliance_pm + belief_compliance_union +   
+  survey2.1.player.confianza_caleta_conocida_mean + survey2.1.player.conflicto_caleta_conocida_mean +
+  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta 
+  '
+  
+  node_labels <- c(
+    belief_compliance_pm = "Beliefs Compl. Others",
+    belief_compliance_union = "Beliefs Compl. Union",
+    average_compliance_ini = "Compliance",
+    survey2.1.player.confianza_caleta_conocida_mean = "Trust Others (mean)",
+    survey2.1.player.conflicto_caleta_conocida_mean = "Conflict Others (mean)",
+    survey1.1.player.confianza_caleta = "Trust Union",
+    survey1.1.player.conflicto_caleta = "Conflict Union"
+  )
+  
+  # Fit the SEM model
+  fit <- sem(sem_model, data = df)
+  
+  # Extract path results and edge colors dynamically
+  path_results <- parameterEstimates(fit, standardized = TRUE)
+  regression_paths <- path_results[path_results$op == "~", ]
+  param_labels <- paste(regression_paths$lhs, regression_paths$op, regression_paths$rhs, sep = " ")
+  edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "red"), param_labels)
+  edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "red")
+  
+  # Ensure edge_colors matches the number of paths
+  n_edges <- length(regression_paths$lhs)
+  if (length(edge_colors) < n_edges) {
+    edge_colors <- c(edge_colors, rep("gray", n_edges - length(edge_colors)))
+  }
+  
+  # Save SEM plot with a dynamic filename
+  output_file <- paste0(path_github, "Outputs/SEM_compliance_OA_T2_plot_Round_1.png")
+  png(output_file, width = 1200, height = 800, res = 300)
+  
+  # Generate SEM plot
+  semPaths(
+    fit,
+    what = "std",
+    layout = "tree",
+    edge.label.cex = 1,
+    nodeLabels = node_labels,
+    sizeMan = 9,
+    label.cex = 1,
+    node.width = 2, 
+    node.height = 0.7,
+    shapeMan = "ellipse", 
+    edge.color = edge_colors,
+    residuals = FALSE,
+    intercepts = FALSE,
+    optimizeLatRes = TRUE,
+    fade = FALSE
+  )
+  
+  # Add title
+  title(main = "Mean Compliance Scenario 2 Meta-TURF Round 1", line = 3.5, cex.main = 0.8)
+  
+  # Close the PDF device
+  dev.off()
+  
+  
+########################################
+#### SEM in OA Scenario 2 Rounds (5:8)
+########################################
+  
+  R<-5 # From which round to start
+  
+  # Loop through N from 1 to 8
+  for (N in (R+1):8) {
+    # Subset variables dynamically
+    variable_subset <- df[, grep("^T2juegoalgas\\.\\d+\\.player\\.T2_extraccion_metat$", names(df))]
+    variable_subset <- variable_subset[, R:N]  # Select columns for current N
+    
+    # Calculate the row-wise mean for selected columns
+    df$average_extraction_ini <- rowMeans(variable_subset, na.rm = TRUE)
+    df$average_compliance_ini <- 1 - (df$average_extraction_ini / 50)
+    
+    # Belief compliance
+    df$belief_compliance_pm <- 1 - (df$beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini / 50)
+    df$belief_compliance_union <- 1 - (df$beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini / 50)
+    
+    # Observed compliance
+    variable_subset <- df[, grep("T2juegoalgas\\.(\\d+)\\.player\\..+_extraccion_otros_metat$", names(df))]
+    variable_subset <- variable_subset[, R:N-1]
+    df$average_extraction_observed_ini <- rowMeans(variable_subset, na.rm = TRUE)
+    df$average_compliance_observed_ini_lag <- 1 - (df$average_extraction_observed_ini / 150)
+  } 
+  
+  
+  
+  
+  # Specify the SEM model
+  sem_model <- '
+  # Relationships for beliefs
+  belief_compliance_pm  ~  survey2.1.player.confianza_caleta_conocida_mean + survey2.1.player.conflicto_caleta_conocida_mean
+  belief_compliance_union   ~  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta
+  
+  # Relationship for extraction
+  average_compliance_ini ~ belief_compliance_pm + belief_compliance_union +   
+  survey1.1.player.confianza_pm + survey1.1.player.conflicto_pm + survey1.1.player.confianza_caleta + 
+  survey1.1.player.conflicto_caleta  + average_compliance_observed_ini_lag 
+'
+  #name variable so that there are comprensible
+  node_labels <- c(belief_compliance_pm =   "Beliefs Compl. Others" ,
+                   belief_compliance_union =   "Beliefs Compl. Union", 
+                   average_compliance_ini = "Compliance" ,
+                   survey2.1.player.confianza_caleta_conocida_mean  =   "Trust Others (mean)" ,
+                   survey2.1.player.conflicto_caleta_conocida_mean =   "Conflict Others (mean)" ,
+                   survey1.1.player.confianza_caleta =   "Trust Union", 
+                   survey1.1.player.conflicto_caleta =   "Conflict Union",
+                   average_compliance_observed_ini_lag = "Observed Compliance (t-1)"
+  )
+  
+  
+  # Fit the SEM model
+  fit <- sem(sem_model, data = df)
+  
+  # Extract path results and edge colors dynamically
+  path_results <- parameterEstimates(fit, standardized = TRUE)
+  regression_paths <- path_results[path_results$op == "~", ]
+  param_labels <- paste(regression_paths$lhs, regression_paths$op, regression_paths$rhs, sep = " ")
+  edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "red"), param_labels)
+  edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "red")
+  
+  # Ensure edge_colors matches the number of paths
+  n_edges <- length(regression_paths$lhs)
+  if (length(edge_colors) < n_edges) {
+    edge_colors <- c(edge_colors, rep("gray", n_edges - length(edge_colors)))
+  }
+  
+  # Save each SEM plot with a dynamic filename
+  output_file <- paste0(path_github, "Outputs/SEM_compliance_OA_T2_plot_Rounds_", R, "_to_", N, ".png")
+  png(output_file, width = 1200, height = 800, res = 300)
+  
+  # Generate SEM plot
+  semPaths(
+    fit,
+    what = "std",
+    layout = "tree",
+    edge.label.cex = 1,
+    nodeLabels = node_labels,
+    sizeMan = 9,
+    label.cex = 1,
+    node.width = 2, 
+    node.height = 0.7,
+    shapeMan = "ellipse", 
+    edge.color = edge_colors,
+    residuals = FALSE,
+    intercepts = FALSE,
+    optimizeLatRes = TRUE,
+    fade = FALSE
+  )
+  
+  # Add dynamic title
+  title(main = paste("Mean Compliance Scenario 2 Open Access Rounds ", R ," to ", N),line = 3.5, cex.main = 0.8)
+  
+  # Close the PDF device
+  dev.off()
+  
+  
+  # End of script
+  
+  
+  
+########################################
+### SEM in TURF Scenario 2 Round 1
+########################################
+
+# Set R to 1
+R <- 1
+
+# Subset variables dynamically
+variable_subset <- df[, grep("^T2juegoalgas\\.\\d+\\.player\\.T2_extraccion_amerb$", names(df))]
+variable_subset <- variable_subset[, R, drop = FALSE]  # Select only the first round
+
+# Calculate the row-wise mean for the selected column
+df$average_extraction_ini <- rowMeans(variable_subset, na.rm = TRUE)
+df$average_compliance_ini <- 1 - (df$average_extraction_ini / 50)
+
+# Belief compliance
+df$belief_compliance_amerb <- 1 - (df$beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini / 50)
+
+# Define the SEM model
+sem_model <- '
+  # Relationships for beliefs
+  belief_compliance_amerb  ~  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta
+  
+
+  # Relationship for extraction
+  average_compliance_ini ~ belief_compliance_amerb +  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta 
+  '
+
+node_labels <- c(
+  belief_compliance_amerb = "Beliefs Compl. Union",
+  average_compliance_ini = "Compliance",
+  survey1.1.player.confianza_caleta = "Trust Union",
+  survey1.1.player.conflicto_caleta = "Conflict Union"
+)
+
+# Fit the SEM model
+fit <- sem(sem_model, data = df)
+
+# Extract path results and edge colors dynamically
+path_results <- parameterEstimates(fit, standardized = TRUE)
+regression_paths <- path_results[path_results$op == "~", ]
+param_labels <- paste(regression_paths$lhs, regression_paths$op, regression_paths$rhs, sep = " ")
+edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "red"), param_labels)
+edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "red")
+
+# Ensure edge_colors matches the number of paths
+n_edges <- length(regression_paths$lhs)
+if (length(edge_colors) < n_edges) {
+  edge_colors <- c(edge_colors, rep("gray", n_edges - length(edge_colors)))
+}
+
+# Save SEM plot with a dynamic filename
+output_file <- paste0(path_github, "Outputs/SEM_compliance_amerb_T2_plot_Round_1.png")
+png(output_file, width = 1200, height = 800, res = 300)
+
+# Generate SEM plot
+semPaths(
+  fit,
+  what = "std",
+  layout = "tree",
+  edge.label.cex = 1,
+  nodeLabels = node_labels,
+  sizeMan = 9,
+  label.cex = 1,
+  node.width = 2, 
+  node.height = 0.7,
+  shapeMan = "ellipse", 
+  edge.color = edge_colors,
+  residuals = FALSE,
+  intercepts = FALSE,
+  optimizeLatRes = TRUE,
+  fade = FALSE
+)
+
+# Add title
+title(main = "Mean Compliance TURF Round 1 Scenario 2", line = 3.5, cex.main = 0.8)
+
+# Close the PDF device
+dev.off()
+
+
+###################################
+### SEM TURF Scenario 2 rounds (5:8)
+###################################
+
+
+
+# Set R (starting round)
+R <- 5
+
+# Loop through N from (R+1) to 8
+for (N in (R+1):8) {
+  
+  # Subset variables dynamically for amerb extraction
+  variable_subset <- df[, grep("^T2juegoalgas\\.\\d+\\.player\\.T2_extraccion_amerb$", names(df))]
+  variable_subset <- variable_subset[, R:N]  # Select columns for current N
+  
+  # Calculate the row-wise mean for selected columns
+  df$average_extraction_ini <- rowMeans(variable_subset, na.rm = TRUE)
+  df$average_compliance_ini <- 1 - (df$average_extraction_ini / 50)
+  
+  # Belief compliance for amerb
+  df$belief_compliance_amerb <- 1 - (df$beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini / 50)
+  
+  
+  # Observed compliance
+  variable_subset <- df[, grep("T2juegoalgas\\.(\\d+)\\.player\\..+_extraccion_otros_amerb$", names(df))]
+  variable_subset <- variable_subset[, R:N-1]
+  df$average_extraction_observed_ini <- rowMeans(variable_subset, na.rm = TRUE)
+  df$average_compliance_observed_ini_lag <- 1 - (df$average_extraction_observed_ini / 150)
+} 
+
+# Define the SEM model for amerb
+sem_model <- '
+  # Relationships for beliefs
+  belief_compliance_amerb  ~  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta
+  
+  # Relationship for extraction
+  average_compliance_ini ~ belief_compliance_amerb +  
+  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta + average_compliance_observed_ini_lag
+'
+
+# Node labels
+node_labels <- c(
+  belief_compliance_amerb = "Beliefs Compl. Union",
+  average_compliance_ini = "Compliance",
+  survey1.1.player.confianza_caleta = "Trust Union",
+  survey1.1.player.conflicto_caleta = "Conflict Union",
+  average_compliance_observed_ini_lag = "Observed Compliance (t-1)"
+)
+
+# Fit the SEM model
+fit <- sem(sem_model, data = df)
+
+# Extract path results and edge colors dynamically
+path_results <- parameterEstimates(fit, standardized = TRUE)
+regression_paths <- path_results[path_results$op == "~", ]
+param_labels <- paste(regression_paths$lhs, regression_paths$op, regression_paths$rhs, sep = " ")
+edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "red"), param_labels)
+edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "red")
+
+# Ensure edge_colors matches the number of paths
+n_edges <- length(regression_paths$lhs)
+if (length(edge_colors) < n_edges) {
+  edge_colors <- c(edge_colors, rep("gray", n_edges - length(edge_colors)))
+}
+
+# Save SEM plot with a dynamic filename
+output_file <- paste0(path_github, "Outputs/SEM_compliance_amerb_T2_plot_Rounds_", R, "_to_", N, ".png")
+png(output_file, width = 1200, height = 800, res = 300)
+
+# Generate SEM plot
+semPaths(
+  fit,
+  what = "std",
+  layout = "tree",
+  edge.label.cex = 1,
+  nodeLabels = node_labels,
+  sizeMan = 9,
+  label.cex = 1,
+  node.width = 2, 
+  node.height = 0.7,
+  shapeMan = "ellipse", 
+  edge.color = edge_colors,
+  residuals = FALSE,
+  intercepts = FALSE,
+  optimizeLatRes = TRUE,
+  fade = FALSE
+)
+
+# Add dynamic title
+title(main = paste("Mean Compliance Scenario 2 TURF Rounds ", R ," to ", N), line = 3.5, cex.main = 0.8)
+
+# Close the P
+# Close the PDF device
+dev.off()
 
 
 
