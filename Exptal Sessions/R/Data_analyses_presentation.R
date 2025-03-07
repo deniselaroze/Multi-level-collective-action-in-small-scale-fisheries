@@ -16,11 +16,11 @@ library(semPlot)
 
 
 rm(list=ls())
-path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+#path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
-#path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 setwd(path_github)
 
@@ -39,6 +39,22 @@ load(paste0(path_datos, "/Datos_islitas_long.Rdata"))
 #Teal → #1B808D
 #Light Green → #56B870 (23%)
 #Yellow → #F7DC38 (6%)
+
+##########################
+### Descriptive Statistics
+##########################
+prop.table(table(df$survey3.1.player.sexo))
+prop.table(table(df$survey3.1.player.liderazgo))
+prop.table(table(df$survey3.1.player.experiencia))
+prop.table(table(df$survey3.1.player.estudios))
+
+
+age<-2024-df$survey3.1.player.nacimiento
+summary(age)
+sd(age)
+
+summary(df$survey3.1.player.horas_trabajo)
+sd(df$survey3.1.player.horas_trabajo)
 
 
 
@@ -290,9 +306,9 @@ stargazer(lm1, lm2,
 
 
 
-########################
+####################################
 ### SEM in OA Scenario 1 Round 1
-########################
+####################################
 
 
 # Set R to 1
@@ -798,8 +814,9 @@ for (N in (R+1):8) {
   
   # Relationship for extraction
   average_compliance_ini ~ belief_compliance_pm + belief_compliance_union +   
-  survey1.1.player.confianza_pm + survey1.1.player.conflicto_pm + survey1.1.player.confianza_caleta + 
-  survey1.1.player.conflicto_caleta  + average_compliance_observed_ini_lag 
+  survey2.1.player.confianza_caleta_conocida_mean + survey2.1.player.conflicto_caleta_conocida_mean + 
+  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta  + 
+  average_compliance_observed_ini_lag 
 '
   #name variable so that there are comprensible
   node_labels <- c(belief_compliance_pm =   "Beliefs Compl. Others" ,
@@ -853,7 +870,7 @@ for (N in (R+1):8) {
   )
   
   # Add dynamic title
-  title(main = paste("Mean Compliance Scenario 2 Open Access Rounds ", R ," to ", N),line = 3.5, cex.main = 0.8)
+  title(main = paste("Mean Compliance Scenario 2 Open Access Rounds ", R ," to ", N),line = 3.5, cex.main = 0.6)
   
   # Close the PDF device
   dev.off()
