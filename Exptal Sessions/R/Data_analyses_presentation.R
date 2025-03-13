@@ -308,16 +308,9 @@ stargazer(lm1, lm2,
 
 
 
-<<<<<<< HEAD:Exptal Sessions/R/Subset_Data_analyses_presentation.R
-##################################
-### SEM in OA Scenario 1 Round 1
-#################################
-=======
 ####################################
 ### SEM in OA Scenario 1 Round 1
 ####################################
->>>>>>> b857c1cc3f38680cc72baef1c43bb2f31491b2b5:Exptal Sessions/R/Data_analyses_presentation.R
-
 
 # Set R to 1
 R <- 1
@@ -597,9 +590,9 @@ sem_model <- '
   dev.off()
   
   
-#########################
+#######################################
 ### SEM in TURF Scenario 1 rounds (5:8)
-#########################
+#######################################
   
   
   
@@ -700,19 +693,6 @@ sem_model <- '
   dev.off()
   
   
-  
-  
-  
-
-
-
-
-
-
-
-
-
-
   
 ##################################
 ### SEM in OA Scenario 2 Round 1
@@ -840,7 +820,7 @@ sem_model <- '
   
   # Relationship for extraction
   average_compliance_ini ~ belief_compliance_pm + belief_compliance_union +   
-<<<<<<< HEAD:Exptal Sessions/R/Subset_Data_analyses_presentation.R
+
   survey2.1.player.confianza_caleta_conocida_mean + survey2.1.player.conflicto_caleta_conocida_mean + survey1.1.player.confianza_caleta + 
   survey1.1.player.conflicto_caleta
   
@@ -851,12 +831,10 @@ sem_model <- '
   average_compliance_observed_ini_lag ~~ 0*belief_compliance_union
    average_compliance_observed_ini_lag ~~ 0*belief_compliance_pm
   
-  
-=======
   survey2.1.player.confianza_caleta_conocida_mean + survey2.1.player.conflicto_caleta_conocida_mean + 
   survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta  + 
   average_compliance_observed_ini_lag 
->>>>>>> b857c1cc3f38680cc72baef1c43bb2f31491b2b5:Exptal Sessions/R/Data_analyses_presentation.R
+
 '
   #name variable so that there are comprehensible
   node_labels <- c(belief_compliance_pm =   "Beliefs Compl. Others" ,
@@ -916,10 +894,7 @@ sem_model <- '
   dev.off()
   
   
-  # End of script
-  
-  
-  
+
 ########################################
 ### SEM in TURF Scenario 2 Round 1
 ########################################
