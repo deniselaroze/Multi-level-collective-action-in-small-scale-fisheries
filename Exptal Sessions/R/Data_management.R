@@ -15,12 +15,12 @@ library(R.matlab)
 
 
 rm(list=ls())
-#path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 
-path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+#path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 
 setwd(path_github)
@@ -624,7 +624,9 @@ dfs_long$compliance_beliefs_OA_caleta<-ifelse(dfs_long$treatment=="T1", dfs_long
 dfs_long$compliance_beliefs_OA_others<-ifelse(dfs_long$treatment=="T1", dfs_long$compliance_beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini,
                                               dfs_long$compliance_beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini) 
 
-
+################
+#### Save data
+#################
 
 save(df, file = paste0(path_datos, "/Datos_islitas_recode.Rdata"))
 save(dfs_long, file = paste0(path_datos, "/Datos_islitas_long.Rdata"))

@@ -6,6 +6,8 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(stargazer)
+library(sandwich)   # For robust and clustered standard errors
+library(lmtest)   
 
 if (!requireNamespace("semPlot", quietly = TRUE)) install.packages("semPlot")
 if (!requireNamespace("lavaan", quietly = TRUE)) install.packages("lavaan")
@@ -34,11 +36,14 @@ load(paste0(path_datos, "/Datos_islitas_long.Rdata"))
 
 #### Color pallet
 
-#Dark Purple → #40103D
-#Dark Blue → #2F4B7C 
-#Teal → #1B808D
-#Light Green → #56B870 (23%)
-#Yellow → #F7DC38 (6%)
+#Dark Purple (#440154)
+#  Purple-Blue (#482777)
+#    Blue (#3F4A8A)
+#      Teal-Blue (#31688E)
+#        Green-Teal (#26828E)
+#          Light Green (#1F9D8A)
+#            Yellow-Green (#6CCE5A)
+#              Bright Yellow (#FDE725)
 
 
 
@@ -86,33 +91,30 @@ means_ci_by_treatment$treatment <- factor(means_ci_by_treatment$treatment,
                                           levels = c("Unknown Outsiders", "Known Outsiders"))
 
 
-# Define custom colors
-custom_colors <- c("TURF" = "#2F4B7C", "Open Access" = "#56B870")
-
-# Plot bar graph with error bars and mean labels
-p <- ggplot(means_ci_by_treatment, aes(x = treatment, y = mean, fill = variable)) +
+# Adjust bar position by grouping variable first
+p <- ggplot(means_ci_by_treatment, aes(x = variable, y = mean, fill = treatment)) +
   
   # Bar plot
-  geom_bar(stat = "identity", position = position_dodge(), alpha = 1) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8), alpha = 1) +
   
   # Error bars
-  geom_errorbar(aes(ymin = lower, ymax = upper), position = position_dodge(0.9), width = 0.2) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), position = position_dodge(0.8), width = 0.2) +
   
   # Add mean values as text labels above bars
   geom_text(aes(label = round(mean, 2)), 
-            position = position_dodge(0.9), 
+            position = position_dodge(0.8), 
             vjust = -1.3, 
             size = 5) +
   
-  # Custom colors
-  scale_fill_manual(values = custom_colors, 
-                    labels = c("TURF" = "TURF", "Open Access" = "Open Access")) +
+  # Custom colors (Grouping by treatment)
+  scale_fill_manual(values = c("Unknown Outsiders" = "#3F4A8A", "Known Outsiders" ="#6CCE5A"), 
+                    labels = c("Unknown Outsiders", "Known Outsiders")) +
   
   # Labels
   labs(title = "",
        y = "Compliance",
-       x = "Scenario",
-       fill = "Management System") +
+       x = "Management System",
+       fill = "Scenario") +
   
   # Y-axis settings
   scale_y_continuous(limits = c(0, 1), expand = c(0, 0), breaks = seq(0, 1, by = 0.1)) +
@@ -129,7 +131,7 @@ p <- ggplot(means_ci_by_treatment, aes(x = treatment, y = mean, fill = variable)
     legend.text = element_text(size = 14)
   )
 
-# Print the plot
+# Print the updated plot
 print(p)
 
 # Save the figure
@@ -160,7 +162,7 @@ p <- ggplot(dfs_long, aes(x = compliance_lag_extraction_others_amerb_mean,
   scale_x_continuous(limits = c(0, 1), breaks = seq(0, 1, by = 0.1), expand = c(0, 0)) +
   
   # Custom colors for treatment groups (Fixed color code issue)
-  scale_color_manual(values = c("T1" = "#40103D", "T2" = "#F7DC38"), 
+  scale_color_manual(values = c("T1" = "#3F4A8A", "T2" = "#6CCE5A"), 
                      labels = c("T1" = "Unknown Outsiders", "T2" = "Known Outsiders")) +
   
   # Labels
@@ -203,11 +205,11 @@ p <- ggplot(dfs_long, aes(x = compliance_lag_extraction_others_OA_mean,
   scale_x_continuous(limits = c(0, 1), breaks = seq(0, 1, by = 0.1), expand = c(0, 0)) +
   
   # Custom colors for treatment groups (Fixed color code issue)
-  scale_color_manual(values = c("T1" = "#40103D", "T2" = "#F7DC38"), 
+  scale_color_manual(values = c("T1" = "#3F4A8A", "T2" = "#6CCE5A"), 
                      labels = c("T1" = "Unknown Outsiders", "T2" = "Known Outsiders")) +
   
   # Labels
-  labs(title = "Compliance in Open Access area",
+  labs(title = "Compliance in Open Access Area",
        y = "Compliance Decision Maker",
        x = "Lagged Compliance Others in Group",
        color = "Scenario") +
@@ -248,14 +250,14 @@ clustered_se_lm3 <- sqrt(diag(vcovCL(lm3, cluster = ~gid.amerb)))
 # Export to stargazer with clustered standard errors
 
 stargazer(lm2, lm3,
-          se = list(clustered_se_lm1, clustered_se_lm2, clustered_se_lm3),
+          se = list(clustered_se_lm2, clustered_se_lm3),
           type = "html",
           out = paste0(path_github, "Outputs/compliance_extraction_AMERB_controls_gid_clustered_se.html"),
           title = "Regression Results with Clustered Standard Errors",
           dep.var.labels = "Proportion Compliance TURF",
           covariate.labels = c("Mean Compliance by Group (t-1)", "Beliefs Compliance by Ingroup in TURF", 
                                "Scenario Know Outsiders (dummy)", "Sessions with 3 Unions (Dummy)" , "Female (Dummy)",
-                               "Fishing hrs/w", "Level of Education" ,"Held Leadership Role (Dummy)", "Constant" ),
+                               "Fishing h/w", "Level of Education" ,"Held Leadership Role (Dummy)", "Constant" ),
           notes = "OLS regressions with TURF matching group clustered s.e. in parentheses.")
 
 
@@ -284,15 +286,15 @@ stargazer(lm1, lm2,
           dep.var.labels = "Proportion Compliance Open Access",
           covariate.labels = c("Mean Compliance by Group (t-1)", "Beliefs Compliance by Ingroup in TURF", "Beliefs Compliance by Outsiders in TURF", 
                                "Scenario Know Outsiders (dummy)", "Sessions with 3 Unions (Dummy)" , "Minority (Dummy)","Female (Dummy)",
-                               "Fishing hrs/w", "Level of Education" ,"Held Leadership Role (Dummy)", "Constant" ),
+                               "Fishing h/w", "Level of Education" ,"Held Leadership Role (Dummy)", "Constant" ),
           notes = "OLS regressions with session matching group clustered s.e. in parentheses.")
 
 
 
 
-########################
+##################################
 ### SEM in OA Scenario 1 Round 1
-########################
+#################################
 
 
 # Set R to 1
@@ -350,7 +352,7 @@ if (length(edge_colors) < n_edges) {
 
 # Save SEM plot with a dynamic filename
 output_file <- paste0(path_github, "Outputs/SEM_compliance_OA_T1_plot_Round_1.png")
-png(output_file, width = 1200, height = 800, res = 300)
+png(output_file, width = 1300, height = 800, res = 300)
 
 # Generate SEM plot
 semPaths(
@@ -407,7 +409,7 @@ for (N in (R+1):8) {
   
   
   # Specify the SEM model
-  sem_model <- '
+sem_model <- '
   # Relationships for beliefs
   belief_compliance_pm  ~  survey1.1.player.confianza_pm + survey1.1.player.conflicto_pm
   belief_compliance_union   ~  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta
@@ -415,8 +417,20 @@ for (N in (R+1):8) {
   # Relationship for extraction
   average_compliance_ini ~ belief_compliance_pm + belief_compliance_union +   
   survey1.1.player.confianza_pm + survey1.1.player.conflicto_pm + survey1.1.player.confianza_caleta + 
-  survey1.1.player.conflicto_caleta  + average_compliance_observed_ini_lag 
+  survey1.1.player.conflicto_caleta  
+
+  # Ensure no direct effect from average_compliance_observed_ini_lag to restricted variables
+  average_compliance_ini ~ average_compliance_observed_ini_lag
+
+  # Restrict correlations between average_compliance_observed_ini_lag and other variables
+  average_compliance_observed_ini_lag ~~ 0*belief_compliance_union
+   average_compliance_observed_ini_lag ~~ 0*belief_compliance_pm
+  #average_compliance_observed_ini_lag ~~ 0*survey1.1.player.confianza_pm
+  #average_compliance_observed_ini_lag ~~ 0*survey1.1.player.conflicto_pm
+  #average_compliance_observed_ini_lag ~~ 0*survey1.1.player.confianza_caleta
+  #average_compliance_observed_ini_lag ~~ 0*survey1.1.player.conflicto_caleta
 '
+
   #name variable so that there are comprensible
   node_labels <- c(belief_compliance_pm =   "Beliefs Compl. Others" ,
                    belief_compliance_union =   "Beliefs Compl. Union", 
@@ -447,7 +461,7 @@ for (N in (R+1):8) {
   
   # Save each SEM plot with a dynamic filename
   output_file <- paste0(path_github, "Outputs/SEM_compliance_OA_T1_plot_Rounds_", R, "_to_", N, ".png")
-  png(output_file, width = 1200, height = 800, res = 300)
+  png(output_file, width = 1300, height = 800, res = 300)
   
   # Generate SEM plot
   semPaths(
@@ -533,7 +547,7 @@ for (N in (R+1):8) {
   
   # Save SEM plot with a dynamic filename
   output_file <- paste0(path_github, "Outputs/SEM_compliance_amerb_T1_plot_Round_1.png")
-  png(output_file, width = 1200, height = 800, res = 300)
+  png(output_file, width = 1300, height = 800, res = 300)
   
   # Generate SEM plot
   semPaths(
@@ -599,8 +613,14 @@ for (N in (R+1):8) {
   
   # Relationship for extraction
   average_compliance_ini ~ belief_compliance_amerb +  
-  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta + average_compliance_observed_ini_lag
-'
+  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta
+
+ # Ensure no direct effect from average_compliance_observed_ini_lag to restricted variables
+  average_compliance_ini ~ average_compliance_observed_ini_lag
+
+  # Restrict correlations between average_compliance_observed_ini_lag and other variables
+  average_compliance_observed_ini_lag ~~ 0*belief_compliance_amerb
+   '
   
   # Node labels
   node_labels <- c(
@@ -629,7 +649,7 @@ for (N in (R+1):8) {
   
   # Save SEM plot with a dynamic filename
   output_file <- paste0(path_github, "Outputs/SEM_compliance_amerb_T1_plot_Rounds_", R, "_to_", N, ".png")
-  png(output_file, width = 1200, height = 800, res = 300)
+  png(output_file, width = 1300, height = 800, res = 300)
   
   # Generate SEM plot
   semPaths(
@@ -732,7 +752,7 @@ for (N in (R+1):8) {
   
   # Save SEM plot with a dynamic filename
   output_file <- paste0(path_github, "Outputs/SEM_compliance_OA_T2_plot_Round_1.png")
-  png(output_file, width = 1200, height = 800, res = 300)
+  png(output_file, width = 1300, height = 800, res = 300)
   
   # Generate SEM plot
   semPaths(
@@ -798,10 +818,19 @@ for (N in (R+1):8) {
   
   # Relationship for extraction
   average_compliance_ini ~ belief_compliance_pm + belief_compliance_union +   
-  survey1.1.player.confianza_pm + survey1.1.player.conflicto_pm + survey1.1.player.confianza_caleta + 
-  survey1.1.player.conflicto_caleta  + average_compliance_observed_ini_lag 
+  survey2.1.player.confianza_caleta_conocida_mean + survey2.1.player.conflicto_caleta_conocida_mean + survey1.1.player.confianza_caleta + 
+  survey1.1.player.conflicto_caleta
+  
+   # Ensure no direct effect from average_compliance_observed_ini_lag to restricted variables
+  average_compliance_ini ~ average_compliance_observed_ini_lag
+
+  # Restrict correlations between average_compliance_observed_ini_lag and other variables
+  average_compliance_observed_ini_lag ~~ 0*belief_compliance_union
+   average_compliance_observed_ini_lag ~~ 0*belief_compliance_pm
+  
+  
 '
-  #name variable so that there are comprensible
+  #name variable so that there are comprehensible
   node_labels <- c(belief_compliance_pm =   "Beliefs Compl. Others" ,
                    belief_compliance_union =   "Beliefs Compl. Union", 
                    average_compliance_ini = "Compliance" ,
@@ -831,7 +860,7 @@ for (N in (R+1):8) {
   
   # Save each SEM plot with a dynamic filename
   output_file <- paste0(path_github, "Outputs/SEM_compliance_OA_T2_plot_Rounds_", R, "_to_", N, ".png")
-  png(output_file, width = 1200, height = 800, res = 300)
+  png(output_file, width = 1300, height = 800, res = 300)
   
   # Generate SEM plot
   semPaths(
@@ -916,7 +945,7 @@ if (length(edge_colors) < n_edges) {
 
 # Save SEM plot with a dynamic filename
 output_file <- paste0(path_github, "Outputs/SEM_compliance_amerb_T2_plot_Round_1.png")
-png(output_file, width = 1200, height = 800, res = 300)
+png(output_file, width = 1300, height = 800, res = 300)
 
 # Generate SEM plot
 semPaths(
@@ -982,7 +1011,13 @@ sem_model <- '
   
   # Relationship for extraction
   average_compliance_ini ~ belief_compliance_amerb +  
-  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta + average_compliance_observed_ini_lag
+  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta 
+  
+ # Ensure no direct effect from average_compliance_observed_ini_lag to restricted variables
+  average_compliance_ini ~ average_compliance_observed_ini_lag
+
+  # Restrict correlations between average_compliance_observed_ini_lag and other variables
+  average_compliance_observed_ini_lag ~~ 0*belief_compliance_amerb
 '
 
 # Node labels
@@ -1012,7 +1047,7 @@ if (length(edge_colors) < n_edges) {
 
 # Save SEM plot with a dynamic filename
 output_file <- paste0(path_github, "Outputs/SEM_compliance_amerb_T2_plot_Rounds_", R, "_to_", N, ".png")
-png(output_file, width = 1200, height = 800, res = 300)
+png(output_file, width = 1300, height = 800, res = 300)
 
 # Generate SEM plot
 semPaths(

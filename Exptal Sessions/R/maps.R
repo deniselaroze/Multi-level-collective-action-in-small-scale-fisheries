@@ -2,6 +2,7 @@ library(sf)
 library(ggplot2)
 library(dplyr) # For data manipulation
 library(ggrepel)
+library(viridis)
 
 
 rm(list=ls())
@@ -112,10 +113,9 @@ valparaiso_cities_filtered$Color <- factor(valparaiso_cities_filtered$Color,
                                              "Session 6"
                                            ))
 
-# Updated Plot with geom_text_repel (no box around city names)
-ggplot() +
-  # Plot filtered region polygons only
-  geom_sf(data = valparaiso_region, fill = "wheat1", color = "black") +
+p<-ggplot() +
+  # Plot filtered region polygons only with pale gray background
+  geom_sf(data = valparaiso_region, fill = "gray90", color = "black") +
   
   # Plot filtered city points with colors
   geom_point(
@@ -139,8 +139,9 @@ ggplot() +
   # Add zoomed limits for the last 1/3 of the x-axis and last 1/4 of the y-axis
   coord_sf(xlim = x_last_bit, ylim = y_first_quarter) +
   
-  # Apply ColorBrewer RdBu palette
-  scale_color_brewer(palette = "Set1") +
+  # Apply a Viridis palette that avoids very light yellow
+  scale_color_viridis_d(begin = 0, end = 0.9) +  
+  # Options: "inferno", "plasma", "cividis" (avoids light yellow)
   
   # Add labels and minimal theme
   labs(
@@ -159,6 +160,10 @@ ggplot() +
     legend.title = element_text(size = 12, face = "bold"), # Legend title
     legend.text = element_text(size = 12) # Legend text
   )
+
+
+print(p)
+ggsave( file=paste0(path_github, "Outputs/Map_sessions.png") , plot = p, device = "png", width = 10, height = 8)
 
 
 
