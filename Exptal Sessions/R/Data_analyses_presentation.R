@@ -18,11 +18,11 @@ library(semPlot)
 
 
 rm(list=ls())
-path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+#path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
-#path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 setwd(path_github)
 
@@ -44,6 +44,22 @@ load(paste0(path_datos, "/Datos_islitas_long.Rdata"))
 #          Light Green (#1F9D8A)
 #            Yellow-Green (#6CCE5A)
 #              Bright Yellow (#FDE725)
+
+##########################
+### Descriptive Statistics
+##########################
+prop.table(table(df$survey3.1.player.sexo))
+prop.table(table(df$survey3.1.player.liderazgo))
+prop.table(table(df$survey3.1.player.experiencia))
+prop.table(table(df$survey3.1.player.estudios))
+
+
+age<-2024-df$survey3.1.player.nacimiento
+summary(age)
+sd(age)
+
+summary(df$survey3.1.player.horas_trabajo)
+sd(df$survey3.1.player.horas_trabajo)
 
 
 
@@ -292,9 +308,15 @@ stargazer(lm1, lm2,
 
 
 
+<<<<<<< HEAD:Exptal Sessions/R/Subset_Data_analyses_presentation.R
 ##################################
 ### SEM in OA Scenario 1 Round 1
 #################################
+=======
+####################################
+### SEM in OA Scenario 1 Round 1
+####################################
+>>>>>>> b857c1cc3f38680cc72baef1c43bb2f31491b2b5:Exptal Sessions/R/Data_analyses_presentation.R
 
 
 # Set R to 1
@@ -818,6 +840,7 @@ sem_model <- '
   
   # Relationship for extraction
   average_compliance_ini ~ belief_compliance_pm + belief_compliance_union +   
+<<<<<<< HEAD:Exptal Sessions/R/Subset_Data_analyses_presentation.R
   survey2.1.player.confianza_caleta_conocida_mean + survey2.1.player.conflicto_caleta_conocida_mean + survey1.1.player.confianza_caleta + 
   survey1.1.player.conflicto_caleta
   
@@ -829,6 +852,11 @@ sem_model <- '
    average_compliance_observed_ini_lag ~~ 0*belief_compliance_pm
   
   
+=======
+  survey2.1.player.confianza_caleta_conocida_mean + survey2.1.player.conflicto_caleta_conocida_mean + 
+  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta  + 
+  average_compliance_observed_ini_lag 
+>>>>>>> b857c1cc3f38680cc72baef1c43bb2f31491b2b5:Exptal Sessions/R/Data_analyses_presentation.R
 '
   #name variable so that there are comprehensible
   node_labels <- c(belief_compliance_pm =   "Beliefs Compl. Others" ,
@@ -882,7 +910,7 @@ sem_model <- '
   )
   
   # Add dynamic title
-  title(main = paste("Mean Compliance Scenario 2 Open Access Rounds ", R ," to ", N),line = 3.5, cex.main = 0.8)
+  title(main = paste("Mean Compliance Scenario 2 Open Access Rounds ", R ," to ", N),line = 3.5, cex.main = 0.6)
   
   # Close the PDF device
   dev.off()
