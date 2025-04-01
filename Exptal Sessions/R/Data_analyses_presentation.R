@@ -356,8 +356,8 @@ fit <- sem(sem_model, data = df)
 path_results <- parameterEstimates(fit, standardized = TRUE)
 regression_paths <- path_results[path_results$op == "~", ]
 param_labels <- paste(regression_paths$lhs, regression_paths$op, regression_paths$rhs, sep = " ")
-edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "red"), param_labels)
-edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "red")
+edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "transparent"), param_labels)
+edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "transparent")
 
 # Ensure edge_colors matches the number of paths
 n_edges <- length(regression_paths$lhs)
@@ -465,8 +465,8 @@ sem_model <- '
   path_results <- parameterEstimates(fit, standardized = TRUE)
   regression_paths <- path_results[path_results$op == "~", ]
   param_labels <- paste(regression_paths$lhs, regression_paths$op, regression_paths$rhs, sep = " ")
-  edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "red"), param_labels)
-  edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "red")
+  edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "transparent"), param_labels)
+  edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "transparent")
   
   # Ensure edge_colors matches the number of paths
   n_edges <- length(regression_paths$lhs)
@@ -551,8 +551,8 @@ sem_model <- '
   path_results <- parameterEstimates(fit, standardized = TRUE)
   regression_paths <- path_results[path_results$op == "~", ]
   param_labels <- paste(regression_paths$lhs, regression_paths$op, regression_paths$rhs, sep = " ")
-  edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "red"), param_labels)
-  edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "red")
+  edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "transparent"), param_labels)
+  edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "transparent")
   
   # Ensure edge_colors matches the number of paths
   n_edges <- length(regression_paths$lhs)
@@ -653,8 +653,8 @@ sem_model <- '
   path_results <- parameterEstimates(fit, standardized = TRUE)
   regression_paths <- path_results[path_results$op == "~", ]
   param_labels <- paste(regression_paths$lhs, regression_paths$op, regression_paths$rhs, sep = " ")
-  edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "red"), param_labels)
-  edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "red")
+  edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "transparent"), param_labels)
+  edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "transparent")
   
   # Ensure edge_colors matches the number of paths
   n_edges <- length(regression_paths$lhs)
@@ -743,8 +743,8 @@ sem_model <- '
   path_results <- parameterEstimates(fit, standardized = TRUE)
   regression_paths <- path_results[path_results$op == "~", ]
   param_labels <- paste(regression_paths$lhs, regression_paths$op, regression_paths$rhs, sep = " ")
-  edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "red"), param_labels)
-  edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "red")
+  edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "transparent"), param_labels)
+  edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "transparent")
   
   # Ensure edge_colors matches the number of paths
   n_edges <- length(regression_paths$lhs)
@@ -814,28 +814,23 @@ sem_model <- '
   
   # Specify the SEM model
   sem_model <- '
-  # Relationships for beliefs
+# Relationships for beliefs
   belief_compliance_pm  ~  survey2.1.player.confianza_caleta_conocida_mean + survey2.1.player.conflicto_caleta_conocida_mean
   belief_compliance_union   ~  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta
-  
+
   # Relationship for extraction
   average_compliance_ini ~ belief_compliance_pm + belief_compliance_union +   
-
   survey2.1.player.confianza_caleta_conocida_mean + survey2.1.player.conflicto_caleta_conocida_mean + survey1.1.player.confianza_caleta + 
   survey1.1.player.conflicto_caleta
-  
-   # Ensure no direct effect from average_compliance_observed_ini_lag to restricted variables
+
+  # Ensure no direct effect from average_compliance_observed_ini_lag to restricted variables
   average_compliance_ini ~ average_compliance_observed_ini_lag
 
   # Restrict correlations between average_compliance_observed_ini_lag and other variables
   average_compliance_observed_ini_lag ~~ 0*belief_compliance_union
-   average_compliance_observed_ini_lag ~~ 0*belief_compliance_pm
-  
-  survey2.1.player.confianza_caleta_conocida_mean + survey2.1.player.conflicto_caleta_conocida_mean + 
-  survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta  + 
-  average_compliance_observed_ini_lag 
-
+  average_compliance_observed_ini_lag ~~ 0*belief_compliance_pm
 '
+
   #name variable so that there are comprehensible
   node_labels <- c(belief_compliance_pm =   "Beliefs Compl. Others" ,
                    belief_compliance_union =   "Beliefs Compl. Union", 
@@ -855,8 +850,8 @@ sem_model <- '
   path_results <- parameterEstimates(fit, standardized = TRUE)
   regression_paths <- path_results[path_results$op == "~", ]
   param_labels <- paste(regression_paths$lhs, regression_paths$op, regression_paths$rhs, sep = " ")
-  edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "red"), param_labels)
-  edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "red")
+  edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "transparent"), param_labels)
+  edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "transparent")
   
   # Ensure edge_colors matches the number of paths
   n_edges <- length(regression_paths$lhs)
@@ -937,8 +932,8 @@ fit <- sem(sem_model, data = df)
 path_results <- parameterEstimates(fit, standardized = TRUE)
 regression_paths <- path_results[path_results$op == "~", ]
 param_labels <- paste(regression_paths$lhs, regression_paths$op, regression_paths$rhs, sep = " ")
-edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "red"), param_labels)
-edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "red")
+edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "transparent"), param_labels)
+edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "transparent")
 
 # Ensure edge_colors matches the number of paths
 n_edges <- length(regression_paths$lhs)
@@ -1039,8 +1034,8 @@ fit <- sem(sem_model, data = df)
 path_results <- parameterEstimates(fit, standardized = TRUE)
 regression_paths <- path_results[path_results$op == "~", ]
 param_labels <- paste(regression_paths$lhs, regression_paths$op, regression_paths$rhs, sep = " ")
-edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "red"), param_labels)
-edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "red")
+edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "transparent"), param_labels)
+edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "transparent")
 
 # Ensure edge_colors matches the number of paths
 n_edges <- length(regression_paths$lhs)

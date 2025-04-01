@@ -1,13 +1,5 @@
 
 
-
-
-
-
-
-
-
-
 if (!requireNamespace("semPlot", quietly = TRUE)) install.packages("semPlot")
 if (!requireNamespace("lavaan", quietly = TRUE)) install.packages("lavaan")
 
@@ -16,11 +8,11 @@ library(semPlot)
 
 
 rm(list=ls())
-#path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
-path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+#path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 setwd(path_github)
 
@@ -87,12 +79,12 @@ param_labels <- paste(regression_paths$lhs, regression_paths$op, regression_path
 
 
 # Create a named vector for edge colors based on p-value
-edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "red"), param_labels)
+edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "white"), param_labels)
 
 
 # Dynamically generate edge colors
 n_edges <- length(regression_paths$lhs)  # Number of regression paths
-edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "red")
+edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "white")
 
 # Check the length of edge_colors matches the number of paths
 if (length(edge_colors) < n_edges) {
@@ -196,12 +188,12 @@ param_labels <- paste(regression_paths$lhs, regression_paths$op, regression_path
 
 
 # Create a named vector for edge colors based on p-value
-edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "red"), param_labels)
+edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "white"), param_labels)
 
 
 # Dynamically generate edge colors
 n_edges <- length(regression_paths$lhs)  # Number of regression paths
-edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "red")
+edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "white")
 
 # Check the length of edge_colors matches the number of paths
 if (length(edge_colors) < n_edges) {
@@ -294,8 +286,8 @@ for (N in (R+1):2) {
   path_results <- parameterEstimates(fit, standardized = TRUE)
   regression_paths <- path_results[path_results$op == "~", ]
   param_labels <- paste(regression_paths$lhs, regression_paths$op, regression_paths$rhs, sep = " ")
-  edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "red"), param_labels)
-  edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "red")
+  edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "white"), param_labels)
+  edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "white")
   
   # Ensure edge_colors matches the number of paths
   n_edges <- length(regression_paths$lhs)
@@ -390,8 +382,8 @@ for (N in (R+1):8) {
   path_results <- parameterEstimates(fit, standardized = TRUE)
   regression_paths <- path_results[path_results$op == "~", ]
   param_labels <- paste(regression_paths$lhs, regression_paths$op, regression_paths$rhs, sep = " ")
-  edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "red"), param_labels)
-  edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "red")
+  edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "white"), param_labels)
+  edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "white")
   
   # Ensure edge_colors matches the number of paths
   n_edges <- length(regression_paths$lhs)
@@ -480,12 +472,12 @@ param_labels <- paste(regression_paths$lhs, regression_paths$op, regression_path
 
 
 # Create a named vector for edge colors based on p-value
-edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "red"), param_labels)
+edge_colors_map <- setNames(ifelse(regression_paths$pvalue < 0.05, "black", "white"), param_labels)
 
 
 # Dynamically generate edge colors
 n_edges <- length(regression_paths$lhs)  # Number of regression paths
-edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "red")
+edge_colors <- ifelse(regression_paths$pvalue < 0.05, "black", "white")
 
 # Check the length of edge_colors matches the number of paths
 if (length(edge_colors) < n_edges) {
