@@ -8,7 +8,7 @@ library(ggplot2)
 library(stargazer)
 library(sandwich)   # For robust and clustered standard errors
 library(lmtest)   
-
+library(viridis)
 if (!requireNamespace("semPlot", quietly = TRUE)) install.packages("semPlot")
 if (!requireNamespace("lavaan", quietly = TRUE)) install.packages("lavaan")
 
@@ -246,6 +246,81 @@ p <- ggplot(dfs_long, aes(x = compliance_lag_extraction_others_OA_mean,
 print(p)
 ggsave( file=paste0(path_github, "Outputs/compliance_per_lag_OA.png") , plot = p, device = "png", width = 10, height = 8)
 
+
+
+
+##################################################
+### Graph beliefs by extraction area and scenario
+##################################################
+
+# Belief compliance for amerb
+df$belief_compliance_amerb_T1 <- 1 - (df$beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini / 50)
+df$belief_compliance_pm_T1 <- 1 - (df$beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini / 50)
+df$belief_compliance_union_T1 <- 1 - (df$beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini / 50)
+df$belief_compliance_pm_T2 <- 1 - (df$beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini / 50)
+df$belief_compliance_union_T2 <- 1 - (df$beliefsT2inicial.1.player.T2_belief_caleta_ini/ 50)
+
+
+
+# Create long dataframe
+beliefs_df <- data.frame(
+  value = c(
+    df$belief_compliance_amerb_T1,
+    df$belief_compliance_union_T1,
+    df$belief_compliance_pm_T1,
+    df$belief_compliance_union_T2,
+    df$belief_compliance_pm_T2
+  ),
+  group = rep(c("Amerb", "Union OA", "Others OA","Union OA", "Others OA"), each = nrow(df)),
+  treatment = rep(c("T1", "T1", "T1", "T2", "T2"), each = nrow(df))
+)
+
+# Summarize with mean and CI
+beliefs_summary <- beliefs_df %>%
+  group_by(group, treatment) %>%
+  summarise(
+    mean = mean(value, na.rm = TRUE),
+    sd = sd(value, na.rm = TRUE),
+    n = sum(!is.na(value)),
+    lower_ci = mean - 1.96 * sd / sqrt(n),
+    upper_ci = mean + 1.96 * sd / sqrt(n),
+    .groups = "drop"
+  )
+
+# Clean group names and set order
+beliefs_summary$group <- factor(
+  beliefs_summary$group,
+  levels = c("Amerb", "Union OA", "Others OA")
+)
+
+# Re-plot with fixed order
+p<-ggplot(beliefs_summary, aes(x = group, y = mean, fill = treatment)) +
+  geom_bar(stat = "identity", position = position_dodge(0.8), width = 0.7) +
+  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci),
+                width = 0.25,
+                position = position_dodge(0.8)) +
+  scale_fill_manual(
+    values = c("T1" = "#3F4A8A", "T2" = "#6CCE5A"),
+    labels = c("Unknown Outsiders", "Known Outsiders")
+  ) +
+  labs(
+    title = "Belief-based Compliance by Group and Scenario",
+    x = "",
+    y = "Belief Compliance (0–1)",
+    fill = "Scenarios"
+  ) +
+  scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.title.y = element_text(size = 14),
+    legend.title = element_text(face = "bold")
+  )
+
+
+ggsave(file = paste0(path_github, "Outputs/beliefs_per_extraction_area.png"), 
+       plot = p, device = "png", width = 10, height = 8)
 
 
 ###############################################
@@ -712,7 +787,7 @@ sem_model <- '
   
   # Belief compliance
   df$belief_compliance_pm <- 1 - (df$beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini / 50)
-  df$belief_compliance_union <- 1 - (df$beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini / 50)
+  df$belief_compliance_union <- 1 - (df$beliefsT2inicial.1.player.T2_belief_caleta_ini / 50)
   
   # Define the SEM model
   sem_model <- '
@@ -800,7 +875,7 @@ sem_model <- '
     
     # Belief compliance
     df$belief_compliance_pm <- 1 - (df$beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini / 50)
-    df$belief_compliance_union <- 1 - (df$beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini / 50)
+    df$belief_compliance_union <- 1 - (df$beliefsT2inicial.1.player.T2_belief_caleta_ini / 50)
     
     # Observed compliance
     variable_subset <- df[, grep("T2juegoalgas\\.(\\d+)\\.player\\..+_extraccion_otros_metat$", names(df))]
@@ -1072,6 +1147,297 @@ title(main = paste("Mean Compliance Scenario 2 TURF Rounds ", R ," to ", N), lin
 # Close the P
 # Close the PDF device
 dev.off()
+
+
+
+
+
+
+
+
+########################################
+############### Round plots by beliefs:
+########################################
+
+# Helper function
+categorize_belief <- function(x) {
+  case_when(
+    x == 1 ~ "Full Compliance",
+    x == 0 ~ "No Compliance",
+    x > 0 & x < 1 ~ "Partial Compliance",
+    TRUE ~ NA_character_
+  )
+}
+
+# --- Recalculate belief compliance variables ---
+df$belief_compliance_amerb_T1  <- 1 - (df$beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini / 50)
+df$belief_compliance_pm_T1     <- 1 - (df$beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini / 50)
+df$belief_compliance_union_T1  <- 1 - (df$beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini / 50)
+df$belief_compliance_pm_T2     <- 1 - (df$beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini / 50)
+df$belief_compliance_union_T2  <- 1 - (df$beliefsT2inicial.1.player.T2_belief_caleta_ini / 50)
+
+
+# Apply categorization
+df$belief_cat_amerb_T1 <- categorize_belief(df$belief_compliance_amerb_T1)
+df$belief_cat_pm_T1 <- categorize_belief(df$belief_compliance_pm_T1)
+df$belief_cat_union_T1 <- categorize_belief(df$belief_compliance_union_T1)
+df$belief_cat_pm_T2 <- categorize_belief(df$belief_compliance_pm_T2)
+df$belief_cat_union_T2 <- categorize_belief(df$belief_compliance_union_T2)
+
+
+
+# === T1 OA Compliance by Outsiders Belief Category ===
+oa_vars_T1 <- grep("^T1juegoalgas\\.\\d+\\.player\\.T1_extraccion_libre$", names(df), value = TRUE)
+oa_data_T1 <- df[, oa_vars_T1[1:8]]
+
+compliance_T1 <- 1 - (oa_data_T1 / 50)
+compliance_T1$belief_cat <- df$belief_cat_pm_T1
+compliance_T1$id <- seq_len(nrow(compliance_T1))
+
+long_T1 <- compliance_T1 %>%
+  pivot_longer(cols = starts_with("T1juegoalgas"), names_to = "round_var", values_to = "compliance") %>%
+  mutate(round = as.numeric(gsub(".*T1juegoalgas\\.(\\d+)\\..*", "\\1", round_var)))
+
+summary_T1 <- long_T1 %>%
+  group_by(round, belief_cat) %>%
+  summarise(
+    mean = mean(compliance, na.rm = TRUE),
+    sd = sd(compliance, na.rm = TRUE),
+    n = n(),
+    lower_ci = mean - 1.96 * sd / sqrt(n),
+    upper_ci = mean + 1.96 * sd / sqrt(n),
+    .groups = "drop"
+  )
+
+p <- ggplot(summary_T1, aes(x = round, y = mean, color = belief_cat, fill = belief_cat)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.2) +
+  scale_color_viridis_d(option = "D") +
+  scale_fill_viridis_d(option = "D") +
+  labs(
+    title = "Compliance Over Time in OA (T1 - Unknown Outsiders)",
+    x = "Round", y = "Mean Compliance",
+    color = "Belief Category", fill = "Belief Category"
+  ) +
+  scale_x_continuous(breaks = 1:8) +
+  scale_y_continuous(limits = c(0, 1.1), expand = c(0, 0)) +
+  theme_minimal()
+
+ggsave(paste0(path_github, "Outputs/beliefs_compliance_outsiders_OA_T1.png"), plot = p, width = 10, height = 8)
+
+
+# === T2 OA Compliance by Outsiders Belief Category ===
+oa_vars_T2 <- grep("^T2juegoalgas\\.\\d+\\.player\\.T2_extraccion_metat$", names(df), value = TRUE)
+oa_data_T2 <- df[, oa_vars_T2[1:8]]
+
+compliance_T2 <- 1 - (oa_data_T2 / 50)
+compliance_T2$belief_cat <- df$belief_cat_pm_T2
+compliance_T2$id <- seq_len(nrow(compliance_T2))
+
+long_T2 <- compliance_T2 %>%
+  pivot_longer(cols = starts_with("T2juegoalgas"), names_to = "round_var", values_to = "compliance") %>%
+  mutate(round = as.numeric(gsub(".*T2juegoalgas\\.(\\d+)\\..*", "\\1", round_var)))
+
+summary_T2 <- long_T2 %>%
+  group_by(round, belief_cat) %>%
+  summarise(
+    mean = mean(compliance, na.rm = TRUE),
+    sd = sd(compliance, na.rm = TRUE),
+    n = n(),
+    lower_ci = mean - 1.96 * sd / sqrt(n),
+    upper_ci = mean + 1.96 * sd / sqrt(n),
+    .groups = "drop"
+  )
+
+p <- ggplot(summary_T2, aes(x = round, y = mean, color = belief_cat, fill = belief_cat)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.2) +
+  scale_color_viridis_d(option = "D") +
+  scale_fill_viridis_d(option = "D") +
+  labs(
+    title = "Compliance Over Time in OA (T2 - Known Outsiders)",
+    x = "Round", y = "Mean Compliance",
+    color = "Belief Category", fill = "Belief Category"
+  ) +
+  scale_x_continuous(breaks = 1:8) +
+  scale_y_continuous(limits = c(0, 1.1), expand = c(0, 0)) +
+  theme_minimal()
+
+ggsave(paste0(path_github, "Outputs/beliefs_compliance_outsiders_OA_T2.png"), plot = p, width = 10, height = 8)
+
+
+# === T1 OA Compliance by Union Belief Category ===
+compliance_T1_union <- 1 - (oa_data_T1 / 50)
+compliance_T1_union$belief_cat <- df$belief_cat_union_T1
+compliance_T1_union$id <- seq_len(nrow(compliance_T1_union))
+
+long_T1_union <- compliance_T1_union %>%
+  pivot_longer(cols = starts_with("T1juegoalgas"), names_to = "round_var", values_to = "compliance") %>%
+  mutate(round = as.numeric(gsub(".*T1juegoalgas\\.(\\d+)\\..*", "\\1", round_var)))
+
+summary_T1_union <- long_T1_union %>%
+  group_by(round, belief_cat) %>%
+  summarise(
+    mean = mean(compliance, na.rm = TRUE),
+    sd = sd(compliance, na.rm = TRUE),
+    n = n(),
+    lower_ci = mean - 1.96 * sd / sqrt(n),
+    upper_ci = mean + 1.96 * sd / sqrt(n),
+    .groups = "drop"
+  )
+
+p1 <- ggplot(summary_T1_union, aes(x = round, y = mean, color = belief_cat, fill = belief_cat)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.2) +
+  scale_color_viridis_d(option = "D") +
+  scale_fill_viridis_d(option = "D") +
+  labs(
+    title = "Compliance Over Time in OA (T1 - Unknown Outsiders) by Union Belief",
+    x = "Round", y = "Mean Compliance",
+    color = "Union Belief", fill = "Union Belief"
+  ) +
+  scale_x_continuous(breaks = 1:8) +
+  scale_y_continuous(limits = c(0, 1.1), expand = c(0, 0)) +
+  theme_minimal()
+
+ggsave(paste0(path_github, "Outputs/beliefs_compliance_union_OA_T1.png"), p1, width = 10, height = 8)
+
+
+# === T2 OA Compliance by Union Belief Category ===
+compliance_T2_union <- 1 - (oa_data_T2 / 50)
+compliance_T2_union$belief_cat <- df$belief_cat_union_T2
+compliance_T2_union$id <- seq_len(nrow(compliance_T2_union))
+
+long_T2_union <- compliance_T2_union %>%
+  pivot_longer(cols = starts_with("T2juegoalgas"), names_to = "round_var", values_to = "compliance") %>%
+  mutate(round = as.numeric(gsub(".*T2juegoalgas\\.(\\d+)\\..*", "\\1", round_var)))
+
+summary_T2_union <- long_T2_union %>%
+  group_by(round, belief_cat) %>%
+  summarise(
+    mean = mean(compliance, na.rm = TRUE),
+    sd = sd(compliance, na.rm = TRUE),
+    n = n(),
+    lower_ci = mean - 1.96 * sd / sqrt(n),
+    upper_ci = mean + 1.96 * sd / sqrt(n),
+    .groups = "drop"
+  )
+
+p2 <- ggplot(summary_T2_union, aes(x = round, y = mean, color = belief_cat, fill = belief_cat)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.2) +
+  scale_color_viridis_d(option = "D") +
+  scale_fill_viridis_d(option = "D") +
+  labs(
+    title = "Compliance Over Time in OA (T2 - Known Outsiders) by Union Belief",
+    x = "Round", y = "Mean Compliance",
+    color = "Union Belief", fill = "Union Belief"
+  ) +
+  scale_x_continuous(breaks = 1:8) +
+  scale_y_continuous(limits = c(0, 1.1), expand = c(0, 0)) +
+  theme_minimal()
+
+ggsave(paste0(path_github, "Outputs/beliefs_compliance_union_OA_T2.png"), p2, width = 10, height = 8)
+
+
+
+###############################
+#### Earnings
+###############################
+#################### Earning Figures with loop and exporting 
+#############################################################
+
+# List of belief category vars
+belief_vars <- c(
+  "belief_cat_amerb_T1",
+  "belief_cat_pm_T1",
+  "belief_cat_union_T1",
+  "belief_cat_pm_T2",
+  "belief_cat_union_T2"
+)
+
+# Combine into long format with labels
+payoff_beliefs <- lapply(belief_vars, function(var) {
+  df %>%
+    select(participant.payoff, belief_cat = all_of(var)) %>%
+    mutate(belief_type = var)
+}) %>% bind_rows()
+
+# Summary stats
+payoff_summary_all <- payoff_beliefs %>%
+  group_by(belief_type, belief_cat) %>%
+  summarise(
+    mean = mean(participant.payoff, na.rm = TRUE),
+    sd = sd(participant.payoff, na.rm = TRUE),
+    n = sum(!is.na(participant.payoff)),
+    lower_ci = mean - 1.96 * sd / sqrt(n),
+    upper_ci = mean + 1.96 * sd / sqrt(n),
+    .groups = "drop"
+  )
+
+# Nicer labels
+payoff_summary_all$belief_type <- recode(
+  payoff_summary_all$belief_type,
+  belief_cat_amerb_T1 = "AMERB_T1",
+  belief_cat_pm_T1 = "Others_OA_T1",
+  belief_cat_union_T1 = "Union_OA_T1",
+  belief_cat_pm_T2 = "Others_OA_T2",
+  belief_cat_union_T2 = "Union_OA_T2"
+)
+
+# === Combined facet plot ===
+p_all <- ggplot(payoff_summary_all, aes(x = belief_cat, y = mean, fill = belief_cat)) +
+  geom_col(position = position_dodge(), width = 0.6) +
+  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2, position = position_dodge(width = 0.6)) +
+  facet_wrap(~ belief_type) +
+  scale_fill_viridis_d(option = "D", end = 0.9) +
+  labs(
+    title = "Mean Participant Payoff by Belief Category and Group",
+    x = "Belief Category", y = "Mean Payoff", fill = "Belief Category"
+  ) +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(face = "bold"),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    axis.title = element_text(size = 14),
+    legend.position = "none"
+  )
+
+# Save combined plot
+ggsave(paste0(path_github, "Outputs/payoffs_by_belief_all_facet.png"), plot = p_all, width = 12, height = 8)
+
+# === Individual plots per belief category ===
+belief_types <- unique(payoff_summary_all$belief_type)
+
+for (bt in belief_types) {
+  df_sub <- payoff_summary_all %>% filter(belief_type == bt)
+  
+  p <- ggplot(df_sub, aes(x = belief_cat, y = mean, fill = belief_cat)) +
+    geom_col(position = position_dodge(), width = 0.6) +
+    geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2, position = position_dodge(width = 0.6)) +
+    scale_fill_viridis_d(option = "D", end = 0.9) +
+    labs(
+      title = paste("Mean Participant Payoff -", bt),
+      x = "Belief Category", y = "Mean Payoff", fill = "Belief Category"
+    ) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+      axis.title = element_text(size = 14),
+      legend.position = "none"
+    )
+  
+  ggsave(paste0(path_github, "Outputs/payoffs_by_belief_", bt, ".png"), plot = p, width = 10, height = 8)
+}
+
+
+
+
+
 
 
 
