@@ -1389,12 +1389,22 @@ payoff_summary_all$belief_type <- recode(
   belief_cat_union_T2 = "Union_OA_T2"
 )
 
+# Reorder belief_cat: Full -> Partial -> No
+desired_order <- c("Full Compliance", "Partial Compliance", "No Compliance")
+payoff_summary_all$belief_cat <- factor(payoff_summary_all$belief_cat, levels = desired_order)
+belief_colors <- c(
+  "Full Compliance" = "#440154",     # Purple
+  "Partial Compliance" = "#FDE725",  # Yellow
+  "No Compliance" = "#21908C"        # Blue-Green
+)
+
+
 # === Combined facet plot ===
 p_all <- ggplot(payoff_summary_all, aes(x = belief_cat, y = mean, fill = belief_cat)) +
   geom_col(position = position_dodge(), width = 0.6) +
   geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2, position = position_dodge(width = 0.6)) +
   facet_wrap(~ belief_type) +
-  scale_fill_viridis_d(option = "D", end = 0.9) +
+  scale_fill_manual(values = belief_colors) +
   labs(
     title = "Mean Participant Payoff by Belief Category and Group",
     x = "Belief Category", y = "Mean Payoff", fill = "Belief Category"
@@ -1419,7 +1429,7 @@ for (bt in belief_types) {
   p <- ggplot(df_sub, aes(x = belief_cat, y = mean, fill = belief_cat)) +
     geom_col(position = position_dodge(), width = 0.6) +
     geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2, position = position_dodge(width = 0.6)) +
-    scale_fill_viridis_d(option = "D", end = 0.9) +
+    scale_fill_manual(values = belief_colors) +
     labs(
       title = paste("Mean Participant Payoff -", bt),
       x = "Belief Category", y = "Mean Payoff", fill = "Belief Category"
