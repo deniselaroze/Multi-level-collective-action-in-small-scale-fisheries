@@ -15,12 +15,12 @@ library(R.matlab)
 
 
 rm(list=ls())
-path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+#path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 
-#path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 
 setwd(path_github)
@@ -225,6 +225,8 @@ belief_columns <- c(
 
 experience <- c("survey1.1.player.confianza_caleta", "survey1.1.player.confianza_pm", 
                 "survey1.1.player.conflicto_caleta", "survey1.1.player.conflicto_pm", 
+                "survey2.1.player.confianza_caleta_conocida_mean",
+                "survey2.1.player.conflicto_caleta_conocida_mean",
                 "survey1.1.player.experiencia_caleta", "survey1.1.player.experiencia_pm", 
                 "survey1.1.player.T1_motiv_legit_amerb", "survey1.1.player.T1_motiv_instr_amerb", 
                 "survey1.1.player.T1_motiv_socnorm_amerb", "survey1.1.player.T1_motiv_legit_pm", 
@@ -623,6 +625,10 @@ dfs_long$compliance_beliefs_OA_caleta<-ifelse(dfs_long$treatment=="T1", dfs_long
 
 dfs_long$compliance_beliefs_OA_others<-ifelse(dfs_long$treatment=="T1", dfs_long$compliance_beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini,
                                               dfs_long$compliance_beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini) 
+
+dfs_long$conflicto_OA<-ifelse(dfs_long$treatment=="T1", dfs_long$survey1.1.player.conflicto_pm, dfs_long$survey2.1.player.conflicto_caleta_conocida_mean)
+dfs_long$confianza_OA<-ifelse(dfs_long$treatment=="T1", dfs_long$survey1.1.player.confianza_pm, dfs_long$survey2.1.player.confianza_caleta_conocida_mean)
+
 
 ################
 #### Save data
