@@ -156,6 +156,37 @@ ggsave(file = paste0(path_github, "Outputs/compliance_per_extraction_area.png"),
 
 
 
+############################################
+#### Correlation compliance per scenario
+############################################
+result <- cor.test(dfs_long$compliance_extraction_OA, 
+                   dfs_long$compliance_extraction_amerb, 
+                   method = "pearson", 
+                   use = "complete.obs")
+
+# Show correlation coefficient and p-value
+cat("Correlation coefficient (r):", round(result$estimate, 3), "\n")
+cat("p-value:", result$p.value, "\n")
+
+lm<-lm(compliance_extraction_OA ~  compliance_extraction_amerb , dfs_long)
+
+summary(lm)
+
+### Individual level differences in compliance across scenarios
+
+# t-test strategy
+t_test_result <- t.test(dfs_long$compliance_extraction_OA, 
+                        dfs_long$compliance_extraction_amerb, 
+                        paired = TRUE)
+t_test_result
+
+# reg strategy
+dfs_long$diff_compliance <- dfs_long$compliance_extraction_OA - dfs_long$compliance_extraction_amerb
+
+lm_diff <- lm(diff_compliance ~ 1, data = dfs_long)
+
+summary(lm_diff)
+
 
 
 #################################################
