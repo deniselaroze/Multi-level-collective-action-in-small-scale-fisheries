@@ -18,7 +18,7 @@ load(paste0(path_datos, "/Datos_islitas_long.Rdata"))
 
 
 ##### identifying data
-df_payoff <- df[, grep("payoff|pago", names(df), ignore.case = TRUE)]
+#df_payoff <- df[, grep("payoff|pago", names(df), ignore.case = TRUE)]
 
 
 df_payoff <- df[, grep("pago_acumulado", names(df), ignore.case = TRUE)]
@@ -37,6 +37,14 @@ df_payoff <- df[, grep("pago_acumulado", names(df), ignore.case = TRUE)]
 
 df$ganancias_amerb<-df$T1juegoalgas.8.player.T1_pago_acumulado_amerb + df$T2juegoalgas.8.player.T2_pago_acumulado_metat
 df$ganancias_OA<-df$T1juegoalgas.8.player.T1_pago_acumulado_libre + df$T2juegoalgas.8.player.T2_pago_acumulado_metat
+
+
+### Descriptive statistics:
+mean(df$T1juegoalgas.8.player.T1_pago_acumulado_libre)
+sd(df$T1juegoalgas.8.player.T1_pago_acumulado_libre )
+
+mean(df$T2juegoalgas.8.player.T2_pago_acumulado_metat)
+sd(df$T2juegoalgas.8.player.T2_pago_acumulado_metat)
 
 
 ### group level 
@@ -122,14 +130,15 @@ m4_tot <- lm(group_payoff_tot ~ mean_belief_fin, data = tmp)
 m5_tot <- lm(group_payoff_tot ~ sd_belief_fin, data = tmp)
 m6_tot <- lm(group_payoff_tot ~ range_belief_fin, data = tmp)
 
+
 # Stargazer table for group_payoff_tot
 stargazer(m1_tot, m2_tot, m3_tot, m4_tot, m5_tot, m6_tot,
           type = "text")
 
 
-
+###################
 #### Open Access
-
+######################
 df$belief_compliance_pm_OA_T1 <- 1 - (df$beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini / 50)
 df$belief_compliance_pm_OA_T2 <- 1 - (df$beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini / 50)
 df$belief_compliance_union_OA_T1 <- 1 - (df$beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini / 50)
@@ -243,6 +252,198 @@ models_OA <- lapply(
 stargazer(models_OA,
           type = "text",
           title = "Bivariate Regressions - Dependent Variable: group_payoff_OA_tot (Union OA)")
+
+
+
+# Amerb
+
+# T1
+m1_t1 <- lm(group_payoff_t1 ~ mean_belief_ini, data = tmp)
+
+# T2
+m4_t2 <- lm(group_payoff_t2 ~ mean_belief_fin, data = tmp)
+
+# Total 
+m1_tot <- lm(group_payoff_tot ~ mean_belief_ini, data = tmp)
+m4_tot <- lm(group_payoff_tot ~ mean_belief_fin, data = tmp)
+
+
+# Open Access 
+
+# Unknown Outsiders T1
+m4_OA_t1 <- lm(group_payoff_OA_t1 ~ mean_union_OA_T1, data = tmp2)
+m1_OA_t1 <- lm(group_payoff_OA_t1 ~ mean_pm_OA_T1, data = tmp2)
+
+# Known Outsiders T2
+m4_OA_t2 <- lm(group_payoff_OA_t2 ~ mean_union_OA_T2, data = tmp2)
+m1_OA_t2 <- lm(group_payoff_OA_t2 ~ mean_pm_OA_T2, data = tmp2)
+
+
+# Total Open Access 
+m7_OA_tot <- lm(group_payoff_OA_tot ~ mean_union_OA_T1, data = tmp2)
+m10_OA_tot <- lm(group_payoff_OA_tot ~ mean_union_OA_T2, data = tmp2)
+m1_OA_tot <- lm(group_payoff_OA_tot ~ mean_pm_OA_T1, data = tmp2)
+m4_OA_tot <- lm(group_payoff_OA_tot ~ mean_pm_OA_T2, data = tmp2)
+
+
+
+
+#######################################
+##### Scatterplots of the regressions
+##########################################
+library(ggplot2)
+library(dplyr)
+
+# T1 and T2 subset
+amerb_t <- bind_rows(
+  tmp %>% 
+    select(mean_belief = mean_belief_ini, group_payoff = group_payoff_t1) %>% 
+    mutate(model = "T1: belief_ini → payoff_t1"),
+  
+  tmp %>%
+    select(mean_belief = mean_belief_fin, group_payoff = group_payoff_t2) %>%
+    mutate(model = "T2: belief_fin → payoff_t2")
+)
+
+# Tot1 and Tot2 subset
+amerb_tot <- bind_rows(
+  tmp %>%
+    select(mean_belief = mean_belief_ini, group_payoff = group_payoff_tot) %>%
+    mutate(model = "Tot1: belief_ini → payoff_tot"),
+  
+  tmp %>%
+    select(mean_belief = mean_belief_fin, group_payoff = group_payoff_tot) %>%
+    mutate(model = "Tot2: belief_fin → payoff_tot")
+)
+
+# T1 & T2 plot
+p<-ggplot(amerb_t, aes(x = mean_belief, y = group_payoff)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = TRUE, color = "blue") +
+  facet_wrap(~model) +
+  coord_cartesian(ylim = c(1100, 1700), xlim = c(0,1)) +
+  labs(
+    title = "Amerb Regressions (T1, T2)",
+    x = "Mean Belief",
+    y = "Group Payoff"
+  ) +
+  theme_minimal()
+
+ggsave(file = paste0(path_github, "Outputs/group_payoffs_per_beliefs_Turf_T1_T2.png"), 
+       plot = p, device = "png", width = 10, height = 8)
+
+
+# Tot1 & Tot2 plot
+p<-ggplot(amerb_tot, aes(x = mean_belief, y = group_payoff)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = TRUE, color = "blue") +
+  facet_wrap(~model) +
+  coord_cartesian(ylim = c(2400, 3300), xlim = c(0,1)) +
+  labs(
+    title = "Amerb Regressions (Total)",
+    x = "Mean Belief",
+    y = "Group Payoff"
+  ) +
+  theme_minimal()
+
+ggsave(file = paste0(path_github, "Outputs/group_payoffs_per_beliefs_Turf_Tot.png"), 
+       plot = p, device = "png", width = 10, height = 8)
+
+
+# File: plots/open_access_regression_plots.R
+
+######################
+### Open Access plots
+######################
+
+# T1 OA
+oa_t1 <- bind_rows(
+  tmp2 %>% 
+    select(x = mean_union_OA_T1, y = group_payoff_OA_t1) %>% 
+    mutate(model = "T1: union → payoff"),
+  
+  tmp2 %>% 
+    select(x = mean_pm_OA_T1, y = group_payoff_OA_t1) %>% 
+    mutate(model = "T1: PM → payoff")
+)
+
+# T2 OA
+oa_t2 <- bind_rows(
+  tmp2 %>% 
+    select(x = mean_union_OA_T2, y = group_payoff_OA_t2) %>% 
+    mutate(model = "T2: union → payoff"),
+  
+  tmp2 %>% 
+    select(x = mean_pm_OA_T2, y = group_payoff_OA_t2) %>% 
+    mutate(model = "T2: PM → payoff")
+)
+
+# Totals OA
+oa_tot <- bind_rows(
+  tmp2 %>%
+    select(x = mean_union_OA_T1, y = group_payoff_OA_tot) %>%
+    mutate(model = "Tot: union_T1 → payoff"),
+  
+  tmp2 %>%
+    select(x = mean_union_OA_T2, y = group_payoff_OA_tot) %>%
+    mutate(model = "Tot: union_T2 → payoff"),
+  
+  tmp2 %>%
+    select(x = mean_pm_OA_T1, y = group_payoff_OA_tot) %>%
+    mutate(model = "Tot: PM_T1 → payoff"),
+  
+  tmp2 %>%
+    select(x = mean_pm_OA_T2, y = group_payoff_OA_tot) %>%
+    mutate(model = "Tot: PM_T2 → payoff")
+)
+
+# Plot T1
+p<-ggplot(oa_t1, aes(x = x, y = y)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = TRUE, color = "blue") +
+  facet_wrap(~model) +
+  coord_cartesian(ylim = c(1100, 1700), xlim = c(0,1)) +
+  labs(
+    title = "Open Access T1: Unknown Outsiders",
+    x = "Mean Belief",
+    y = "Group Payoff"
+  ) +
+  theme_minimal()
+
+ggsave(file = paste0(path_github, "Outputs/group_payoffs_per_beliefs_OA_.png"), 
+       plot = p, device = "png", width = 10, height = 8)
+
+
+# Plot T2
+p<-ggplot(oa_t2, aes(x = x, y = y)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = TRUE, color = "blue") +
+  facet_wrap(~model) +
+  coord_cartesian(ylim = c(1100, 1700), xlim = c(0,1)) +
+  labs(
+    title = "Open Access T2: Known Outsiders",
+    x = "Mean Belief",
+    y = "Group Payoff"
+  ) +
+  theme_minimal()
+ggsave(file = paste0(path_github, "Outputs/group_payoffs_per_beliefs_OA_T2.png"), 
+       plot = p, device = "png", width = 10, height = 8)
+
+# Plot Totals with fixed y-axis
+p<-ggplot(oa_tot, aes(x = x, y = y)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = TRUE, color = "blue") +
+  facet_wrap(~model) +
+  coord_cartesian(ylim = c(2400, 3300), xlim = c(0,1)) +  # Ensures comparable payoff range
+  labs(
+    title = "Open Access Total: All Models",
+    x = "Mean Belief",
+    y = "Group Payoff"
+  ) +
+  theme_minimal()
+
+ggsave(file = paste0(path_github, "Outputs/group_payoffs_per_beliefs_OA_Tot.png"), 
+       plot = p, device = "png", width = 10, height = 8)
 
 
 
