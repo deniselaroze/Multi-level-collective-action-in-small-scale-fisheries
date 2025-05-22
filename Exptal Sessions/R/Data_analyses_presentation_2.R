@@ -32,19 +32,6 @@ load(paste0(path_datos, "/Datos_islitas_recode.Rdata"))
 load(paste0(path_datos, "/Datos_islitas_long.Rdata"))
 
 
-
-
-#### Color pallet
-
-#Dark Purple (#440154)
-#  Purple-Blue (#482777)
-#    Blue (#3F4A8A)
-#      Teal-Blue (#31688E)
-#        Green-Teal (#26828E)
-#          Light Green (#1F9D8A)
-#            Yellow-Green (#6CCE5A)
-#              Bright Yellow (#FDE725)
-
 ##########################
 ### Descriptive Statistics
 ##########################
