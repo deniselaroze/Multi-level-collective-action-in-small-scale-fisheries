@@ -1,6 +1,10 @@
 
 library(dplyr)
 library(stargazer)
+library(tidyr)
+library(ggplot2)
+library(viridis)
+
 rm(list=ls())
 path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
 path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
@@ -454,6 +458,211 @@ ggsave(file = paste0(path_github, "Outputs/group_payoffs_per_beliefs_OA_Tot.png"
 library(dplyr)
 library(ggplot2)
 library(viridis)
+library(tidyr)
+
+
+tmp2 <- df %>%
+  group_by(gid.treat) %>%
+  summarise(
+    mean_pm_OA_T1  = mean(belief_compliance_pm_OA_T1, na.rm = TRUE),
+    mean_pm_OA_T2  = mean(belief_compliance_pm_OA_T2, na.rm = TRUE),
+    mean_union_OA_T1  = mean(belief_compliance_union_OA_T1, na.rm = TRUE),
+    mean_union_OA_T2  = mean(belief_compliance_union_OA_T2, na.rm = TRUE),
+    group_payoff_OA_t1 = mean(T1juegoalgas.8.player.T1_pago_acumulado_libre, na.rm = TRUE),
+    group_payoff_OA_t2 = mean(T2juegoalgas.8.player.T2_pago_acumulado_metat, na.rm = TRUE),
+    group_payoff_OA_tot = mean(ganancias_OA, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    category_pm_OA_T1 = factor(case_when(
+      mean_pm_OA_T1 < 0.3 ~ "Low Belief Others (mean<0.3)",
+      mean_pm_OA_T1 >= 0.3 & mean_pm_OA_T1 < 0.7 ~ "Mid-Range Belief Others (mean >=0.3, <0.7)",
+      TRUE ~ "High Belief Others (mean >=0.7)"
+    ), levels = c(
+      "Low Belief Others (mean<0.3)",
+      "Mid-Range Belief Others (mean >=0.3, <0.7)",
+      "High Belief Others (mean >=0.7)"
+    )),
+    
+    category_pm_OA_T2 = factor(case_when(
+      mean_pm_OA_T2 < 0.3 ~ "Low Belief Others (mean<0.3)",
+      mean_pm_OA_T2 >= 0.3 & mean_pm_OA_T2 < 0.7 ~ "Mid-Range Belief Others (mean >=0.3, <0.7)",
+      TRUE ~ "High Belief Others (mean >=0.7)"
+    ), levels = c(
+      "Low Belief Others (mean<0.3)",
+      "Mid-Range Belief Others (mean >=0.3, <0.7)",
+      "High Belief Others (mean >=0.7)"
+    )),
+    
+    category_union_OA_T1 = factor(case_when(
+      mean_union_OA_T1 < 0.3 ~ "Low Belief Others (mean<0.3)",
+      mean_union_OA_T1 >= 0.3 & mean_union_OA_T1 < 0.7 ~ "Mid-Range Belief Others (mean >=0.3, <0.7)",
+      TRUE ~ "High Belief Others (mean >=0.7)"
+    ), levels = c(
+      "Low Belief Others (mean<0.3)",
+      "Mid-Range Belief Others (mean >=0.3, <0.7)",
+      "High Belief Others (mean >=0.7)"
+    )),
+    
+    category_union_OA_T2 = factor(case_when(
+      mean_union_OA_T2 < 0.3 ~ "Low Belief Others (mean<0.3)",
+      mean_union_OA_T2 >= 0.3 & mean_union_OA_T2 < 0.7 ~ "Mid-Range Belief Others (mean >=0.3, <0.7)",
+      TRUE ~ "High Belief Others (mean >=0.7)"
+    ), levels = c(
+      "Low Belief Others (mean<0.3)",
+      "Mid-Range Belief Others (mean >=0.3, <0.7)",
+      "High Belief Others (mean >=0.7)"
+    ))
+  )
+
+
+plot_bar_with_ci <- function(df, belief_category, payoff_var, title) {
+  df_ci <- df %>%
+    group_by(.data[[belief_category]]) %>%
+    summarise(
+      mean_payoff = mean(.data[[payoff_var]], na.rm = TRUE),
+      sd = sd(.data[[payoff_var]], na.rm = TRUE),
+      n = sum(!is.na(.data[[payoff_var]])),
+      .groups = "drop"
+    ) %>%
+    mutate(
+      se = ifelse(n > 1, sd / sqrt(n), NA),
+      ci_low = ifelse(n > 1, mean_payoff - 1.96 * se, NA),
+      ci_high = ifelse(n > 1, mean_payoff + 1.96 * se, NA)
+    ) %>%
+    complete(!!sym(belief_category),
+             fill = list(mean_payoff = NA, sd = NA, n = 0, se = NA, ci_low = NA, ci_high = NA))
+  
+  ggplot(df_ci, aes_string(x = belief_category, y = "mean_payoff", fill = belief_category)) +
+    geom_col(na.rm = TRUE) +
+    geom_errorbar(
+      aes(ymin = ci_low, ymax = ci_high),
+      width = 0.2,
+      linewidth = 0.7,
+      na.rm = TRUE
+    ) +
+    geom_text(aes(
+      y = mean_payoff + 120,
+      label = ifelse(n > 0, paste0("n=", n), "n=0")),
+      size = 3,
+      vjust = 0,
+      na.rm = TRUE
+    ) +
+    labs(
+      x = "Belief in Others' Compliance Category",
+      y = "Mean Group Earnings",
+      title = title
+    ) +
+    scale_fill_viridis_d(option = "D", end = 0.9, direction = -1) +
+    scale_x_discrete(drop = FALSE) +
+    coord_cartesian(ylim = c(0, 1600)) +
+    theme_minimal() +
+    theme(legend.position = "none")
+}
+
+
+
+# Plot 1: Outsiders, OA T1
+p1 <- plot_bar_with_ci(tmp2, "category_pm_OA_T1", "group_payoff_OA_t1",
+                       "Outsiders in OA T1: Group Earnings by Belief Category")
+ggsave(filename = paste0(path_github, "Outputs/group_payoffs_belief_categories_outsiders_OA_T1.png"),
+       plot = p1, device = "png", width = 10, height = 8)
+
+# Plot 2: Outsiders, OA T2
+p2 <- plot_bar_with_ci(tmp2, "category_pm_OA_T2", "group_payoff_OA_t2",
+                       "Outsiders in OA T2: Group Earnings by Belief Category")
+ggsave(filename = paste0(path_github, "Outputs/group_payoffs_belief_categories_outsiders_OA_T2.png"),
+       plot = p2, device = "png", width = 10, height = 8)
+
+# Plot 3: Union, OA T1
+p3 <- plot_bar_with_ci(tmp2, "category_union_OA_T1", "group_payoff_OA_t1",
+                       "Union in OA T1: Group Earnings by Belief Category")
+ggsave(filename = paste0(path_github, "Outputs/group_payoffs_belief_categories_union_OA_T1.png"),
+       plot = p3, device = "png", width = 10, height = 8)
+
+# Plot 4: Union, OA T2
+p4 <- plot_bar_with_ci(tmp2, "category_union_OA_T2", "group_payoff_OA_t2",
+                       "Union in OA T2: Group Earnings by Belief Category")
+ggsave(filename = paste0(path_github, "Outputs/group_payoffs_belief_categories_union_OA_T2.png"),
+       plot = p4, device = "png", width = 10, height = 8)
+
+
+library(patchwork)  # install if needed: install.packages("patchwork")
+
+# Combine p1 to p4 in a 2x2 layout
+combined_plot <- (p1 | p2) / (p3 | p4)
+
+# Save the combined plot
+ggsave(filename = paste0(path_github, "Outputs/group_payoffs_belief_categories_combined.png"),
+       plot = combined_plot, device = "png", width = 16, height = 12)
+
+######################################################
+################### Trust and conflict with earnings
+######################################################
+
+trust_summary <- df %>%
+  group_by(gid.treat) %>%
+  summarise(
+    confianza_mean_t1 = mean(survey1.1.player.confianza_pm, na.rm = TRUE),
+    confianza_mean_t2 = mean(survey2.1.player.confianza_caleta_conocida_mean, na.rm = TRUE),
+    conflicto_mean_t1 = mean(survey1.1.player.conflicto_pm, na.rm = TRUE),
+    conflicto_mean_t2 = mean(survey2.1.player.conflicto_caleta_conocida_mean, na.rm = TRUE),
+    group_payoff_OA_t1 = mean(T1juegoalgas.8.player.T1_pago_acumulado_libre, na.rm = TRUE),
+    group_payoff_OA_t2 = mean(T2juegoalgas.8.player.T2_pago_acumulado_metat, na.rm = TRUE),
+    group_payoff_OA_tot = mean(ganancias_OA, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    trust_category_t1 = factor(case_when(
+      confianza_mean_t1 < 2 ~ "Low Trust (mean < 2)",
+      TRUE ~ "High Trust (mean ≥ 2)"
+    ), levels = c("Low Trust (mean < 2)", "High Trust (mean ≥ 2)")),
+    
+    trust_category_t2 = factor(case_when(
+      confianza_mean_t2 < 2 ~ "Low Trust (mean < 2)",
+      TRUE ~ "High Trust (mean ≥ 2)"
+    ), levels = c("Low Trust (mean < 2)", "High Trust (mean ≥ 2)")),
+    
+    conflict_category_t1 = factor(case_when(
+      conflicto_mean_t1 < 2 ~ "Low Conflict (mean < 2)",
+      TRUE ~ "High Conflict (mean ≥ 2)"
+    ), levels = c("Low Conflict (mean < 2)", "High Conflict (mean ≥ 2)")),
+    
+    conflict_category_t2 = factor(case_when(
+      conflicto_mean_t2 < 2 ~ "Low Conflict (mean < 2)",
+      TRUE ~ "High Conflict (mean ≥ 2)"
+    ), levels = c("Low Conflict (mean < 2)", "High Conflict (mean ≥ 2)"))
+  )
+
+# Trust T1
+p_trust_t1 <- plot_bar_with_ci(trust_summary, "trust_category_t1", "group_payoff_OA_t1",
+                               "Trust Category T1: Group Earnings OA T1")
+ggsave(paste0(path_github, "Outputs/group_payoffs_trust_category_t1.pdf"),
+       p_trust_t1, width = 10, height = 8)
+
+# Trust T2
+p_trust_t2 <- plot_bar_with_ci(trust_summary, "trust_category_t2", "group_payoff_OA_t2",
+                               "Trust Category T2: Group Earnings OA T2")
+ggsave(paste0(path_github, "Outputs/group_payoffs_trust_category_t2.pdf"),
+       p_trust_t2, width = 10, height = 8)
+
+# Conflict T1
+p_conflict_t1 <- plot_bar_with_ci(trust_summary, "conflict_category_t1", "group_payoff_OA_t1",
+                                  "Conflict Category T1: Group Earnings OA T1")
+ggsave(paste0(path_github, "Outputs/group_payoffs_conflict_category_t1.pdf"),
+       p_conflict_t1, width = 10, height = 8)
+
+# Conflict T2
+p_conflict_t2 <- plot_bar_with_ci(trust_summary, "conflict_category_t2", "group_payoff_OA_t2",
+                                  "Conflict Category T2: Group Earnings OA T2")
+ggsave(paste0(path_github, "Outputs/group_payoffs_conflict_category_t2.pdf"),
+       p_conflict_t2, width = 10, height = 8)
+
+
+###########################################
+### Earnings v belief categories in groups
+##########################################
+
 
 tmp2 <- df %>%
   group_by(gid.treat) %>%
@@ -589,7 +798,6 @@ combined_plot <- (p1 | p2) / (p3 | p4)
 # Save the combined plot
 ggsave(filename = paste0(path_github, "Outputs/group_payoffs_belief_categories_combined.png"),
        plot = combined_plot, device = "png", width = 16, height = 12)
-
 
 
 
