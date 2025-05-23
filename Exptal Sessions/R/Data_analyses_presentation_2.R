@@ -18,11 +18,11 @@ library(semPlot)
 
 
 rm(list=ls())
-path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+#path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
-#path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 setwd(path_github)
 
@@ -1285,5 +1285,169 @@ p2 <- ggplot(summary_T2_union, aes(x = round, y = mean, color = belief_cat, fill
   theme_minimal()
 
 ggsave(paste0(path_github, "Outputs/beliefs_compliance_union_OA_T2.png"), p2, width = 10, height = 8)
+
+
+
+
+
+
+
+
+
+#################################
+### Beliefs by trust and conflict
+#################################
+
+
+
+
+
+
+# Load libraries
+library(ggplot2)
+library(viridis)
+library(dplyr)
+
+#####################################
+############ Turst conflict OA T1
+########################################
+
+# Belief compliance
+df$belief_compliance_pm <- 1 - (df$beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini / 50)
+df$belief_compliance_union <- 1 - (df$beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini / 50)
+
+
+df <- df %>%
+  mutate(
+    trust_pm = factor(
+      ifelse(`survey1.1.player.confianza_pm` <= 1, "Low Trust", "High Trust"),
+      levels = c("Low Trust", "High Trust")
+    ),
+    conflict_pm = factor(
+      ifelse(`survey1.1.player.conflicto_pm` <= 1, "Low Conflict", "High Conflict"),
+      levels = c("Low Conflict", "High Conflict")
+    ),
+    trust_caleta = factor(
+      ifelse(`survey1.1.player.confianza_caleta` <= 1, "Low Trust", "High Trust"),
+      levels = c("Low Trust", "High Trust")
+    ),
+    conflict_caleta = factor(
+      ifelse(`survey1.1.player.conflicto_caleta` <= 1, "Low Conflict", "High Conflict"),
+      levels = c("Low Conflict", "High Conflict")
+    )
+  )
+
+
+# 1. Belief Compliance PM vs Trust PM
+p1 <- ggplot(df, aes(x = trust_pm, y = belief_compliance_pm, fill = trust_pm)) +
+  stat_summary(fun = mean, geom = "bar",  width = 0.6) +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = 0.2) +
+  scale_fill_viridis(discrete = TRUE, direction = -1, end=0.9) +
+  labs(title = "Belief Compliance PM vs Trust in PM", x = "Trust in PM", y = "Mean Belief Compliance PM") +
+  theme_minimal()
+
+# 2. Belief Compliance PM vs Conflict PM
+p2 <- ggplot(df, aes(x = conflict_pm, y = belief_compliance_pm, fill = conflict_pm)) +
+  stat_summary(fun = mean, geom = "bar",  width = 0.6) +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = 0.2) +
+  scale_fill_viridis(discrete = TRUE, direction = -1, end=0.9) +
+  labs(title = "Belief Compliance PM vs Conflict in PM", x = "Conflict in PM", y = "Mean Belief Compliance PM") +
+  theme_minimal()
+
+# 3. Belief Compliance Union vs Trust Caleta
+p3 <- ggplot(df, aes(x = trust_caleta, y = belief_compliance_union, fill = trust_caleta)) +
+  stat_summary(fun = mean, geom = "bar",  width = 0.6) +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = 0.2) +
+  scale_fill_viridis(discrete = TRUE, direction = -1, end=0.9) +
+  labs(title = "Belief Compliance Union vs Trust in Caleta", x = "Trust in Caleta", y = "Mean Belief Compliance Union") +
+  theme_minimal()
+
+# 4. Belief Compliance Union vs Conflict Caleta
+p4 <- ggplot(df, aes(x = conflict_caleta, y = belief_compliance_union, fill = conflict_caleta)) +
+  stat_summary(fun = mean, geom = "bar", width = 0.6) +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = 0.2) +
+  scale_fill_viridis(discrete = TRUE, direction = -1, end=0.9) +
+  labs(title = "Belief Compliance Union vs Conflict in Caleta", x = "Conflict in Caleta", y = "Mean Belief Compliance Union") +
+  theme_minimal()
+
+# Save plots
+ggsave(paste0(path_github, "Outputs/belief_compliance_pm_trust_OA_T1.pdf"), p1, width = 10, height = 8)
+ggsave(paste0(path_github, "Outputs/belief_compliance_pm_conflict_OA_T1.pdf"), p2, width = 10, height = 8)
+ggsave(paste0(path_github, "Outputs/belief_compliance_union_trust_OA_T1.pdf"), p3, width = 10, height = 8)
+ggsave(paste0(path_github, "Outputs/belief_compliance_union_conflict_OA_T1.pdf"), p4, width = 10, height = 8)
+
+
+
+
+#######################################
+### Beliefs on Turst conflict OA - T2
+#######################################
+# Compute belief compliance scores
+df$belief_compliance_pm <- 1 - (df$beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini / 50)
+df$belief_compliance_union <- 1 - (df$beliefsT2inicial.1.player.T2_belief_caleta_ini / 50)
+
+# Recode trust/conflict categories
+df <- df %>%
+  mutate(
+    trust_caleta_conocida = factor(
+      ifelse(`survey2.1.player.confianza_caleta_conocida_mean` <= 1, "Low Trust", "High Trust"),
+      levels = c("Low Trust", "High Trust")
+    ),
+    conflict_caleta_conocida = factor(
+      ifelse(`survey2.1.player.conflicto_caleta_conocida_mean` <= 1, "Low Conflict", "High Conflict"),
+      levels = c("Low Conflict", "High Conflict")
+    ),
+    trust_caleta = factor(
+      ifelse(`survey1.1.player.confianza_caleta` <= 1, "Low Trust", "High Trust"),
+      levels = c("Low Trust", "High Trust")
+    ),
+    conflict_caleta = factor(
+      ifelse(`survey1.1.player.conflicto_caleta` <= 1, "Low Conflict", "High Conflict"),
+      levels = c("Low Conflict", "High Conflict")
+    )
+  )
+
+
+# Plot 1
+p1 <- ggplot(df, aes(x = trust_caleta_conocida, y = belief_compliance_pm, fill = trust_caleta_conocida)) +
+  stat_summary(fun = mean, geom = "bar", width = 0.6) +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = 0.2) +
+  scale_fill_viridis(discrete = TRUE, direction = -1, end = 0.9) +
+  labs(title = "T2: Belief Compliance PM vs Trust in Known Caleta",
+       x = "Trust in Known Caleta", y = "Mean Belief Compliance PM") +
+  theme_minimal()
+
+# Plot 2
+p2 <- ggplot(df, aes(x = conflict_caleta_conocida, y = belief_compliance_pm, fill = conflict_caleta_conocida)) +
+  stat_summary(fun = mean, geom = "bar", width = 0.6) +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = 0.2) +
+  scale_fill_viridis(discrete = TRUE, direction = -1, end = 0.9) +
+  labs(title = "T2: Belief Compliance PM vs Conflict in Known Caleta",
+       x = "Conflict in Known Caleta", y = "Mean Belief Compliance PM") +
+  theme_minimal()
+
+# Plot 3
+p3 <- ggplot(df, aes(x = trust_caleta, y = belief_compliance_union, fill = trust_caleta)) +
+  stat_summary(fun = mean, geom = "bar", width = 0.6) +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = 0.2) +
+  scale_fill_viridis(discrete = TRUE, direction = -1, end = 0.9) +
+  labs(title = "T2: Belief Compliance Union vs Trust in Caleta",
+       x = "Trust in Caleta", y = "Mean Belief Compliance Union") +
+  theme_minimal()
+
+# Plot 4
+p4 <- ggplot(df, aes(x = conflict_caleta, y = belief_compliance_union, fill = conflict_caleta)) +
+  stat_summary(fun = mean, geom = "bar", width = 0.6) +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", width = 0.2) +
+  scale_fill_viridis(discrete = TRUE, direction = -1, end = 0.9) +
+  labs(title = "T2: Belief Compliance Union vs Conflict in Caleta",
+       x = "Conflict in Caleta", y = "Mean Belief Compliance Union") +
+  theme_minimal()
+
+# Save plots
+ggsave(paste0(path_github, "Outputs/belief_compliance_pm_trust_known_OA_T2.pdf"), p1, width = 10, height = 8)
+ggsave(paste0(path_github, "Outputs/belief_compliance_pm_conflict_known_OA_T2.pdf"), p2, width = 10, height = 8)
+ggsave(paste0(path_github, "Outputs/belief_compliance_union_trust_OA_T2.pdf"), p3, width = 10, height = 8)
+ggsave(paste0(path_github, "Outputs/belief_compliance_union_conflict_OA_T2.pdf"), p4, width = 10, height = 8)
 
 
