@@ -18,11 +18,11 @@ library(semPlot)
 
 
 rm(list=ls())
-#path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
-path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+#path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 setwd(path_github)
 
@@ -1309,7 +1309,7 @@ library(viridis)
 library(dplyr)
 
 #####################################
-############ Turst conflict OA T1
+############ Trust conflict OA T1
 ########################################
 
 # Belief compliance
@@ -1380,7 +1380,7 @@ ggsave(paste0(path_github, "Outputs/belief_compliance_union_conflict_OA_T1.pdf")
 
 
 #######################################
-### Beliefs on Turst conflict OA - T2
+### Beliefs on Trust conflict OA - T2
 #######################################
 # Compute belief compliance scores
 df$belief_compliance_pm <- 1 - (df$beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini / 50)
