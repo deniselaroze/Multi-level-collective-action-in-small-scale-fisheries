@@ -68,7 +68,7 @@ save_sem_plot <- function(df, R, N, path_github) {
   paths <- parameterEstimates(fit, standardized = TRUE)
   edge_colors <- ifelse(paths$pvalue[paths$op == "~"] < 0.05, "black", "transparent")
   
-  output_file <- paste0(path_github, "Outputs/SEM_Turf_T1_plot_Rounds_Cluster", R, "_to_", N, ".pdf")
+  output_file <- paste0(path_github, "Outputs/SEM_Turf_T1_plot_Rounds_ClusterLag_", R, "_to_", N, ".pdf")
   pdf(output_file, width = 12, height = 8)
   
   semPaths(
@@ -94,7 +94,7 @@ save_sem_plot <- function(df, R, N, path_github) {
 
 
 # Usage:
-save_sem_plot(df, 1, 1, path_github)
+#save_sem_plot(df, 1, 1, path_github)
 
 #############################
 ### Turf rounds 2-8 T1
@@ -112,7 +112,7 @@ save_dynamic_sem_plot <- function(df, R, N, path_github) {
   # 2. Compute observed compliance in previous rounds (lag)
   # Careful: if R == 1, this will fail; you may want to check for valid lag
   if (R > 1) {
-    cols_obs <- get_columns_by_round("T1juegoalgas", "T1_extraccion_otros_amerb", R - 1, N - 1)
+    cols_obs <- get_columns_by_round("T1juegoalgas", "T1_extraccion_otros_amerb", 1, R - 1)
     variable_subset_obs <- df[, cols_obs, drop = FALSE]
     df$average_extraction_observed_ini <- rowMeans(variable_subset_obs, na.rm = TRUE)
     df$average_compliance_observed_ini_lag <- 1 - (df$average_extraction_observed_ini / 150)
@@ -152,7 +152,7 @@ save_dynamic_sem_plot <- function(df, R, N, path_github) {
   edge_colors <- ifelse(paths$pvalue[paths$op == "~"] < 0.05, "black", "transparent")
   
   # Save to PDF (rectangle shape)
-  output_file <- paste0(path_github, "Outputs/SEM_Turf_T1_dynamic_plot_Rounds_Cluster_", R, "_to_", N, ".pdf")
+  output_file <- paste0(path_github, "Outputs/SEM_Turf_T1_dynamic_plot_Rounds_ClusterLag_", R, "_to_", N, ".pdf")
   pdf(output_file, width = 12, height = 8)
   semPaths(
     fit,
@@ -176,14 +176,15 @@ save_dynamic_sem_plot <- function(df, R, N, path_github) {
   dev.off()
 }
 
-save_dynamic_sem_plot(df, 2, 8, path_github)
+#save_dynamic_sem_plot(df, 2, 8, path_github)
 
 #####################
 ### Turf Round 1 - T2
 ###################
+R<-1
+N<-1
 
-
-save_sem_plot <- function(df, R, N, path_github) {
+save_t2_sem_plot <- function(df, R, N, path_github) {
   cols <- get_columns_by_round("T2juegoalgas", "T2_extraccion_amerb", R, N)
   df$average_extraction_ini <- rowMeans(df[, cols, drop = FALSE], na.rm = TRUE)
   df$average_compliance_ini <- 1 - (df$average_extraction_ini / 50)
@@ -215,7 +216,7 @@ save_sem_plot <- function(df, R, N, path_github) {
   paths <- parameterEstimates(fit, standardized = TRUE)
   edge_colors <- ifelse(paths$pvalue[paths$op == "~"] < 0.05, "black", "transparent")
   
-  output_file <- paste0(path_github, "Outputs/SEM_Turf_T2_plot_Rounds_Cluster_", R+8, "_to_", N+8, ".pdf")
+  output_file <- paste0(path_github, "Outputs/SEM_Turf_T2_plot_Rounds_ClusterLag_", R+8, "_to_", N+8, ".pdf")
   pdf(output_file, width = 12, height = 8)
   
   semPaths(
@@ -241,14 +242,14 @@ save_sem_plot <- function(df, R, N, path_github) {
 
 
 # Usage:
-save_sem_plot(df, 1, 1, path_github)
+#save_t2_sem_plot(df, 1, 1, path_github)
 
 #############################
 ### Turf rounds 2-8 T2
 #############################
 
 
-save_dynamic_sem_plot <- function(df, R, N, path_github) {
+save_dynamic_t2_sem_plot <- function(df, R, N, path_github) {
   # 1. Compute average extraction and compliance for the selected rounds
   cols <- get_columns_by_round("T2juegoalgas", "T2_extraccion_amerb", R, N)
   variable_subset <- df[, cols, drop = FALSE]
@@ -259,7 +260,7 @@ save_dynamic_sem_plot <- function(df, R, N, path_github) {
   # 2. Compute observed compliance in previous rounds (lag)
   # Careful: if R == 1, this will fail; you may want to check for valid lag
   if (R > 1) {
-    cols_obs <- get_columns_by_round("T2juegoalgas", "T2_extraccion_otros_amerb", R - 1, N - 1)
+    cols_obs <- get_columns_by_round("T2juegoalgas", "T2_extraccion_otros_amerb", 1, R - 1)
     variable_subset_obs <- df[, cols_obs, drop = FALSE]
     df$average_extraction_observed_ini <- rowMeans(variable_subset_obs, na.rm = TRUE)
     df$average_compliance_observed_ini_lag <- 1 - (df$average_extraction_observed_ini / 150)
@@ -299,7 +300,7 @@ save_dynamic_sem_plot <- function(df, R, N, path_github) {
   edge_colors <- ifelse(paths$pvalue[paths$op == "~"] < 0.05, "black", "transparent")
   
   # Save to PDF (rectangle shape)
-  output_file <- paste0(path_github, "Outputs/SEM_Turf_T2_dynamic_plot_Rounds_Cluster_", R+8, "_to_", N+8, ".pdf")
+  output_file <- paste0(path_github, "Outputs/SEM_Turf_T2_dynamic_plot_Rounds_ClusterLag_", R+8, "_to_", N+8, ".pdf")
   pdf(output_file, width = 12, height = 8)
   semPaths(
     fit,
@@ -323,7 +324,7 @@ save_dynamic_sem_plot <- function(df, R, N, path_github) {
   dev.off()
 }
 
-save_dynamic_sem_plot(df, 2, 8, path_github)
+#save_dynamic_t2_sem_plot(df, 2, 8, path_github)
 
 
 
@@ -372,7 +373,7 @@ save_sharedarea_sem_plot <- function(df, R, N, path_github) {
   paths <- parameterEstimates(fit, standardized = TRUE)
   edge_colors <- ifelse(paths$pvalue[paths$op == "~"] < 0.05, "black", "transparent")
   
-  output_file <- paste0(path_github, "Outputs/SEM_sharedarea_T1_plot_Rounds_Cluster", R, "_to_", N, ".pdf")
+  output_file <- paste0(path_github, "Outputs/SEM_sharedarea_T1_plot_Rounds_ClusterLag_", R, "_to_", N, ".pdf")
   pdf(output_file, width = 12, height = 8)
   semPaths(
     fit,
@@ -395,7 +396,7 @@ save_sharedarea_sem_plot <- function(df, R, N, path_github) {
 }
 
 # Usage:
-save_sharedarea_sem_plot(df, 1, 1, path_github)
+#save_sharedarea_sem_plot(df, 1, 1, path_github)
 
 ##############################
 ### Shared Area Round 2-8 - T1
@@ -409,7 +410,7 @@ save_sharedarea_dynamic_sem_plot <- function(df, R, N, path_github) {
   df$belief_compliance_union <- 1 - (df$beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini / 50)
   
   if (R > 1) {
-    cols_obs <- get_columns_by_round("T1juegoalgas", "T1_extraccion_otros_libre", R - 1, N - 1)
+    cols_obs <- get_columns_by_round("T1juegoalgas", "T1_extraccion_otros_libre", 1, R - 1)
     variable_subset_obs <- df[, cols_obs, drop = FALSE]
     df$average_extraction_observed_ini <- rowMeans(variable_subset_obs, na.rm = TRUE)
     df$average_compliance_observed_ini_lag <- 1 - (df$average_extraction_observed_ini / 150)
@@ -448,7 +449,7 @@ save_sharedarea_dynamic_sem_plot <- function(df, R, N, path_github) {
   paths <- parameterEstimates(fit, standardized = TRUE)
   edge_colors <- ifelse(paths$pvalue[paths$op == "~"] < 0.05, "black", "transparent")
   
-  output_file <- paste0(path_github, "Outputs/SEM_sharedarea_T1_dynamic_plot_Rounds_Cluster", R, "_to_", N, ".pdf")
+  output_file <- paste0(path_github, "Outputs/SEM_sharedarea_T1_dynamic_plot_Rounds_ClusterLag_", R, "_to_", N, ".pdf")
   pdf(output_file, width = 12, height = 8)
   semPaths(
     fit,
@@ -472,7 +473,7 @@ save_sharedarea_dynamic_sem_plot <- function(df, R, N, path_github) {
 }
 
 # Usage:
-save_sharedarea_dynamic_sem_plot(df, 2, 8, path_github)
+#save_sharedarea_dynamic_sem_plot(df, 2, 8, path_github)
 
 
 
@@ -517,7 +518,7 @@ save_sharedarea_t2_sem_plot <- function(df, R, N, path_github) {
   paths <- parameterEstimates(fit, standardized = TRUE)
   edge_colors <- ifelse(paths$pvalue[paths$op == "~"] < 0.05, "black", "transparent")
   
-  output_file <- paste0(path_github, "Outputs/SEM_sharedarea_T2_plot_Rounds_Cluster", R+8, "_to_", N+8, ".pdf")
+  output_file <- paste0(path_github, "Outputs/SEM_sharedarea_T2_plot_Rounds_ClusterLag_", R+8, "_to_", N+8, ".pdf")
   pdf(output_file, width = 12, height = 8)
   semPaths(
     fit,
@@ -540,7 +541,7 @@ save_sharedarea_t2_sem_plot <- function(df, R, N, path_github) {
 }
 
 # Usage:
-save_sharedarea_t2_sem_plot(df, 1, 1, path_github)
+#save_sharedarea_t2_sem_plot(df, 1, 1, path_github)
 
 
 
@@ -558,7 +559,7 @@ save_sharedarea_t2_dynamic_sem_plot <- function(df, R, N, path_github) {
   df$belief_compliance_union <- 1 - (df$beliefsT2inicial.1.player.T2_belief_caleta_ini / 50)
   
   if (R > 1) {
-    cols_obs <- get_columns_by_round("T2juegoalgas", "T2_extraccion_otros_metat", R - 1, N - 1)
+    cols_obs <- get_columns_by_round("T2juegoalgas", "T2_extraccion_otros_metat", 1, R - 1)
     variable_subset_obs <- df[, cols_obs, drop = FALSE]
     df$average_extraction_observed_ini <- rowMeans(variable_subset_obs, na.rm = TRUE)
     df$average_compliance_observed_ini_lag <- 1 - (df$average_extraction_observed_ini / 150)
@@ -598,7 +599,7 @@ save_sharedarea_t2_dynamic_sem_plot <- function(df, R, N, path_github) {
   paths <- parameterEstimates(fit, standardized = TRUE)
   edge_colors <- ifelse(paths$pvalue[paths$op == "~"] < 0.05, "black", "transparent")
   
-  output_file <- paste0(path_github, "Outputs/SEM_sharedarea_T2_dynamic_plot_Rounds_Cluster", R+8, "_to_", N+8, ".pdf")
+  output_file <- paste0(path_github, "Outputs/SEM_sharedarea_T2_dynamic_plot_Rounds_ClusterLag_", R+8, "_to_", N+8, ".pdf")
   pdf(output_file, width = 12, height = 8)
   semPaths(
     fit,
@@ -622,8 +623,27 @@ save_sharedarea_t2_dynamic_sem_plot <- function(df, R, N, path_github) {
 }
 
 # Usage:
-save_sharedarea_t2_dynamic_sem_plot(df, 2, 8, path_github)
+#save_sharedarea_t2_dynamic_sem_plot(df, 2, 8, path_github)
 
+#################
+### Plot Figures
+#################
+
+#Turf
+#T1
+save_sem_plot(df, 1, 1, path_github)
+save_dynamic_sem_plot(df, 7, 8, path_github)
+#T2
+save_t2_sem_plot(df, 1, 1, path_github)
+save_dynamic_t2_sem_plot(df, 7, 8, path_github)
+
+# Shared Area
+#T1
+save_sharedarea_sem_plot(df, 1, 1, path_github)
+save_sharedarea_dynamic_sem_plot(df,7, 8, path_github)
+#T2
+save_sharedarea_t2_sem_plot(df, 1, 1, path_github)
+save_sharedarea_t2_dynamic_sem_plot(df, 7, 8, path_github)
 
 
 
