@@ -36,7 +36,7 @@ get_columns_by_round <- function(prefix, suffix, start, end = NULL) {
 #####################
 ### Turf Round 1 - T1
 ###################
-
+set.seed(5326)
 
 save_sem_plot <- function(df, R, N, path_github) {
   cols <- get_columns_by_round("T1juegoalgas", "T1_extraccion_amerb", R, N)
@@ -56,10 +56,9 @@ save_sem_plot <- function(df, R, N, path_github) {
   
   fit <- sem(sem_model,
              data       = df,
-             cluster    = "gid.treat",
              estimator  = "ML",
              se         = "bootstrap",
-             bootstrap  = 100,
+             bootstrap  = 500,
              parallel   = "multicore",
              ncpus      = 4)  
   
@@ -71,7 +70,7 @@ save_sem_plot <- function(df, R, N, path_github) {
   paths <- parameterEstimates(fit, standardized = TRUE)
   edge_colors <- ifelse(paths$pvalue[paths$op == "~"] < 0.05, "black", "transparent")
   
-  output_file <- paste0(path_github, "Outputs/SEM_Turf_T1_plot_Rounds_ClusterLag_", R, "_to_", N, ".pdf")
+  output_file <- paste0(path_github, "Outputs/SEM_Turf_T1_plot_Rounds_ClusterLag1_", R, "_to_", N, ".pdf")
   pdf(output_file, width = 12, height = 8)
   
   semPaths(
@@ -102,8 +101,7 @@ save_sem_plot <- function(df, R, N, path_github) {
 #############################
 ### Turf rounds 2-8 T1
 #############################
-
-
+set.seed(5326)
 save_dynamic_sem_plot <- function(df, R, N, path_github) {
   # 1. Compute average extraction and compliance for the selected rounds
   cols <- get_columns_by_round("T1juegoalgas", "T1_extraccion_amerb", R, N)
@@ -141,10 +139,9 @@ save_dynamic_sem_plot <- function(df, R, N, path_github) {
   
   fit <- sem(sem_model,
              data       = df,
-             cluster    = "gid.treat",
              estimator  = "ML",
              se         = "bootstrap",
-             bootstrap  = 100,
+             bootstrap  = 500,
              parallel   = "multicore",
              ncpus      = 4)
   
@@ -157,7 +154,7 @@ save_dynamic_sem_plot <- function(df, R, N, path_github) {
   edge_colors <- ifelse(paths$pvalue[paths$op == "~"] < 0.05, "black", "transparent")
   
   # Save to PDF (rectangle shape)
-  output_file <- paste0(path_github, "Outputs/SEM_Turf_T1_dynamic_plot_Rounds_ClusterLag_", R, "_to_", N, ".pdf")
+  output_file <- paste0(path_github, "Outputs/SEM_Turf_T1_dynamic_plot_Rounds_ClusterLag1_", R, "_to_", N, ".pdf")
   pdf(output_file, width = 12, height = 8)
   semPaths(
     fit,
@@ -180,12 +177,12 @@ save_dynamic_sem_plot <- function(df, R, N, path_github) {
   title(main = paste("Mean Compliance TURF Rounds", R, "to", N), line = 2, cex.main = 1.5)
   dev.off()
 }
-
 #save_dynamic_sem_plot(df, 2, 8, path_github)
 
 #####################
 ### Turf Round 1 - T2
 ###################
+set.seed(5326)
 save_t2_sem_plot <- function(df, R, N, path_github) {
   cols <- get_columns_by_round("T2juegoalgas", "T2_extraccion_amerb", R, N)
   df$average_extraction_ini <- rowMeans(df[, cols, drop = FALSE], na.rm = TRUE)
@@ -205,10 +202,9 @@ save_t2_sem_plot <- function(df, R, N, path_github) {
   
   fit <- sem(sem_model,
              data       = df,
-             cluster    = "gid.treat",
              estimator  = "ML",
              se         = "bootstrap",
-             bootstrap  = 100,
+             bootstrap  = 500,
              parallel   = "multicore",
              ncpus      = 4)
   
@@ -220,7 +216,7 @@ save_t2_sem_plot <- function(df, R, N, path_github) {
   paths <- parameterEstimates(fit, standardized = TRUE)
   edge_colors <- ifelse(paths$pvalue[paths$op == "~"] < 0.05, "black", "transparent")
   
-  output_file <- paste0(path_github, "Outputs/SEM_Turf_T2_plot_Rounds_ClusterLag_", R+8, "_to_", N+8, ".pdf")
+  output_file <- paste0(path_github, "Outputs/SEM_Turf_T2_plot_Rounds_ClusterLag1_", R+8, "_to_", N+8, ".pdf")
   pdf(output_file, width = 12, height = 8)
   
   semPaths(
@@ -251,7 +247,7 @@ save_t2_sem_plot <- function(df, R, N, path_github) {
 #############################
 ### Turf rounds 2-8 T2
 #############################
-
+set.seed(5326)
 
 save_dynamic_t2_sem_plot <- function(df, R, N, path_github) {
   # 1. Compute average extraction and compliance for the selected rounds
@@ -290,10 +286,9 @@ save_dynamic_t2_sem_plot <- function(df, R, N, path_github) {
   
   fit <- sem(sem_model,
              data       = df,
-             cluster    = "gid.treat",
              estimator  = "ML",
              se         = "bootstrap",
-             bootstrap  = 100,
+             bootstrap  = 500,
              parallel   = "multicore",
              ncpus      = 4)
   
@@ -306,7 +301,7 @@ save_dynamic_t2_sem_plot <- function(df, R, N, path_github) {
   edge_colors <- ifelse(paths$pvalue[paths$op == "~"] < 0.05, "black", "transparent")
   
   # Save to PDF (rectangle shape)
-  output_file <- paste0(path_github, "Outputs/SEM_Turf_T2_dynamic_plot_Rounds_ClusterLag_", R+8, "_to_", N+8, ".pdf")
+  output_file <- paste0(path_github, "Outputs/SEM_Turf_T2_dynamic_plot_Rounds_ClusterLag1_", R+8, "_to_", N+8, ".pdf")
   pdf(output_file, width = 12, height = 8)
   semPaths(
     fit,
@@ -331,19 +326,10 @@ save_dynamic_t2_sem_plot <- function(df, R, N, path_github) {
 }
 
 #save_dynamic_t2_sem_plot(df, 2, 8, path_github)
-
-
-
-
-
-
-
-
-
 ##############################
 ### Shared Area Round 1 - T1
 ##############################
-
+set.seed(5326)
 save_sharedarea_sem_plot <- function(df, R, N, path_github) {
   cols <- get_columns_by_round("T1juegoalgas", "T1_extraccion_libre", R, N)
   df$average_extraction_ini <- df[, cols, drop = TRUE]
@@ -368,10 +354,9 @@ save_sharedarea_sem_plot <- function(df, R, N, path_github) {
   
   fit <- sem(sem_model,
              data       = df,
-             cluster    = "gid.treat",
              estimator  = "ML",
              se         = "bootstrap",
-             bootstrap  = 100,
+             bootstrap  = 500,
              parallel   = "multicore",
              ncpus      = 4)
   
@@ -382,7 +367,7 @@ save_sharedarea_sem_plot <- function(df, R, N, path_github) {
   paths <- parameterEstimates(fit, standardized = TRUE)
   edge_colors <- ifelse(paths$pvalue[paths$op == "~"] < 0.05, "black", "transparent")
   
-  output_file <- paste0(path_github, "Outputs/SEM_sharedarea_T1_plot_Rounds_ClusterLag_", R, "_to_", N, ".pdf")
+  output_file <- paste0(path_github, "Outputs/SEM_sharedarea_T1_plot_Rounds_ClusterLag1_", R, "_to_", N, ".pdf")
   pdf(output_file, width = 12, height = 8)
   semPaths(
     fit,
@@ -410,6 +395,7 @@ save_sharedarea_sem_plot <- function(df, R, N, path_github) {
 ##############################
 ### Shared Area Round 2-8 - T1
 ##############################
+set.seed(5326)
 save_sharedarea_dynamic_sem_plot <- function(df, R, N, path_github) {
   cols <- get_columns_by_round("T1juegoalgas", "T1_extraccion_libre", R, N)
   variable_subset <- df[, cols, drop = FALSE]
@@ -447,10 +433,9 @@ save_sharedarea_dynamic_sem_plot <- function(df, R, N, path_github) {
   
   fit <- sem(sem_model,
              data       = df,
-             cluster    = "gid.treat",
              estimator  = "ML",
              se         = "bootstrap",
-             bootstrap  = 100,
+             bootstrap  = 500,
              parallel   = "multicore",
              ncpus      = 4)
   
@@ -461,7 +446,7 @@ save_sharedarea_dynamic_sem_plot <- function(df, R, N, path_github) {
   paths <- parameterEstimates(fit, standardized = TRUE)
   edge_colors <- ifelse(paths$pvalue[paths$op == "~"] < 0.05, "black", "transparent")
   
-  output_file <- paste0(path_github, "Outputs/SEM_sharedarea_T1_dynamic_plot_Rounds_ClusterLag_", R, "_to_", N, ".pdf")
+  output_file <- paste0(path_github, "Outputs/SEM_sharedarea_T1_dynamic_plot_Rounds_ClusterLag1_", R, "_to_", N, ".pdf")
   pdf(output_file, width = 12, height = 8)
   semPaths(
     fit,
@@ -494,6 +479,7 @@ save_sharedarea_dynamic_sem_plot <- function(df, R, N, path_github) {
 ##############################
 ### Shared Area Round 1 - T2
 #############################
+set.seed(5326)
 save_sharedarea_t2_sem_plot <- function(df, R, N, path_github) {
   cols <- get_columns_by_round("T2juegoalgas", "T2_extraccion_metat", R, N)
   df$average_extraction_ini <- df[, cols, drop = TRUE]
@@ -518,10 +504,9 @@ save_sharedarea_t2_sem_plot <- function(df, R, N, path_github) {
   
   fit <- sem(sem_model,
              data       = df,
-             cluster    = "gid.treat",
              estimator  = "ML",
              se         = "bootstrap",
-             bootstrap  = 100,
+             bootstrap  = 500,
              parallel   = "multicore",
              ncpus      = 4)
   
@@ -532,7 +517,7 @@ save_sharedarea_t2_sem_plot <- function(df, R, N, path_github) {
   paths <- parameterEstimates(fit, standardized = TRUE)
   edge_colors <- ifelse(paths$pvalue[paths$op == "~"] < 0.05, "black", "transparent")
   
-  output_file <- paste0(path_github, "Outputs/SEM_sharedarea_T2_plot_Rounds_ClusterLag_", R+8, "_to_", N+8, ".pdf")
+  output_file <- paste0(path_github, "Outputs/SEM_sharedarea_T2_plot_Rounds_ClusterLag1_", R+8, "_to_", N+8, ".pdf")
   pdf(output_file, width = 12, height = 8)
   semPaths(
     fit,
@@ -563,7 +548,7 @@ save_sharedarea_t2_sem_plot <- function(df, R, N, path_github) {
 ##############################
 ### Shared Area Round 2-8 - T2
 #############################
-
+set.seed(5326)
 save_sharedarea_t2_dynamic_sem_plot <- function(df, R, N, path_github) {
   cols <- get_columns_by_round("T2juegoalgas", "T2_extraccion_metat", R, N)
   variable_subset <- df[, cols, drop = FALSE]
@@ -584,7 +569,10 @@ save_sharedarea_t2_dynamic_sem_plot <- function(df, R, N, path_github) {
   sem_model <- '
     belief_compliance_pm ~ survey2.1.player.confianza_caleta_conocida_mean + survey2.1.player.conflicto_caleta_conocida_mean
     belief_compliance_union ~ survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta
-    average_compliance_ini ~ belief_compliance_pm + belief_compliance_union + survey2.1.player.confianza_caleta_conocida_mean + survey2.1.player.conflicto_caleta_conocida_mean + survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta + average_compliance_observed_ini_lag
+    average_compliance_ini ~ belief_compliance_pm + belief_compliance_union + survey2.1.player.confianza_caleta_conocida_mean + 
+    survey2.1.player.conflicto_caleta_conocida_mean + survey1.1.player.confianza_caleta +
+    survey1.1.player.conflicto_caleta + average_compliance_observed_ini_lag
+    
     average_compliance_observed_ini_lag ~~ 0*belief_compliance_union
     average_compliance_observed_ini_lag ~~ 0*belief_compliance_pm
   '
@@ -601,7 +589,6 @@ save_sharedarea_t2_dynamic_sem_plot <- function(df, R, N, path_github) {
   
   fit <- sem(sem_model,
              data       = df,
-             cluster    = "gid.treat",
              estimator  = "ML",
              se         = "bootstrap",
              bootstrap  = 100,
@@ -611,11 +598,12 @@ save_sharedarea_t2_dynamic_sem_plot <- function(df, R, N, path_github) {
   node_names <- semPlot::semPlotModel(fit)@Vars$name
   cat("Node names detected for Shared Area T2 dynamic SEM labeling:\n")
   print(node_names)
+  print(summary(fit))
   
   paths <- parameterEstimates(fit, standardized = TRUE)
   edge_colors <- ifelse(paths$pvalue[paths$op == "~"] < 0.05, "black", "transparent")
   
-  output_file <- paste0(path_github, "Outputs/SEM_sharedarea_T2_dynamic_plot_Rounds_ClusterLag_", R+8, "_to_", N+8, ".pdf")
+  output_file <- paste0(path_github, "Outputs/SEM_sharedarea_T2_dynamic_plot_Rounds_ClusterLag1_", R+8, "_to_", N+8, ".pdf")
   pdf(output_file, width = 12, height = 8)
   semPaths(
     fit,
@@ -648,18 +636,18 @@ save_sharedarea_t2_dynamic_sem_plot <- function(df, R, N, path_github) {
 #Turf
 #T1
 save_sem_plot(df, 1, 1, path_github)
-save_dynamic_sem_plot(df, 5, 8, path_github)
+save_dynamic_sem_plot(df, 2, 8, path_github)
 #T2
 save_t2_sem_plot(df, 1, 1, path_github)
-save_dynamic_t2_sem_plot(df, 5, 8, path_github)
+save_dynamic_t2_sem_plot(df, 2, 8, path_github)
 
 # Shared Area
 #T1
 save_sharedarea_sem_plot(df, 1, 1, path_github)
-save_sharedarea_dynamic_sem_plot(df,8, 8, path_github)
+save_sharedarea_dynamic_sem_plot(df,2, 8, path_github)
 #T2
 save_sharedarea_t2_sem_plot(df, 1, 1, path_github)
-save_sharedarea_t2_dynamic_sem_plot(df, 8, 8, path_github)
+save_sharedarea_t2_dynamic_sem_plot(df, 2, 8, path_github)
 
 
 

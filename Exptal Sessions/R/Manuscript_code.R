@@ -9,7 +9,12 @@ library(tidyr)
 library(ggplot2)
 library(stargazer)
 library(sandwich)   # For robust and clustered standard errors
-library(lmtest)   
+library(lmtest)
+library(lme4)
+library(modelsummary)
+library(tinytable)
+library(rlang)
+library(pandoc)
 
 if (!requireNamespace("semPlot", quietly = TRUE)) install.packages("semPlot")
 if (!requireNamespace("lavaan", quietly = TRUE)) install.packages("lavaan")
@@ -98,6 +103,129 @@ means_ci_by_treatment$treatment <- factor(means_ci_by_treatment$treatment,
 
 print(means_ci_by_treatment)
 
+####################################################################
+#### Statistics for differences in extraction per area and scenario
+####################################################################
+
+
+df_long_ext <- dfs_long %>%
+  pivot_longer(
+    cols = c(extraction_amerb, extraction_OA),
+    names_to = "area",
+    values_to = "extraction"
+  ) %>%
+  mutate(
+    # simplify area labels
+    area = recode(
+      area,
+      extraction_amerb = "TURF",
+      extraction_OA    = "Shared_Area"
+    ),
+    # compute compliance
+    compliance = 1 - (extraction / 50)
+  )
+
+with(df_long_ext, {
+  treat.area <- paste0(area, "_", treatment)
+  # Define factor with desired order
+  treat.area <- factor(treat.area,
+                       levels = c(
+                         "TURF_T1", "TURF_T2",
+                         "Shared_Area_T1", "Shared_Area_T2"
+                       ))
+  # Explicitly relevel to ensure baseline
+  treat.area <- relevel(treat.area, ref = "TURF_T1")
+  df_long_ext$treat.area <<- treat.area
+})
+
+### Empirical tests of H1: differences between SA in T1 and Turf in T1:
+model <- lmer(compliance ~ treat.area + (1 | participant.code), data = df_long_ext)
+
+summary(model)
+
+my_labels <- c(
+  `(Intercept)`  = "Intercept (TURF rounds 1-8)",
+  treat.areaTURF_T2  = "TURF rounds 9-16 (dummy)",
+  treat.areaShared_Area_T1    = "Shared Area Unknow Out-group (dummy)",
+  treat.areaShared_Area_T2 = "Shared Area Know Out-group (dummy)"
+)
+
+modelsummary(
+  model,
+  output    = paste0(path_github, "Outputs/LMM.docx"),
+  stars     = TRUE,
+  coef_map  = my_labels
+)
+
+### Summary statistics and tests
+treatment_summary <- df_long_ext %>%
+  group_by(treat.area) %>%
+  summarise(
+    n = n(),
+    mean_compliance = mean(compliance, na.rm = TRUE),
+    sd_compliance   = sd(compliance,   na.rm = TRUE),
+    se_compliance   = sd_compliance / sqrt(n),
+    ci_lower        = mean_compliance - qt(0.975, df = n - 1) * se_compliance,
+    ci_upper        = mean_compliance + qt(0.975, df = n - 1) * se_compliance
+  ) %>%
+  ungroup()
+
+
+print(treatment_summary)
+
+kw_all <- kruskal.test(compliance ~ treat.area, data = df_long_ext)
+cat("\nKruskal-Wallis test across treat.area levels:\n")
+print(kw_all)
+
+pairwise_res <- pairwise.wilcox.test(df_long_ext$compliance, df_long_ext$treat.area,
+                                     p.adjust.method = "bonferroni")
+cat("\nPairwise Wilcoxon tests (Bonferroni-adjusted p-values):\n")
+print(pairwise_res)
+
+##################################################
+#### Diff in diff TURF T1 and T2, vs SA T1 and T2
+##################################################
+did_df <- df_long_ext %>%
+  group_by(participant.code, treat.area) %>%
+  summarise(mean_comp = mean(compliance, na.rm = TRUE), .groups = "drop") %>%
+  pivot_wider(
+    names_from = treat.area,
+    values_from = mean_comp
+  ) %>%
+  mutate(
+    diff_turf   = TURF_T2 - TURF_T1,
+    diff_shared = Shared_Area_T2 - Shared_Area_T1,
+    DiD         = diff_turf - diff_shared
+  )
+
+# View the first few rows of DiD calculations
+print(head(did_df))
+
+# 9. Test if mean DiD differs from zero
+# 9a. One-sample t-test
+t_test_did <- t.test(did_df$DiD, mu = 0)
+cat("One-sample t-test for DiD ≠ 0:
+")
+print(t_test_did)
+
+# 9b. Wilcoxon signed-rank test (non-parametric)
+wilcox_did <- wilcox.test(did_df$DiD, mu = 0)
+cat("Wilcoxon signed-rank test for DiD ≠ 0:
+")
+print(wilcox_did)
+
+# (Optional) 10. Summary statistics for DiD
+did_summary <- did_df %>%
+  summarise(
+    n      = n(),
+    mean_DiD = mean(DiD, na.rm = TRUE),
+    sd_DiD   = sd(DiD, na.rm = TRUE),
+    se_DiD   = sd_DiD / sqrt(n),
+    ci_lower = mean_DiD - qt(0.975, df = n - 1) * se_DiD,
+    ci_upper = mean_DiD + qt(0.975, df = n - 1) * se_DiD
+  )
+
+print(did_summary)
 
 
 ##################################################
