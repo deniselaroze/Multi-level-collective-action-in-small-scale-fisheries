@@ -138,24 +138,41 @@ with(df_long_ext, {
   df_long_ext$treat.area <<- treat.area
 })
 
-### Empirical tests of H1: differences between SA in T1 and Turf in T1:
-model <- lmer(compliance ~ treat.area + (1 | participant.code), data = df_long_ext)
+df_long_ext$area <- relevel(factor(df_long_ext$area), ref = "TURF")
+### Empirical tests of H1 and H2: differences between SA in T1 and Turf in T1 and T2:
+# Fit models (yours):
+model  <- lmer(compliance ~ treat.area + (1 | participant.code), data = df_long_ext)
+model2 <- lmer(compliance ~ area * treatment + (1 | participant.code), data = df_long_ext)
 
-summary(model)
+# One coef map covering ALL terms that appear in either model (order = row order)
+coef_map <- c(
+  "(Intercept)"                      = "Intercept (TURF rounds 1–8)",
+  "treat.areaTURF_T2"                = "TURF rounds 9–16 (dummy)",
+  "treat.areaShared_Area_T1"         = "Shared Area Unknown Out-group (dummy)",
+  "treat.areaShared_Area_T2"         = "Shared Area Known Out-group (dummy)",
+  "areaShared_Area"                  = "Shared Area (dummy)",
+  "treatmentT2"                      = "Known Out-group condition (dummy)",
+  "areaShared_Area:treatmentT2"      = "Area × Known Out-group"
+)
 
-my_labels <- c(
-  `(Intercept)`  = "Intercept (TURF rounds 1-8)",
-  treat.areaTURF_T2  = "TURF rounds 9-16 (dummy)",
-  treat.areaShared_Area_T1    = "Shared Area Unknow Out-group (dummy)",
-  treat.areaShared_Area_T2 = "Shared Area Know Out-group (dummy)"
+# Model names for columns
+models <- list(
+  "H1: TURF vs Shared Area"     = model,
+  "H2: Area × Known Out-group condition"    = model2
 )
 
 modelsummary(
-  model,
-  output    = paste0(path_github, "Outputs/LMM.docx"),
-  stars     = TRUE,
-  coef_map  = my_labels
+  models,
+  coef_map   = coef_map,
+  # optional: keep only the mapped rows (drop any stray contrasts)
+  coef_omit  = "^$",
+  stars      = c('*' = 0.05, '**' = 0.01, '***' = 0.001),
+  statistic  = "({std.error})",
+  gof_omit   = "IC|Log|RMSE",  # hide AIC/BIC/LogLik if you want a cleaner table
+  title      = "Empirical tests of H1 & H2 (LMM with random intercept by participant)",
+  output     = paste0(path_github, "Outputs/LMM_H1_H2.docx")
 )
+
 
 ### Summary statistics and tests
 treatment_summary <- df_long_ext %>%
@@ -186,7 +203,7 @@ print(pairwise_res)
 #### Diff in diff TURF T1 and T2, vs SA T1 and T2
 ##################################################
 did_df <- df_long_ext %>%
-  group_by(participant.code, treat.area) %>%
+  group_by(participant.code, treat.area, round) %>%
   summarise(mean_comp = mean(compliance, na.rm = TRUE), .groups = "drop") %>%
   pivot_wider(
     names_from = treat.area,
