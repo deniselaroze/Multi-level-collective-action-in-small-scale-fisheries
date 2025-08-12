@@ -11,16 +11,32 @@ library(flextable)     # for DOCX
 library(officer)       # for DOCX
 options(modelsummary_factory_default = "flextable")  # force DOCX via flextable
 
-# (your paths, loads, and formulas stay the same)
+rm(list=ls())
+path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
-# Scale survey covariates used below (avoid /4 in formulas so names stay clean)
+#path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+
+setwd(path_github)
+
+
+#load(paste0(path_datos, "/Datos_islitas.Rdata"))
+load(paste0(path_datos, "/Datos_islitas_recode.Rdata"))
+load(paste0(path_datos, "/Datos_islitas_long.Rdata"))
+
+### Data management
 dfs_long <- dfs_long %>%
   mutate(
-    confianza_pm_scaled      = survey1.1.player.confianza_pm/4,
-    conflicto_pm_scaled      = survey1.1.player.conflicto_pm/4,
-    confianza_caleta_scaled  = survey1.1.player.confianza_caleta/4,
-    conflicto_caleta_scaled  = survey1.1.player.conflicto_caleta/4
+    confianza_pm_scaled      = (survey1.1.player.confianza_pm- 1) / 3,
+    conflicto_pm_scaled      = (survey1.1.player.conflicto_pm- 1) / 3,
+    confianza_caleta_scaled  = (survey1.1.player.confianza_caleta- 1) / 3,
+    conflicto_caleta_scaled  = (survey1.1.player.conflicto_caleta- 1) / 3
   )
+
+dfs_long$round.plm<-ifelse(dfs_long$treatment=="T2", as.numeric(dfs_long$round)+8, as.numeric(dfs_long$round))
+dfs_long$participant.code.plm<-ifelse(dfs_long$treatment=="T2", paste0(dfs_long$participant.code, ".T2"), dfs_long$participant.code)
+
 
 
 ### Define models
@@ -101,10 +117,10 @@ res3 <- bootstrap_lmer(model3, dfs_long, "gid.amerb", B = B)
 res4 <- bootstrap_lmer(model4, dfs_long, "gid.amerb", B = B)
 
 # --- Table (single DOCX) ----------------------------------------------------
-out_file <- paste0(path_github, "Outputs/LMM_boot_H3_TURF3.docx")
+out_file <- paste0(path_github, "Outputs/LMM_boot_H3_TURF.docx")
 
 coef_map <- c(
-  "(Intercept)"                      = "Intercept (TURF rounds 1–8)",
+  "(Intercept)" = "(Intercept)",
   "compliance_lag_extraction_others_amerb_mean" = "Mean observed compliance (t-1)",
   "compliance_beliefsT1inicial.1.player.T1_belief_caleta_en_amerb_ini" = "Prior Belief (TURF)",
   "treatmentT2" = "Stage (rounds 9-16)",
@@ -118,16 +134,136 @@ coef_map <- c(
   "SD (Observations)" = "SD (Observations)"
 )
 
+omit_sociodemo <- "^survey3\\.1\\.player\\.(sexo|horas_trabajo|estudios|liderazgo).*"
+
+
+add_row <- tibble::tibble(
+  term = "Socio-demographic controls",
+  `SA: Base + Beliefs`             = "No",
+  `SA: Base + Trust/Conflict`      = "No",
+  `SA: Beliefs + Trust/Conflict`   = "No",
+  `SA: Full (+ sociodemographics)` = "Yes"
+)
+
 modelsummary(
   list(
-    "Base"                     = plm1,
-    "Trust/Conflict only"      = plm2,
-    "Beliefs + Trust/Conflict" = plm3,
-    "Full ( + sociodemographics )" = plm4
+    "TURF: Base + Beliefs"                     = plm1,
+    "TURF: Base + Trust/Conflict"      = plm2,
+    "TURF: Beliefs + Trust/Conflict" = plm3,
+    "TURF: Full (+ sociodemographics)" = plm4
   ),
   coef_map   = coef_map,
+  coef_omit  = omit_sociodemo,
+  add_rows   = add_row,  
   vcov      = list(res1$V, res2$V, res3$V, res4$V),
   statistic = "({std.error})",
   stars     = c("*" = .05, "**" = .01, "***" = .001),
+  gof_omit   = "^(AIC|BIC|ICC|RMSE)$", 
   output    = out_file
 )
+
+
+
+##############################
+### Shared Area
+##############################
+
+# --- OA formulas (add random intercept) ---
+oa_m1 <- compliance_extraction_OA ~
+  compliance_lag_extraction_others_OA_mean +
+  compliance_beliefs_OA_caleta + compliance_beliefs_OA_others +
+  treatment + minority +  n_identities+
+  (1 | participant.code.plm)
+
+oa_m2 <- compliance_extraction_OA ~
+  compliance_lag_extraction_others_OA_mean +
+  treatment + minority +  n_identities+
+  confianza_pm_scaled + conflicto_pm_scaled +
+  confianza_caleta_scaled + conflicto_caleta_scaled +
+  (1 | participant.code.plm)
+
+oa_m3 <- compliance_extraction_OA ~
+  compliance_lag_extraction_others_OA_mean +
+  compliance_beliefs_OA_caleta + compliance_beliefs_OA_others +
+  treatment + minority + n_identities +
+  confianza_pm_scaled + conflicto_pm_scaled +
+  confianza_caleta_scaled + conflicto_caleta_scaled +
+  (1 | participant.code.plm)
+
+oa_m4 <- compliance_extraction_OA ~
+  compliance_lag_extraction_others_OA_mean +
+  compliance_beliefs_OA_caleta + compliance_beliefs_OA_others +
+  treatment + minority + n_identities +
+  confianza_pm_scaled + conflicto_pm_scaled +
+  confianza_caleta_scaled + conflicto_caleta_scaled +
+  survey3.1.player.sexo + survey3.1.player.horas_trabajo +
+  survey3.1.player.estudios + survey3.1.player.liderazgo +
+  (1 | participant.code.plm)
+
+ctrl <- lmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 1e5))
+
+# --- Fit full-sample models (point estimates) ---
+oaplm1 <- lmer(oa_m1, data = dfs_long, control = ctrl, REML = FALSE)
+oaplm2 <- lmer(oa_m2, data = dfs_long, control = ctrl, REML = FALSE)
+oaplm3 <- lmer(oa_m3, data = dfs_long, control = ctrl, REML = FALSE)
+oaplm4 <- lmer(oa_m4, data = dfs_long, control = ctrl, REML = FALSE)
+
+# --- Clustered bootstrap (by OA cluster) ---
+B <- 200  # bump to 500–1000 for the paper
+oa1 <- bootstrap_lmer(oa_m1, dfs_long, "gid.treat", B = B)
+oa2 <- bootstrap_lmer(oa_m2, dfs_long, "gid.treat", B = B)
+oa3 <- bootstrap_lmer(oa_m3, dfs_long, "gid.treat", B = B)
+oa4 <- bootstrap_lmer(oa_m4, dfs_long, "gid.treat", B = B)
+
+# --- Export a single DOCX table with bootstrapped SEs ---
+out_file_oa <- paste0(path_github, "Outputs/LMM_boot_H3_SharedArea.docx")
+
+
+coef_map <- c(
+  "(Intercept)" = "(Intercept)",
+  "compliance_lag_extraction_others_OA_mean" = "Mean observed compliance (t-1)",
+  "compliance_beliefs_OA_caleta" = "Prior Belief (Turf)",
+  "compliance_beliefs_OA_others" = "Prior Belief (out-siders)",
+  "treatmentT2" = "Stage (Known out-siders)",
+  "minority" = "Minority in round",
+  "n_identities" = "Three unions",
+  "confianza_pm_scaled" = "Trust (out-siders",
+  "conflicto_pm_scaled" = "Conflict (out-siders)",
+  "confianza_caleta_scaled" = "Trust (TURF)",
+  "conflicto_caleta_scaled" = "Conflict (TURF)",
+  "survey3.1.player.sexo" = "Female",
+  "survey3.1.player.horas_trabajo" = "Hours of work a week",
+  "survey3.1.player.estudios" = "Level of education",
+  "survey3.1.player.liderazgoSí" = "Held ledership role",
+  "SD (Intercept participant.code.plm)" = "SD (Intercept participant)",
+  "SD (Observations)" = "SD (Observations)"
+)
+
+omit_sociodemo <- "^survey3\\.1\\.player\\.(sexo|horas_trabajo|estudios|liderazgo).*"
+
+
+add_row <- tibble::tibble(
+  term = "Socio-demographic controls",
+  `SA: Base + Beliefs`             = "No",
+  `SA: Base + Trust/Conflict`      = "No",
+  `SA: Beliefs + Trust/Conflict`   = "No",
+  `SA: Full (+ sociodemographics)` = "Yes"
+)
+
+modelsummary(
+  list(
+    "SA: Base + Beliefs"          = oaplm1,
+    "SA: Base + Trust/Conflict"     = oaplm2,
+    "SA: Beliefs + Trust/Conflict"= oaplm3,
+    "SA: Full (+ sociodemographics)"    = oaplm4
+  ),
+  coef_map   = coef_map,
+  coef_omit  = omit_sociodemo,
+  add_rows   = add_row,    
+  vcov      = list(oa1$V, oa2$V, oa3$V, oa4$V),
+  statistic = "({std.error})",
+  stars     = c("*" = .05, "**" = .01, "***" = .001),
+  gof_omit   = "^(AIC|BIC|ICC|RMSE)$", 
+  output    = out_file_oa
+)
+
