@@ -25,11 +25,11 @@ library(semPlot)
 
 
 rm(list=ls())
-path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+#path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
-#path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 setwd(path_github)
 
@@ -147,11 +147,11 @@ model2 <- lmer(compliance ~ area * treatment + (1 | participant.code), data = df
 # One coef map covering ALL terms that appear in either model (order = row order)
 coef_map <- c(
   "(Intercept)"                      = "Intercept (TURF rounds 1–8)",
-  "treat.areaTURF_T2"                = "TURF rounds 9–16 (dummy)",
-  "treat.areaShared_Area_T1"         = "Shared Area Unknown Out-group (dummy)",
-  "treat.areaShared_Area_T2"         = "Shared Area Known Out-group (dummy)",
-  "areaShared_Area"                  = "Shared Area (dummy)",
-  "treatmentT2"                      = "Known Out-group condition (dummy)",
+  "treat.areaTURF_T2"                = "TURF (rounds 9–16)",
+  "treat.areaShared_Area_T1"         = "Shared Area Unknown Out-group",
+  "treat.areaShared_Area_T2"         = "Shared Area Known Out-group",
+  "areaShared_Area"                  = "Area (Shared)",
+  "treatmentT2"                      = "Stage (rounds 9-16)",
   "areaShared_Area:treatmentT2"      = "Area × Known Out-group"
 )
 
@@ -199,9 +199,9 @@ pairwise_res <- pairwise.wilcox.test(df_long_ext$compliance, df_long_ext$treat.a
 cat("\nPairwise Wilcoxon tests (Bonferroni-adjusted p-values):\n")
 print(pairwise_res)
 
-##################################################
-#### Diff in diff TURF T1 and T2, vs SA T1 and T2
-##################################################
+###########################################################################
+#### Diff in diff TURF T1 and T2, vs SA T1 and T2, robustness test for H2
+###########################################################################
 did_df <- df_long_ext %>%
   group_by(participant.code, treat.area, round) %>%
   summarise(mean_comp = mean(compliance, na.rm = TRUE), .groups = "drop") %>%
@@ -243,6 +243,70 @@ did_summary <- did_df %>%
   )
 
 print(did_summary)
+
+
+
+########################################################################
+### Robustness tests on the definition of compliance : here a dummy
+#####################################################################
+
+
+df_long_ext$complianceDummy<-ifelse(df_long_ext$compliance == 1,  1, 0)
+
+model3  <- lmer(complianceDummy ~ treat.area + (1 | participant.code), data = df_long_ext)
+model4 <- lmer(complianceDummy ~ area * treatment + (1 | participant.code), data = df_long_ext)
+
+summary(model3)
+summary(model4)
+
+table(df_long_ext$complianceDummy)
+
+
+# One coef map covering ALL terms that appear in either model (order = row order)
+coef_map <- c(
+  "(Intercept)"                      = "Intercept (TURF rounds 1–8)",
+  "treat.areaTURF_T2"                = "TURF (rounds 9–16)",
+  "treat.areaShared_Area_T1"         = "Shared Area Unknown Out-group",
+  "treat.areaShared_Area_T2"         = "Shared Area Known Out-group",
+  "areaShared_Area"                  = "Area (Shared)",
+  "treatmentT2"                      = "Stage (rounds 9-16)",
+  "areaShared_Area:treatmentT2"      = "Area × Known Out-group"
+)
+
+# Model names for columns
+models <- list(
+  "H1: TURF vs Shared Area"     = model3,
+  "H2: Area × Known Out-group condition"    = model4
+)
+
+modelsummary(
+  models,
+  coef_map   = coef_map,
+  # optional: keep only the mapped rows (drop any stray contrasts)
+  coef_omit  = "^$",
+  stars      = c('*' = 0.05, '**' = 0.01, '***' = 0.001),
+  statistic  = "({std.error})",
+  gof_omit   = "IC|Log|RMSE",  # hide AIC/BIC/LogLik if you want a cleaner table
+  title      = "Empirical tests of H1 & H2 (LMM with random intercept by participant) using a binary definition of compliance (full complinace =1, anything else 0).",
+  output     = paste0(path_github, "Outputs/LMM_H1_H2_SM.docx")
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ##################################################
