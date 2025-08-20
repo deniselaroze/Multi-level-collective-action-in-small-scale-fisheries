@@ -38,6 +38,44 @@ dfs_long$round.plm<-ifelse(dfs_long$treatment=="T2", as.numeric(dfs_long$round)+
 dfs_long$participant.code.plm<-ifelse(dfs_long$treatment=="T2", paste0(dfs_long$participant.code, ".T2"), dfs_long$participant.code)
 
 
+# --- Clustered bootstrap helper --------------------------------------------
+bootstrap_lmer <- function(model_formula, data, cluster_var, B = 100, seed = 62354234) {
+  # coefficient skeleton
+  coef_names <- names(fixef(lmer(model_formula, data = data, control = ctrl, REML = FALSE)))
+  
+  # one bootstrap replication (cluster resampling with replacement)
+  one_rep <- function(d, i_unused) {
+    clusters <- unique(stats::na.omit(d[[cluster_var]]))   # <-- drop NA clusters
+    if (length(clusters) < 2L) return(setNames(rep(NA_real_, length(coef_names)), coef_names))
+    
+    samp <- sample(clusters, length(clusters), replace = TRUE)
+    d_b <- dplyr::bind_rows(lapply(samp, function(cl) d[d[[cluster_var]] == cl, , drop = FALSE]))
+    
+    fit <- try(lmer(model_formula, data = d_b, control = ctrl, REML = FALSE), silent = TRUE)
+    out <- setNames(rep(NA_real_, length(coef_names)), coef_names)
+    if (inherits(fit, "try-error")) return(out)
+    
+    cf <- try(fixef(fit), silent = TRUE)
+    if (!inherits(cf, "try-error")) out[names(cf)] <- cf
+    out
+  }
+  
+  set.seed(seed)
+  bt <- boot::boot(data = data,
+                   statistic = function(d, i) one_rep(d, i),
+                   R = B)
+  
+  draws <- bt$t
+  colnames(draws) <- coef_names
+  V <- stats::cov(draws, use = "pairwise.complete.obs")
+  se <- sqrt(diag(V))
+  list(boot = bt, V = V, se = se, coef_names = coef_names)
+}
+
+
+################
+### TURF
+################
 
 ### Define models
 model1 <- compliance_extraction_amerb ~
@@ -74,40 +112,6 @@ plm1 <- lmer(model1, data = dfs_long, control = ctrl, REML = FALSE)
 plm2 <- lmer(model2, data = dfs_long, control = ctrl, REML = FALSE)
 plm3 <- lmer(model3, data = dfs_long, control = ctrl, REML = FALSE)
 plm4 <- lmer(model4, data = dfs_long, control = ctrl, REML = FALSE)
-
-# --- Clustered bootstrap helper --------------------------------------------
-bootstrap_lmer <- function(model_formula, data, cluster_var, B = 100, seed = 62354234) {
-  # coefficient skeleton
-  coef_names <- names(fixef(lmer(model_formula, data = data, control = ctrl, REML = FALSE)))
-  
-  # one bootstrap replication (cluster resampling with replacement)
-  one_rep <- function(d, i_unused) {
-    clusters <- unique(stats::na.omit(d[[cluster_var]]))   # <-- drop NA clusters
-    if (length(clusters) < 2L) return(setNames(rep(NA_real_, length(coef_names)), coef_names))
-    
-    samp <- sample(clusters, length(clusters), replace = TRUE)
-    d_b <- dplyr::bind_rows(lapply(samp, function(cl) d[d[[cluster_var]] == cl, , drop = FALSE]))
-    
-    fit <- try(lmer(model_formula, data = d_b, control = ctrl, REML = FALSE), silent = TRUE)
-    out <- setNames(rep(NA_real_, length(coef_names)), coef_names)
-    if (inherits(fit, "try-error")) return(out)
-    
-    cf <- try(fixef(fit), silent = TRUE)
-    if (!inherits(cf, "try-error")) out[names(cf)] <- cf
-    out
-  }
-  
-  set.seed(seed)
-  bt <- boot::boot(data = data,
-                   statistic = function(d, i) one_rep(d, i),
-                   R = B)
-  
-  draws <- bt$t
-  colnames(draws) <- coef_names
-  V <- stats::cov(draws, use = "pairwise.complete.obs")
-  se <- sqrt(diag(V))
-  list(boot = bt, V = V, se = se, coef_names = coef_names)
-}
 
 # --- Run bootstrap for each model ------------------------------------------
 B <- 200  # try small while testing; use 500–1000 for paper
@@ -169,32 +173,37 @@ modelsummary(
 ##############################
 
 # --- OA formulas (add random intercept) ---
+
 oa_m1 <- compliance_extraction_OA ~
   compliance_lag_extraction_others_OA_mean +
-  compliance_beliefs_OA_caleta + compliance_beliefs_OA_others +
-  treatment + minority +  n_identities+
+  treatment*confianza_pm_scaled + treatment*conflicto_pm_scaled +
   (1 | participant.code.plm)
 
 oa_m2 <- compliance_extraction_OA ~
   compliance_lag_extraction_others_OA_mean +
-  treatment + minority +  n_identities+
-  confianza_pm_scaled + conflicto_pm_scaled +
+  treatment*confianza_pm_scaled + treatment*conflicto_pm_scaled +
   confianza_caleta_scaled + conflicto_caleta_scaled +
   (1 | participant.code.plm)
 
 oa_m3 <- compliance_extraction_OA ~
   compliance_lag_extraction_others_OA_mean +
   compliance_beliefs_OA_caleta + compliance_beliefs_OA_others +
-  treatment + minority + n_identities +
-  confianza_pm_scaled + conflicto_pm_scaled +
-  confianza_caleta_scaled + conflicto_caleta_scaled +
+  treatment +
   (1 | participant.code.plm)
 
+# oa_m4 <- compliance_extraction_OA ~
+#   compliance_lag_extraction_others_OA_mean +
+#   compliance_beliefs_OA_caleta + compliance_beliefs_OA_others +
+#   treatment + minority + n_identities +
+#   confianza_pm_scaled + conflicto_pm_scaled +
+#   confianza_caleta_scaled + conflicto_caleta_scaled +
+#   (1 | participant.code.plm)
+
 oa_m4 <- compliance_extraction_OA ~
-  compliance_lag_extraction_others_OA_mean +
+  #compliance_lag_extraction_others_OA_mean +
+  treatment*confianza_pm_scaled + treatment*conflicto_pm_scaled +
   compliance_beliefs_OA_caleta + compliance_beliefs_OA_others +
   treatment + minority + n_identities +
-  confianza_pm_scaled + conflicto_pm_scaled +
   confianza_caleta_scaled + conflicto_caleta_scaled +
   survey3.1.player.sexo + survey3.1.player.horas_trabajo +
   survey3.1.player.estudios + survey3.1.player.liderazgo +
@@ -216,54 +225,53 @@ oa3 <- bootstrap_lmer(oa_m3, dfs_long, "gid.treat", B = B)
 oa4 <- bootstrap_lmer(oa_m4, dfs_long, "gid.treat", B = B)
 
 # --- Export a single DOCX table with bootstrapped SEs ---
-out_file_oa <- paste0(path_github, "Outputs/LMM_boot_H3_SharedArea.docx")
 
-
-coef_map <- c(
-  "(Intercept)" = "(Intercept)",
-  "compliance_lag_extraction_others_OA_mean" = "Mean observed compliance (t-1)",
-  "compliance_beliefs_OA_caleta" = "Prior Belief (Turf)",
-  "compliance_beliefs_OA_others" = "Prior Belief (out-siders)",
-  "treatmentT2" = "Stage (Known out-siders)",
-  "minority" = "Minority in round",
-  "n_identities" = "Three unions",
-  "confianza_pm_scaled" = "Trust (out-siders",
-  "conflicto_pm_scaled" = "Conflict (out-siders)",
-  "confianza_caleta_scaled" = "Trust (TURF)",
-  "conflicto_caleta_scaled" = "Conflict (TURF)",
-  "survey3.1.player.sexo" = "Female",
-  "survey3.1.player.horas_trabajo" = "Hours of work a week",
-  "survey3.1.player.estudios" = "Level of education",
-  "survey3.1.player.liderazgoSí" = "Held ledership role",
-  "SD (Intercept participant.code.plm)" = "SD (Intercept participant)",
-  "SD (Observations)" = "SD (Observations)"
+# A dictionary that renames but never drops terms.
+# Include both ':' and ' × ' versions for interactions so it works regardless of pretty rewriting.
+coef_dict <- c(
+  "(Intercept)"                                  = "(Intercept)",
+  "compliance_lag_extraction_others_OA_mean"     = "Mean observed compliance (t-1)",
+  "treatmentT2"                                  = "Stage (Known outsiders)",
+  "confianza_pm_scaled"                          = "Trust (outsiders)",
+  "conflicto_pm_scaled"                          = "Conflict (outsiders)",
+  "treatmentT2:confianza_pm_scaled"              = "Stage × Trust (outsiders)",
+  "treatmentT2:conflicto_pm_scaled"              = "Stage × Conflict (outsiders)",
+  "treatmentT2 × confianza_pm_scaled"            = "Stage × Trust (outsiders)",
+  "treatmentT2 × conflicto_pm_scaled"            = "Stage × Conflict (outsiders)",
+  "confianza_caleta_scaled"                      = "Trust (TURF)",
+  "conflicto_caleta_scaled"                      = "Conflict (TURF)",
+  "compliance_beliefs_OA_caleta"                 = "Prior belief (TURF)",
+  "compliance_beliefs_OA_others"                 = "Prior belief (outsiders)",
+  "minority"                                     = "Minority in round",
+  "n_identities"                                 = "Three unions",
+  "survey3.1.player.sexo"                        = "Female",
+  "survey3.1.player.horas_trabajo"               = "Hours worked per week",
+  "survey3.1.player.estudios"                    = "Education level",
+  "survey3.1.player.liderazgoSí"                 = "Held leadership role",
+  "SD (Intercept participant.code.plm)"          = "SD (Intercept participant)",
+  "SD (Observations)"                            = "SD (Residual)"
 )
 
-omit_sociodemo <- "^survey3\\.1\\.player\\.(sexo|horas_trabajo|estudios|liderazgo).*"
+# Optional: if you’d rather *stop* the automatic '×' rewrite entirely, uncomment:
+# options(modelsummary_rewrite_terms = FALSE)
 
-
-add_row <- tibble::tibble(
-  term = "Socio-demographic controls",
-  `SA: Base + Beliefs`             = "No",
-  `SA: Base + Trust/Conflict`      = "No",
-  `SA: Beliefs + Trust/Conflict`   = "No",
-  `SA: Full (+ sociodemographics)` = "Yes"
+mods <- list(
+  "SA: Base"                        = oaplm1,
+  "SA: Base + Trust/Conflict TURF"  = oaplm2,
+  "SA: Beliefs"                     = oaplm3,
+  "SA: Full"                        = oaplm4
 )
+
+vcvs <- list(oa1$V, oa2$V, oa3$V, oa4$V)
+
+out_file_oa <- paste0(path_github, "Outputs/LMM_boot_H3_SharedArea3.docx")
 
 modelsummary(
-  list(
-    "SA: Base + Beliefs"          = oaplm1,
-    "SA: Base + Trust/Conflict"     = oaplm2,
-    "SA: Beliefs + Trust/Conflict"= oaplm3,
-    "SA: Full (+ sociodemographics)"    = oaplm4
-  ),
-  coef_map   = coef_map,
-  coef_omit  = omit_sociodemo,
-  add_rows   = add_row,    
-  vcov      = list(oa1$V, oa2$V, oa3$V, oa4$V),
-  statistic = "({std.error})",
-  stars     = c("*" = .05, "**" = .01, "***" = .001),
-  gof_omit   = "^(AIC|BIC|ICC|RMSE)$", 
-  output    = out_file_oa
+  mods,
+  #vcov        = vcvs,
+  coef_rename = coef_dict,                 # rename without dropping anything
+  statistic   = "({std.error})",
+  stars       = c("*"=.05,"**"=.01,"***"=.001),
+  gof_omit    = "^(AIC|BIC|ICC|RMSE)$",
+  output      = out_file_oa
 )
-

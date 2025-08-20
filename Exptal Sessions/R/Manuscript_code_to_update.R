@@ -15,10 +15,9 @@ library(modelsummary)
 library(tinytable)
 library(rlang)
 library(pandoc)
-
-if (!requireNamespace("semPlot", quietly = TRUE)) install.packages("semPlot")
-if (!requireNamespace("lavaan", quietly = TRUE)) install.packages("lavaan")
-
+library(dplyr)
+library(ggplot2)
+library(viridis)
 library(lavaan)
 library(semPlot)
 
@@ -37,6 +36,69 @@ setwd(path_github)
 #load(paste0(path_datos, "/Datos_islitas.Rdata"))
 load(paste0(path_datos, "/Datos_islitas_recode.Rdata"))
 load(paste0(path_datos, "/Datos_islitas_long.Rdata"))
+
+######################
+#### Summary Table
+######################
+
+df <- df %>%
+  mutate(
+    confianza_pm_scaled     = (survey1.1.player.confianza_pm   - 1) / 3,
+    conflicto_pm_scaled     = (survey1.1.player.conflicto_pm   - 1) / 3,
+    confianza_caleta_scaled = (survey1.1.player.confianza_caleta - 1) / 3,
+    conflicto_caleta_scaled = (survey1.1.player.conflicto_caleta - 1) / 3
+  )
+
+# --- variables of interest ---
+vars_df <- c(
+  "survey1.1.player.confianza_pm", "confianza_pm_scaled",
+  "survey1.1.player.conflicto_pm", "conflicto_pm_scaled",
+  "survey1.1.player.confianza_caleta", "confianza_caleta_scaled",
+  "survey1.1.player.conflicto_caleta", "conflicto_caleta_scaled",
+  #"compliance_beliefs_OA_caleta", "compliance_beliefs_OA_others",
+  #"minority", "n_identities",
+  "survey3.1.player.sexo", "survey3.1.player.horas_trabajo",
+  "survey3.1.player.estudios", "survey3.1.player.liderazgo"
+)
+
+vars_dfs_long <- c(
+  "compliance_extraction_OA",
+  "compliance_lag_extraction_others_OA_mean"
+)
+
+# --- summarise helper: one row per variable ---
+summarize_vars <- function(df, vars) {
+  df %>%
+    select(all_of(vars)) %>%
+    summarise(across(
+      everything(),
+      list(
+        Mean = ~mean(., na.rm = TRUE),
+        SD   = ~sd(., na.rm = TRUE),
+        N    = ~sum(!is.na(.))
+      ),
+      .names = "{.col}__{.fn}"
+    )) %>%
+    tidyr::pivot_longer(
+      everything(),
+      names_to = c("Variable", ".value"),
+      names_sep = "__"
+    )
+}
+
+# --- summaries ---
+summary_df       <- summarize_vars(df, vars_df)
+summary_dfs_long <- summarize_vars(dfs_long, vars_dfs_long)
+
+# --- combine ---
+summary_all <- bind_rows(summary_df, summary_dfs_long)
+
+# --- pretty table ---
+datasummary_df(summary_all,
+               title = "Summary Statistics",
+               output    = paste0(path_github, "Outputs/summary.docx")) 
+
+
 
 
 ##########################
@@ -103,9 +165,9 @@ means_ci_by_treatment$treatment <- factor(means_ci_by_treatment$treatment,
 
 print(means_ci_by_treatment)
 
-####################################################################
-#### Statistics for differences in extraction per area and scenario
-####################################################################
+#######################################
+#### Data Manipulation for H1 and H2
+#######################################
 df_long_ext <- dfs_long %>%
   pivot_longer(
     cols = c(extraction_amerb, extraction_OA),
@@ -145,39 +207,115 @@ df_long_ext$area <- relevel(factor(df_long_ext$area), ref = "TURF")
 ### Empirical tests of H1 and H2: differences between SA in T1 and Turf in T1 and T2:
 ######################################################################################
 
+# A robust lmerControl (helps reduce spurious convergence warnings)
+ctrl <- lmerControl(
+  optimizer = "bobyqa",
+  optCtrl   = list(maxfun = 2e5),
+  check.conv.grad = .makeCC("warning", tol = 1e-3, relTol = NULL)
+)
+
+# ---------- Cluster bootstrap for lmer ----------
+bootstrap_lmer <- function(model_formula, data, cluster_var, B = 2000, seed = 62354234) {
+  # Fit once on the full data (ML) to get the coefficient skeleton & order
+  base_fit <- lmer(model_formula, data = data, control = ctrl, REML = FALSE)
+  coef_names <- names(fixef(base_fit))
+  
+  # One bootstrap replication: sample clusters with replacement
+  one_rep <- function(d, i_unused) {
+    # unique, non-missing clusters
+    clusters <- unique(stats::na.omit(d[[cluster_var]]))
+    # if too few clusters, return NAs
+    if (length(clusters) < 2L) return(setNames(rep(NA_real_, length(coef_names)), coef_names))
+    
+    # resample cluster ids (with replacement), keep all rows from chosen clusters
+    samp <- sample(clusters, length(clusters), replace = TRUE)
+    d_b  <- dplyr::bind_rows(lapply(samp, function(cl) d[d[[cluster_var]] == cl, , drop = FALSE]))
+    
+    # fit
+    fit <- try(lmer(model_formula, data = d_b, control = ctrl, REML = FALSE), silent = TRUE)
+    out <- setNames(rep(NA_real_, length(coef_names)), coef_names)
+    if (inherits(fit, "try-error")) return(out)
+    
+    cf <- try(fixef(fit), silent = TRUE)
+    if (!inherits(cf, "try-error")) out[names(cf)] <- as.numeric(cf)
+    out
+  }
+  
+  set.seed(seed)
+  bt <- boot::boot(
+    data = data,
+    statistic = function(d, i) one_rep(d, i),  # i is unused; we resample clusters internally
+    R = B,
+    parallel = "no"  # set to "multicore"/"snow" if you want parallelism
+  )
+  
+  draws <- bt$t
+  colnames(draws) <- coef_names
+  
+  # Covariance & SEs from the bootstrap draws
+  V  <- stats::cov(draws, use = "pairwise.complete.obs")
+  se <- sqrt(diag(V))
+  
+  # Percentile CIs (quick, vectorized)
+  qs <- apply(draws, 2, quantile, probs = c(0.025, 0.975), na.rm = TRUE)
+  ci_lower <- qs[1,]
+  ci_upper <- qs[2,]
+  
+  list(
+    base_fit  = base_fit,   # lmer fit on full data (ML)
+    boot      = bt,         # full boot object
+    draws     = draws,      # B x p matrix of bootstrap coefficients
+    V         = V,          # bootstrap covariance (cluster-robust)
+    se        = se,         # bootstrap SEs
+    ci_lower  = ci_lower,   # 2.5% percentile CI
+    ci_upper  = ci_upper,   # 97.5% percentile CI
+    coef_names = coef_names
+  )
+}
+
+
+
+#----------- Estimate models ##############
+# Your models (ML fits are inside the bootstrap anyway)
 model  <- lmer(compliance ~ treat.area + (1 | participant.code), data = df_long_ext)
 model2 <- lmer(compliance ~ area * treatment + (1 | participant.code), data = df_long_ext)
 
-# One coef map covering ALL terms that appear in either model (order = row order)
-coef_map <- c(
-  "(Intercept)"                      = "Intercept (TURF rounds 1–8)",
-  "treat.areaTURF_T2"                = "TURF (rounds 9–16)",
-  "treat.areaShared_Area_T1"         = "Shared Area Unknown Out-group",
-  "treat.areaShared_Area_T2"         = "Shared Area Known Out-group",
-  "areaShared_Area"                  = "Area (Shared)",
-  "treatmentT2"                      = "Stage (rounds 9-16)",
-  "areaShared_Area:treatmentT2"      = "Area × Stage"
+# Cluster variable is the subject id:
+clvar <- "gid.treat" # for TURF or "gid.treat" for Shared Area
+
+# Run the cluster bootstrap (increase B for publication results)
+res1 <- bootstrap_lmer(compliance ~ treat.area + (1 | participant.code),
+                       data = df_long_ext, cluster_var = clvar, B = 2000)
+res2 <- bootstrap_lmer(compliance ~ area * treatment + (1 | participant.code),
+                       data = df_long_ext, cluster_var = clvar, B = 2000)
+
+# If you use modelsummary, pass the bootstrap vcov so p-values/SEs reflect the cluster bootstrap:
+library(modelsummary)
+
+# Optional: label coefficients
+my_labels <- c(
+  "(Intercept)"              = "Intercept (TURF rounds 1–8)",
+  "treat.areaTURF_T2"        = "TURF rounds 9–16",
+  "treat.areaShared_Area_T1" = "Shared Area Unknown Out-group",
+  "treat.areaShared_Area_T2" = "Shared Area Known Out-group",
+  "areaShared_Area"          = "Area (Shared)",
+  "treatmentT2"              = "Stage (Rounds 9–16)",
+  "areaShared_Area:treatmentT2" = "Area × Stage"
 )
 
-# Model names for columns
-models <- list(
-  "H1: TURF vs Shared Area"     = model,
-  "H2: Area × Stage"    = model2
-)
+# Make sure the vcov matrices align with the fitted object coef order
+vcov1 <- res1$V[ names(fixef(res1$base_fit)), names(fixef(res1$base_fit)) ]
+vcov2 <- res2$V[ names(fixef(res2$base_fit)), names(fixef(res2$base_fit)) ]
 
 modelsummary(
-  models,
-  coef_map   = coef_map,
-  # optional: keep only the mapped rows (drop any stray contrasts)
-  coef_omit  = "^$",
-  stars      = c('*' = 0.05, '**' = 0.01, '***' = 0.001),
-  statistic  = "({std.error})",
-  gof_omit   = "IC|Log|RMSE",  # hide AIC/BIC/LogLik if you want a cleaner table
-  title      = "Empirical tests of H1 & H2 (LMM with random intercept by participant)",
-  output     = paste0(path_github, "Outputs/LMM_H1_H2.docx")
+  list("H1: TURF vs Shared Area" = res1$base_fit,
+       "H2: Area × Stage" = res2$base_fit),
+  vcov      = list(vcov1, vcov2),
+  coef_map  = my_labels,
+  stars     = c("*" = .05, "**" = .01, "***" = .001),  # only these three
+  gof_omit  = "IC|Log.Lik|AIC|BIC",                    # cleaner table
+  output    = paste0(path_github, "Outputs/LMM_H1_H2_boot_gid.treat.docx")
 )
-
-
 
 
 ######################################################################################
@@ -289,6 +427,90 @@ did_summary <- did_df %>%
   )
 
 print(did_summary)
+
+########################################
+### Descriptive graph H1 and H2 - SM
+########################################
+
+# --- summary by round × treat.area ---
+sum_ext <- df_long_ext %>%
+  group_by(round, treat.area) %>%
+  summarise(
+    n    = dplyr::n(),
+    mean = mean(compliance, na.rm = TRUE),
+    sd   = sd(compliance,   na.rm = TRUE),
+    se   = sd / sqrt(n),
+    ci   = 1.96 * se,
+    .groups = "drop"
+  ) %>%
+  mutate(
+    ymin = pmax(0, mean - ci),
+    ymax = pmin(1, mean + ci)
+  )
+
+# legend labels for treat.area
+labs_map <- c(
+  "TURF_T1"        = "TURF (rounds 1-8)",
+  "TURF_T2"        = "TURF (rounds 9-16)",
+  "Shared_Area_T1" = "Shared Area (Unknown outsiders)",
+  "Shared_Area_T2" = "Shared Area (Known out-siders)"
+)
+
+# map linetype & shape in aes so scales take effect
+p <- ggplot(
+  sum_ext,
+  aes(x = round, y = mean,
+      color = treat.area, linetype = treat.area, shape = treat.area,
+      group = treat.area)
+) +
+  geom_line() +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.15, alpha = 0.85) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1),
+    limits = c(0, 1), expand = expansion(mult = c(0.02, 0.04))
+  ) +
+  # give all three scales the same name & breaks so legend combines cleanly
+  scale_color_viridis_d(
+    end = 0.9, option = "D", name = "Area × Stage",
+    breaks = names(labs_map), labels = unname(labs_map)
+  ) +
+  scale_linetype_manual(
+    values = c("solid", "dashed", "dotted", "longdash"),
+    name = "Area × Stage",
+    breaks = names(labs_map), labels = unname(labs_map)
+  ) +
+  scale_shape_manual(
+    values = c(16,17,15,18),
+    name   = "Area × Stage",
+    breaks = names(labs_map), labels = unname(labs_map)
+  ) +
+  labs(
+    x = "Round",
+    y = "Mean compliance",
+    title = "Compliance by area × stage across rounds"
+  ) +
+  theme_bw(base_size = 14) +  # keep fonts large under theme_bw
+  theme(
+    legend.position = "bottom",
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    axis.text.x  = element_text(size = 12),
+    axis.text.y  = element_text(size = 12),
+    legend.title = element_text(size = 12),
+    legend.text  = element_text(size = 12),
+    plot.title   = element_text(size = 14)
+  )
+
+print(p)
+
+ggsave(
+  filename = paste0(path_github, "Outputs/compliance_by_round_treat_area.png"),
+  plot = p, width = 12, height = 8, dpi = 300
+)
+
+
+
 
 
 ##################################################
