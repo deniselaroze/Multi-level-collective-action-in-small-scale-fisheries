@@ -9,13 +9,20 @@ library(lavaan)
 library(semPlot)
 
 rm(list=ls())
-path_github <- "C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-path_datos <- "C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+#path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+
+path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 setwd(path_github)
 
+#load(paste0(path_datos, "/Datos_islitas.Rdata"))
 load(paste0(path_datos, "/Datos_islitas_recode.Rdata"))
 load(paste0(path_datos, "/Datos_islitas_long.Rdata"))
+
+
+############### functions
 
 get_columns_by_round <- function(prefix, suffix, start, end = NULL) {
   if (is.null(end)) end <- start
@@ -48,17 +55,17 @@ save_sem_plot <- function(df, R, N, path_github) {
                 average_compliance_ini ~ belief_compliance_amerb + survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta'
   
   node_labels <- c(
-    "belief_compliance_amerb" = "Prior Beliefs",
+    "belief_compliance_amerb" = "Prior Beliefs Union",
     "average_compliance_ini" = "Compliance",
-    "survey1.1.player.confianza_caleta" = "Trust TURF",
-    "survey1.1.player.conflicto_caleta" = "Conflict TURF"
+    "survey1.1.player.confianza_caleta" = "Trust Union",
+    "survey1.1.player.conflicto_caleta" = "Conflict Union"
   )
   
   fit <- sem(sem_model,
              data       = df,
              estimator  = "ML",
              se         = "bootstrap",
-             bootstrap  = 500,
+             bootstrap  = 2000,
              parallel   = "multicore",
              ncpus      = 4)  
   
@@ -77,17 +84,20 @@ save_sem_plot <- function(df, R, N, path_github) {
     fit,
     what = "std",
     layout = "tree",
-    edge.label.cex = 1,
+    #edge.label.cex = 1,
     nodeLabels = node_labels,
-    sizeMan = 9,
+    sizeMan = 7,
     label.cex = 1,
     node.width = 2,
-    node.height = 0.7,
+    #node.height = 1,
     shapeMan = "rectangle",
     edge.color = edge_colors,
     residuals = FALSE,
     intercepts = FALSE,
-    optimizeLatRes = TRUE
+    optimizeLatRes = TRUE,
+    fade = FALSE,
+    nCharNodes = 25,
+    mar = c(6, 6, 7, 6)
   )
   
   title(main = paste("Mean Compliance TURF Round ", R), line = 2, cex.main = 1.5)
@@ -129,11 +139,11 @@ save_dynamic_sem_plot <- function(df, R, N, path_github) {
   '
   
   node_labels <- c(
-    "belief_compliance_amerb" = "Prior Beliefs",
+    "belief_compliance_amerb" = "Prior Beliefs Union",
     "average_compliance_ini" = "Compliance",
-    "survey1.1.player.confianza_caleta" = "Trust TURF",
-    "survey1.1.player.conflicto_caleta" = "Conflict TURF",
-    "average_compliance_observed_ini_lag" = "Updated Beliefs"
+    "survey1.1.player.confianza_caleta" = "Trust Union",
+    "survey1.1.player.conflicto_caleta" = "Conflict Union",
+    "average_compliance_observed_ini_lag" = "Observed Behavior"
   )
   
   
@@ -141,7 +151,7 @@ save_dynamic_sem_plot <- function(df, R, N, path_github) {
              data       = df,
              estimator  = "ML",
              se         = "bootstrap",
-             bootstrap  = 500,
+             bootstrap  = 2000,
              parallel   = "multicore",
              ncpus      = 4)
   
@@ -160,18 +170,20 @@ save_dynamic_sem_plot <- function(df, R, N, path_github) {
     fit,
     what = "std",
     layout = "tree",
-    edge.label.cex = 1,
+    #edge.label.cex = 1,
     nodeLabels = node_labels,
-    sizeMan = 9,
+    sizeMan = 7,
     label.cex = 1,
     node.width = 2,
-    node.height = 0.7,
+    #node.height = 1,
     shapeMan = "rectangle",
     edge.color = edge_colors,
     residuals = FALSE,
     intercepts = FALSE,
     optimizeLatRes = TRUE,
-    fade = FALSE
+    fade = FALSE,
+    nCharNodes = 25,
+    mar = c(6, 6, 7, 6)
   )
   
   title(main = paste("Mean Compliance TURF Rounds", R, "to", N), line = 2, cex.main = 1.5)
@@ -193,10 +205,10 @@ save_t2_sem_plot <- function(df, R, N, path_github) {
                 average_compliance_ini ~ belief_compliance_amerb + survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta'
   
   node_labels <- c(
-    "belief_compliance_amerb" = "Prior Beliefs",
+    "belief_compliance_amerb" = "Prior Beliefs Union",
     "average_compliance_ini" = "Compliance",
-    "survey1.1.player.confianza_caleta" = "Trust TURF",
-    "survey1.1.player.conflicto_caleta" = "Conflict TURF"
+    "survey1.1.player.confianza_caleta" = "Trust Union",
+    "survey1.1.player.conflicto_caleta" = "Conflict Union"
   )
   
   
@@ -204,7 +216,7 @@ save_t2_sem_plot <- function(df, R, N, path_github) {
              data       = df,
              estimator  = "ML",
              se         = "bootstrap",
-             bootstrap  = 500,
+             bootstrap  = 2000,
              parallel   = "multicore",
              ncpus      = 4)
   
@@ -223,17 +235,20 @@ save_t2_sem_plot <- function(df, R, N, path_github) {
     fit,
     what = "std",
     layout = "tree",
-    edge.label.cex = 1,
+    #edge.label.cex = 1,
     nodeLabels = node_labels,
-    sizeMan = 9,
+    sizeMan = 7,
     label.cex = 1,
     node.width = 2,
-    node.height = 0.7,
+    #node.height = 1,
     shapeMan = "rectangle",
     edge.color = edge_colors,
     residuals = FALSE,
     intercepts = FALSE,
-    optimizeLatRes = TRUE
+    optimizeLatRes = TRUE,
+    fade = FALSE,
+    nCharNodes = 25,
+    mar = c(6, 6, 7, 6)
   )
   
   title(main = paste("Mean Compliance TURF Round", R+8), line = 2, cex.main = 1.5)
@@ -276,11 +291,11 @@ save_dynamic_t2_sem_plot <- function(df, R, N, path_github) {
   '
   
   node_labels <- c(
-    "belief_compliance_amerb" = "Prior Beliefs",
+    "belief_compliance_amerb" = "Prior Beliefs Union",
     "average_compliance_ini" = "Compliance",
-    "survey1.1.player.confianza_caleta" = "Trust TURF",
-    "survey1.1.player.conflicto_caleta" = "Conflict TURF",
-    "average_compliance_observed_ini_lag" = "Updated Beliefs"
+    "survey1.1.player.confianza_caleta" = "Trust Union",
+    "survey1.1.player.conflicto_caleta" = "Conflict Union",
+    "average_compliance_observed_ini_lag" = "Observed Behavior"
   )
   
   
@@ -288,7 +303,7 @@ save_dynamic_t2_sem_plot <- function(df, R, N, path_github) {
              data       = df,
              estimator  = "ML",
              se         = "bootstrap",
-             bootstrap  = 500,
+             bootstrap  = 2000,
              parallel   = "multicore",
              ncpus      = 4)
   
@@ -307,18 +322,20 @@ save_dynamic_t2_sem_plot <- function(df, R, N, path_github) {
     fit,
     what = "std",
     layout = "tree",
-    edge.label.cex = 1,
+    #edge.label.cex = 1,
     nodeLabels = node_labels,
-    sizeMan = 9,
+    sizeMan = 7,
     label.cex = 1,
     node.width = 2,
-    node.height = 0.7,
+    #node.height = 1,
     shapeMan = "rectangle",
     edge.color = edge_colors,
     residuals = FALSE,
     intercepts = FALSE,
     optimizeLatRes = TRUE,
-    fade = FALSE
+    fade = FALSE,
+    nCharNodes = 25,
+    mar = c(6, 6, 7, 6)
   )
   
   title(main = paste("Mean Compliance TURF Rounds", R+8, "to", N+8), line = 2, cex.main = 1.5)
@@ -343,20 +360,20 @@ save_sharedarea_sem_plot <- function(df, R, N, path_github) {
     average_compliance_ini ~ belief_compliance_pm + belief_compliance_union + survey1.1.player.confianza_pm + survey1.1.player.conflicto_pm + survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta
   '
   node_labels <- c(
-    "belief_compliance_pm" = "Prior Beliefs Outsiders",
-    "belief_compliance_union" = "Prior Beliefs TURF",
+    "belief_compliance_pm" = "Prior Beliefs Out-group",
+    "belief_compliance_union" = "Prior Beliefs Union",
     "average_compliance_ini" = "Compliance",
-    "survey1.1.player.confianza_pm" = "Trust Outsiders",
-    "survey1.1.player.conflicto_pm" = "Conflict Outsiders",
-    "survey1.1.player.confianza_caleta" = "Trust TURF",
-    "survey1.1.player.conflicto_caleta" = "Conflict TURF"
+    "survey1.1.player.confianza_pm" = "Trust Out-group",
+    "survey1.1.player.conflicto_pm" = "Conflict Out-group",
+    "survey1.1.player.confianza_caleta" = "Trust Union",
+    "survey1.1.player.conflicto_caleta" = "Conflict Union"
   )
   
   fit <- sem(sem_model,
              data       = df,
              estimator  = "ML",
              se         = "bootstrap",
-             bootstrap  = 500,
+             bootstrap  = 2000,
              parallel   = "multicore",
              ncpus      = 4)
   
@@ -373,19 +390,22 @@ save_sharedarea_sem_plot <- function(df, R, N, path_github) {
     fit,
     what = "std",
     layout = "tree",
-    edge.label.cex = 1,
+    #edge.label.cex = 1,
     nodeLabels = node_labels,
-    sizeMan = 9,
+    sizeMan = 7,
     label.cex = 1,
     node.width = 2,
-    node.height = 0.7,
+    #node.height = 1,
     shapeMan = "rectangle",
     edge.color = edge_colors,
     residuals = FALSE,
     intercepts = FALSE,
-    optimizeLatRes = TRUE
+    optimizeLatRes = TRUE,
+    fade = FALSE,
+    nCharNodes = 25,
+    mar = c(6, 6, 7, 6)
   )
-  title(main = paste("Shared Area (Unknow Outsiders) Round", R), line = 2, cex.main = 1.5)
+  title(main = paste("Shared Area (Unknow Out-group) Round", R), line = 2, cex.main = 1.5)
   dev.off()
 }
 
@@ -421,21 +441,21 @@ save_sharedarea_dynamic_sem_plot <- function(df, R, N, path_github) {
     average_compliance_observed_ini_lag ~~ 0*belief_compliance_pm
   '
   node_labels <- c(
-    "belief_compliance_pm" = "Prior Beliefs Outsiders",
-    "belief_compliance_union" = "Prior Beliefs TURF",
+    "belief_compliance_pm" = "Prior Beliefs Out-group",
+    "belief_compliance_union" = "Prior Beliefs Union",
     "average_compliance_ini" = "Compliance",
-    "survey1.1.player.confianza_pm" = "Trust Outsiders",
-    "survey1.1.player.conflicto_pm" = "Conflict Outsiders",
-    "survey1.1.player.confianza_caleta" = "Trust TURF",
-    "survey1.1.player.conflicto_caleta" = "Conflict TURF",
-    "average_compliance_observed_ini_lag" = "Updated Beliefs"
+    "survey1.1.player.confianza_pm" = "Trust Out-group",
+    "survey1.1.player.conflicto_pm" = "Conflict Out-group",
+    "survey1.1.player.confianza_caleta" = "Trust Union",
+    "survey1.1.player.conflicto_caleta" = "Conflict Union",
+    "average_compliance_observed_ini_lag" = "Observed Behavior"
   )
   
   fit <- sem(sem_model,
              data       = df,
              estimator  = "ML",
              se         = "bootstrap",
-             bootstrap  = 500,
+             bootstrap  = 2000,
              parallel   = "multicore",
              ncpus      = 4)
   
@@ -452,20 +472,22 @@ save_sharedarea_dynamic_sem_plot <- function(df, R, N, path_github) {
     fit,
     what = "std",
     layout = "tree",
-    edge.label.cex = 1,
+    #edge.label.cex = 1,
     nodeLabels = node_labels,
-    sizeMan = 9,
+    sizeMan = 7,
     label.cex = 1,
     node.width = 2,
-    node.height = 0.7,
+    #node.height = 1,
     shapeMan = "rectangle",
     edge.color = edge_colors,
     residuals = FALSE,
     intercepts = FALSE,
     optimizeLatRes = TRUE,
-    fade = FALSE
+    fade = FALSE,
+    nCharNodes = 25,
+    mar = c(6, 6, 7, 6)
   )
-  title(main = paste("Shared Area (Unknow Outsiders) Rounds", R, "to", N), line = 2, cex.main = 1.5)
+  title(main = paste("Shared Area (Unknow Out-group) Mean Rounds", R, "to", N), line = 2, cex.main = 1.5)
   dev.off()
 }
 
@@ -493,20 +515,20 @@ save_sharedarea_t2_sem_plot <- function(df, R, N, path_github) {
     average_compliance_ini ~ belief_compliance_pm + belief_compliance_union + survey2.1.player.confianza_caleta_conocida_mean + survey2.1.player.conflicto_caleta_conocida_mean + survey1.1.player.confianza_caleta + survey1.1.player.conflicto_caleta
   '
   node_labels <- c(
-    "belief_compliance_pm" = "Prior Beliefs Outsiders",
-    "belief_compliance_union" = "Prior Beliefs TURF",
+    "belief_compliance_pm" = "Prior Beliefs Out-group",
+    "belief_compliance_union" = "Prior Beliefs Union",
     "average_compliance_ini" = "Compliance",
-    "survey2.1.player.confianza_caleta_conocida_mean" = "Trust Know Outsiders",
-    "survey2.1.player.conflicto_caleta_conocida_mean" = "Conflict Know Outsider",
-    "survey1.1.player.confianza_caleta" = "Trust TURF",
-    "survey1.1.player.conflicto_caleta" = "Conflict TURF"
+    "survey2.1.player.confianza_caleta_conocida_mean" = "Trust Out-group",
+    "survey2.1.player.conflicto_caleta_conocida_mean" = "Conflict Out-group",
+    "survey1.1.player.confianza_caleta" = "Trust Union",
+    "survey1.1.player.conflicto_caleta" = "Conflict Union"
   )
   
   fit <- sem(sem_model,
              data       = df,
              estimator  = "ML",
              se         = "bootstrap",
-             bootstrap  = 500,
+             bootstrap  = 2000,
              parallel   = "multicore",
              ncpus      = 4)
   
@@ -523,19 +545,22 @@ save_sharedarea_t2_sem_plot <- function(df, R, N, path_github) {
     fit,
     what = "std",
     layout = "tree",
-    edge.label.cex = 1,
+    #edge.label.cex = 1,
     nodeLabels = node_labels,
-    sizeMan = 9,
+    sizeMan = 7,
     label.cex = 1,
     node.width = 2,
-    node.height = 0.7,
+    #node.height = 1,
     shapeMan = "rectangle",
     edge.color = edge_colors,
     residuals = FALSE,
     intercepts = FALSE,
-    optimizeLatRes = TRUE
+    optimizeLatRes = TRUE,
+    fade = FALSE,
+    nCharNodes = 25,
+    mar = c(6, 6, 7, 6)
   )
-  title(main = paste("Shared Area (Know Outsiders) Round", R+8), line = 2, cex.main = 1.5)
+  title(main = paste("Shared Area (Know Out-group) Round", R+8), line = 2, cex.main = 1.5)
   dev.off()
 }
 
@@ -577,21 +602,21 @@ save_sharedarea_t2_dynamic_sem_plot <- function(df, R, N, path_github) {
     average_compliance_observed_ini_lag ~~ 0*belief_compliance_pm
   '
   node_labels <- c(
-    "belief_compliance_pm" = "Prior Beliefs Outsiders",
-    "belief_compliance_union" = "Prior Beliefs TURF",
+    "belief_compliance_pm" = "Prior Beliefs Out-group",
+    "belief_compliance_union" = "Prior Beliefs Union",
     "average_compliance_ini" = "Compliance",
-    "survey2.1.player.confianza_caleta_conocida_mean" = "Trust Outsiders",
-    "survey2.1.player.conflicto_caleta_conocida_mean" = "Conflict Outsiders",
-    "survey1.1.player.confianza_caleta" = "Trust TURF",
-    "survey1.1.player.conflicto_caleta" = "Conflict TURF",
-    "average_compliance_observed_ini_lag" = "Updated Beliefs"
+    "survey2.1.player.confianza_caleta_conocida_mean" = "Trust Out-group",
+    "survey2.1.player.conflicto_caleta_conocida_mean" = "Conflict Out-group",
+    "survey1.1.player.confianza_caleta" = "Trust Union",
+    "survey1.1.player.conflicto_caleta" = "Conflict Union",
+    "average_compliance_observed_ini_lag" =  "Observed Behavior"
   )
   
   fit <- sem(sem_model,
              data       = df,
              estimator  = "ML",
              se         = "bootstrap",
-             bootstrap  = 100,
+             bootstrap  = 2000,
              parallel   = "multicore",
              ncpus      = 4)
   
@@ -609,20 +634,22 @@ save_sharedarea_t2_dynamic_sem_plot <- function(df, R, N, path_github) {
     fit,
     what = "std",
     layout = "tree",
-    edge.label.cex = 1,
+    #edge.label.cex = 1,
     nodeLabels = node_labels,
-    sizeMan = 9,
+    sizeMan = 7,
     label.cex = 1,
     node.width = 2,
-    node.height = 0.7,
+    #node.height = 1,
     shapeMan = "rectangle",
     edge.color = edge_colors,
     residuals = FALSE,
     intercepts = FALSE,
     optimizeLatRes = TRUE,
-    fade = FALSE
+    fade = FALSE,
+    nCharNodes = 25,
+    mar = c(6, 6, 7, 6)
   )
-  title(main = paste("Shared Area (Know Outsiders) Rounds", R+8, "to", N+8), line = 2, cex.main = 1.5)
+  title(main = paste("Shared Area (Know Out-group) Mean Rounds", R+8, "to", N+8), line = 2, cex.main = 1.5)
   dev.off()
 }
 
