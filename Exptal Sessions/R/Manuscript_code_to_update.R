@@ -24,11 +24,11 @@ library(semPlot)
 
 
 rm(list=ls())
-path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+#path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
-#path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 setwd(path_github)
 
@@ -41,28 +41,41 @@ load(paste0(path_datos, "/Datos_islitas_long.Rdata"))
 #### Summary Table
 ######################
 
+
+
+# --- compute new/updated variables (single mutate for clarity) ---
 df <- df %>%
   mutate(
-    confianza_pm_scaled     = (survey1.1.player.confianza_pm   - 1) / 3,
-    conflicto_pm_scaled     = (survey1.1.player.conflicto_pm   - 1) / 3,
-    confianza_caleta_scaled = (survey1.1.player.confianza_caleta - 1) / 3,
-    conflicto_caleta_scaled = (survey1.1.player.conflicto_caleta - 1) / 3
+    # Scales (0–1)
+    Tst_sa_T1_scaled  = (survey1.1.player.confianza_pm        - 1) / 3,
+    Cft_sa_T1_scaled  = (survey1.1.player.conflicto_pm        - 1) / 3,
+    Tst_caleta_scaled = (survey1.1.player.confianza_caleta    - 1) / 3,
+    Cft_caleta_scaled = (survey1.1.player.conflicto_caleta    - 1) / 3,
+    Tst_sa_t2_scaled  = (survey2.1.player.confianza_caleta_conocida_mean  - 1) / 3,
+    Cft_sa_t2_scaled  = (survey2.1.player.conflicto_caleta_conocida_mean  - 1) / 3,
+    
+    # Beliefs → compliance (0–1)
+    belief_compliance_SA_T1    = 1 - (beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini / 50),
+    belief_compliance_union_T1 = 1 - (beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini / 50),
+    belief_compliance_SA_T2    = 1 - (beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini / 50),
+    belief_compliance_union_T2 = 1 - (beliefsT2inicial.1.player.T2_belief_caleta_ini / 50)
   )
 
-# --- variables of interest ---
+# --- variables of interest (df-level; keep desired order) ---
 vars_df <- c(
-  "survey1.1.player.confianza_pm", "confianza_pm_scaled",
-  "survey1.1.player.conflicto_pm", "conflicto_pm_scaled",
-  "survey1.1.player.confianza_caleta", "confianza_caleta_scaled",
-  "survey1.1.player.conflicto_caleta", "conflicto_caleta_scaled",
-  #"compliance_beliefs_OA_caleta", "compliance_beliefs_OA_others",
-  #"minority", "n_identities",
-  "survey3.1.player.sexo", "survey3.1.player.horas_trabajo",
-  "survey3.1.player.estudios", "survey3.1.player.liderazgo"
+  "Tst_caleta_scaled", "Cft_caleta_scaled",
+  "Tst_sa_T1_scaled", "Cft_sa_T1_scaled",
+  "Tst_sa_t2_scaled",  "Cft_sa_t2_scaled",
+  "belief_compliance_union_T1", "belief_compliance_SA_T1", 
+  "belief_compliance_union_T2", "belief_compliance_SA_T2", 
+  "survey3.1.player.horas_trabajo"
 )
 
+# --- long df vars (unchanged) ---
 vars_dfs_long <- c(
-  "compliance_extraction_OA",
+  "compliance_extraction_amerb",                                         
+  "compliance_lag_extraction_others_amerb_mean",
+  "compliance_extraction_OA", 
   "compliance_lag_extraction_others_OA_mean"
 )
 
@@ -74,7 +87,7 @@ summarize_vars <- function(df, vars) {
       everything(),
       list(
         Mean = ~mean(., na.rm = TRUE),
-        SD   = ~sd(., na.rm = TRUE),
+        SD   = ~sd(.,   na.rm = TRUE),
         N    = ~sum(!is.na(.))
       ),
       .names = "{.col}__{.fn}"
@@ -90,15 +103,138 @@ summarize_vars <- function(df, vars) {
 summary_df       <- summarize_vars(df, vars_df)
 summary_dfs_long <- summarize_vars(dfs_long, vars_dfs_long)
 
-# --- combine ---
-summary_all <- bind_rows(summary_df, summary_dfs_long)
+
+####################Categorical variables
+
+cat_vars <- c("survey3.1.player.sexo",
+              "survey3.1.player.estudios",
+              "survey3.1.player.liderazgo")
+
+summary_num <- bind_rows(summary_dfs_long, summary_df) %>%
+  mutate(
+    Variable = factor(Variable, levels = c(vars_df, vars_dfs_long)),
+    Panel = "Continuous"
+  ) %>%
+  select(Panel, Variable, Mean, SD, N) %>%
+  mutate(N = as.character(N))   # keep type compatible with categorical N
+
+# --- helper to summarize categoricals with counts and percentages ---
+
+summarize_cats <- function(df, vars) {
+  df_long <- df |>
+    mutate(across(all_of(vars), as.character)) |>
+    tidyr::pivot_longer(all_of(vars),
+                        names_to = "Variable", values_to = "value")
+  
+  counts <- df_long |>
+    filter(!is.na(value) & value != "") |>
+    count(Variable, value, name = "Count")
+  
+  totals <- df_long |>
+    filter(!is.na(value) & value != "") |>
+    count(Variable, name = "Ntotal")
+  
+  left_join(counts, totals, by = "Variable") |>
+    mutate(
+      Percent  = 100 * Count / Ntotal,
+      # N column now includes count + percent
+      N        = sprintf("%d (%.1f%%)", Count, Percent),
+      Variable = paste0(Variable, ": ", value)
+    ) |>
+    select(Variable, N)
+}
+
+# --- build categorical panel (NO var_labels here) ---
+cat_panel <- summarize_cats(df, cat_vars) |>
+  mutate(
+    Panel = "Categorical",
+    Mean = NA_real_, SD = NA_real_
+  ) |>
+  select(Panel, Variable, Mean, SD, N)   # Variable is e.g. "survey3...sexo: 0"
+
+
+# --- combined table: continuous first, then categorical ---
+summary_combined <- bind_rows(summary_num, cat_panel) %>%
+  mutate(Panel = factor(Panel, levels = c("Continuous", "Categorical")))
+# no arrange() needed unless you want alpha-order within each panel
+
+
+
+######################### Exporting correctly
+var_labels <- c(
+  # Trust / Conflict (scales 0–1)
+  "Tst_sa_T1_scaled"   = "Trust Unknown out-group",
+  "Cft_sa_T1_scaled"   = "Conflict Unknown out-group",
+  "Tst_caleta_scaled"  = "Trust Union",
+  "Cft_caleta_scaled"  = "Conflict Union",
+  "Tst_sa_t2_scaled"   = "Trust Known out-group",
+  "Cft_sa_t2_scaled"   = "Conflict Known out-group",
+  
+  # Belief-based compliance (0–1)
+  "belief_compliance_SA_T1"    = "Prior Beliefs Compliance Shared Area Unknown out-group",
+  "belief_compliance_union_T1" = "Prior Beliefs Compliance Shared Area in-group (rounds 1–8)",
+  "belief_compliance_SA_T2"    = "Prior Beliefs Compliance Shared Area Known out-group",
+  "belief_compliance_union_T2" = "Prior Beliefs Compliance Shared Area in-group (rounds 9–16)",
+  
+  # Continuous demographic
+  "survey3.1.player.horas_trabajo" = "Hours in loco fishing",
+  
+  # Outcomes & lags
+  "compliance_extraction_amerb"                     = "Compliance (TURF)",
+  "compliance_extraction_OA"                        = "Compliance (Shared Area)",
+  "compliance_lag_extraction_others_amerb_mean"     = "Observed Compliance TURF (t−1)",
+  "compliance_lag_extraction_others_OA_mean"        = "Observed Compliance Shared Area (t−1)",
+  
+  # Base labels for categoricals (fallback)
+  "survey3.1.player.liderazgo" = "Held leadership role",
+  "survey3.1.player.estudios"  = "Level of education",
+  "survey3.1.player.sexo"      = "Sex",
+  
+  # Category-specific labels (preferential when present)
+  "survey3.1.player.liderazgo: No" = "Held leadership role: No",
+  "survey3.1.player.liderazgo: Sí" = "Held leadership role: Yes",
+  
+  "survey3.1.player.estudios: 1" = "Level of education: No formal studies",
+  "survey3.1.player.estudios: 2" = "Level of education: Incomplete Primary",
+  "survey3.1.player.estudios: 3" = "Level of education: Complete Primary",
+  "survey3.1.player.estudios: 4" = "Level of education: Incomplete High School",
+  "survey3.1.player.estudios: 5" = "Level of education: Complete High School",
+  
+  "survey3.1.player.sexo: 0" = "Sex: Male",
+  "survey3.1.player.sexo: 1" = "Sex: Female"
+)
+
+summary_all <- summary_combined %>%
+  rowwise() %>%
+  mutate(
+    VariableLabel = {
+      v <- as.character(Variable)
+      # Try full key first (works for "var: category")
+      full <- unname(var_labels[v])
+      if (!is.na(full)) full else {
+        # If it's "var: category", try base label + category
+        parts <- strsplit(v, ": ", fixed = TRUE)[[1]]
+        if (length(parts) == 2) {
+          base <- parts[1]; cat <- parts[2]
+          base_label <- unname(var_labels[base])
+          if (!is.na(base_label)) paste0(base_label, ": ", cat) else v
+        } else {
+          # Just a base name
+          base_label <- unname(var_labels[v])
+          if (!is.na(base_label)) base_label else v
+        }
+      }
+    }
+  ) %>%
+  ungroup() %>%
+  select(Variable = VariableLabel, Mean, SD, N)
 
 # --- pretty table ---
-datasummary_df(summary_all,
-               title = "Summary Statistics",
-               output    = paste0(path_github, "Outputs/summary.docx")) 
-
-
+modelsummary::datasummary_df(
+  summary_all,
+  title  = "Summary Statistics",
+  output = paste0(path_github, "Outputs/summary.docx")
+)
 
 
 ##########################
