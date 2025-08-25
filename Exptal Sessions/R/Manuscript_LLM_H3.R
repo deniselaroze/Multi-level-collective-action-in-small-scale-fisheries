@@ -275,3 +275,124 @@ modelsummary(
   gof_omit    = "^(AIC|BIC|ICC|RMSE)$",
   output      = out_file_oa
 )
+
+
+############################################333
+
+
+
+
+
+
+# oa_m1 <- compliance_extraction_OA ~
+#   compliance_lag_extraction_others_OA_mean +
+#   treatment*confianza_pm_scaled + treatment*conflicto_pm_scaled +
+#   (1 | participant.code.plm)
+
+oa_m1 <- compliance_extraction_OA ~
+  compliance_lag_extraction_others_OA_mean +
+  treatment*confianza_pm_scaled + treatment*conflicto_pm_scaled +
+  confianza_caleta_scaled + conflicto_caleta_scaled +
+  (1 | participant.code.plm)
+
+oa_m2 <- compliance_extraction_OA ~
+  compliance_lag_extraction_others_OA_mean +
+  compliance_beliefs_OA_caleta + compliance_beliefs_OA_others +
+  treatment +
+  (1 | participant.code.plm)
+
+oa_m3 <- compliance_extraction_OA ~
+  compliance_lag_extraction_others_OA_mean +
+  compliance_beliefs_OA_caleta + compliance_beliefs_OA_others*treatment +
+  (1 | participant.code.plm)
+
+
+# oa_m4 <- compliance_extraction_OA ~
+#   compliance_lag_extraction_others_OA_mean +
+#   compliance_beliefs_OA_caleta + compliance_beliefs_OA_others +
+#   treatment + minority + n_identities +
+#   confianza_pm_scaled + conflicto_pm_scaled +
+#   confianza_caleta_scaled + conflicto_caleta_scaled +
+#   (1 | participant.code.plm)
+
+oa_m4 <- compliance_extraction_OA ~
+  #compliance_lag_extraction_others_OA_mean +
+  treatment*confianza_pm_scaled + treatment*conflicto_pm_scaled +
+  compliance_beliefs_OA_caleta + compliance_beliefs_OA_others +
+  treatment + minority + n_identities +
+  confianza_caleta_scaled + conflicto_caleta_scaled +
+  survey3.1.player.sexo + survey3.1.player.horas_trabajo +
+  survey3.1.player.estudios + survey3.1.player.liderazgo +
+  (1 | participant.code.plm)
+
+ctrl <- lmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 1e5))
+
+# --- Fit full-sample models (point estimates) ---
+oaplm1 <- lmer(oa_m1, data = dfs_long, control = ctrl, REML = FALSE)
+oaplm2 <- lmer(oa_m2, data = dfs_long, control = ctrl, REML = FALSE)
+oaplm3 <- lmer(oa_m3, data = dfs_long, control = ctrl, REML = FALSE)
+oaplm4 <- lmer(oa_m4, data = dfs_long, control = ctrl, REML = FALSE)
+
+# --- Clustered bootstrap (by OA cluster) ---
+B <- 200  # bump to 500–1000 for the paper
+oa1 <- bootstrap_lmer(oa_m1, dfs_long, "gid.treat", B = B)
+oa2 <- bootstrap_lmer(oa_m2, dfs_long, "gid.treat", B = B)
+oa3 <- bootstrap_lmer(oa_m3, dfs_long, "gid.treat", B = B)
+oa4 <- bootstrap_lmer(oa_m4, dfs_long, "gid.treat", B = B)
+
+# --- Export a single DOCX table with bootstrapped SEs ---
+
+# A dictionary that renames but never drops terms.
+# Include both ':' and ' × ' versions for interactions so it works regardless of pretty rewriting.
+coef_dict <- c(
+  "(Intercept)"                                  = "(Intercept)",
+  "compliance_lag_extraction_others_OA_mean"     = "Mean observed compliance (t-1)",
+  "treatmentT2"                                  = "Stage (Known out-group)",
+  "confianza_pm_scaled"                          = "Trust (out-group)",
+  "conflicto_pm_scaled"                          = "Conflict (out-group)",
+  "treatmentT2:confianza_pm_scaled"              = "Stage × Trust (out-group)",
+  "treatmentT2:conflicto_pm_scaled"              = "Stage × Conflict (out-group)",
+  "treatmentT2 × confianza_pm_scaled"            = "Stage × Trust (out-group)",
+  "treatmentT2 × conflicto_pm_scaled"            = "Stage × Conflict (out-group)",
+  "compliance_beliefs_OA_others:treatmentT2"     = "Beliefs out-group x Stage",
+  "confianza_caleta_scaled"                      = "Trust (Union)",
+  "conflicto_caleta_scaled"                      = "Conflict (in-group)",
+  "compliance_beliefs_OA_caleta"                 = "Prior beliefs (in-group)",
+  "compliance_beliefs_OA_others"                 = "Prior beliefs (out-group)",
+  "minority"                                     = "Minority in round",
+  "n_identities"                                 = "Three unions",
+  "survey3.1.player.sexo"                        = "Female",
+  "survey3.1.player.horas_trabajo"               = "Hours worked per week",
+  "survey3.1.player.estudios"                    = "Education level",
+  "survey3.1.player.liderazgoSí"                 = "Held leadership role",
+  "SD (Intercept participant.code.plm)"          = "SD (Intercept participant)",
+  "SD (Observations)"                            = "SD (Residual)"
+)
+
+# Optional: if you’d rather *stop* the automatic '×' rewrite entirely, uncomment:
+# options(modelsummary_rewrite_terms = FALSE)
+
+mods <- list(
+  "SA: Base"                        = oaplm1,
+  "SA: Base + Trust/Conflict TURF"  = oaplm2,
+  "SA: Beliefs"                     = oaplm3,
+  "SA: Full"                        = oaplm4
+)
+
+vcvs <- list(oa1$V, oa2$V, oa3$V, oa4$V)
+
+out_file_oa <- paste0(path_github, "Outputs/LMM_boot_H3_SharedArea_presentation.docx")
+
+modelsummary(
+  mods,
+  #vcov        = vcvs,
+  coef_rename = coef_dict,                 # rename without dropping anything
+  statistic   = "({std.error})",
+  stars       = c("*"=.05,"**"=.01,"***"=.001),
+  gof_omit    = "^(AIC|BIC|ICC|RMSE)$",
+  output      = out_file_oa
+)
+
+
+
+
