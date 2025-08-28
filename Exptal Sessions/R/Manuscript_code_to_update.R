@@ -24,11 +24,11 @@ library(semPlot)
 
 
 rm(list=ls())
-#path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
-path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+#path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 setwd(path_github)
 
@@ -92,7 +92,7 @@ summarize_vars <- function(df, vars) {
       ),
       .names = "{.col}__{.fn}"
     )) %>%
-    tidyr::pivot_longer(
+    pivot_longer(
       everything(),
       names_to = c("Variable", ".value"),
       names_sep = "__"
@@ -165,16 +165,16 @@ var_labels <- c(
   # Trust / Conflict (scales 0–1)
   "Tst_sa_T1_scaled"   = "Trust Unknown out-group",
   "Cft_sa_T1_scaled"   = "Conflict Unknown out-group",
-  "Tst_caleta_scaled"  = "Trust Union",
-  "Cft_caleta_scaled"  = "Conflict Union",
+  "Tst_caleta_scaled"  = "Trust in-group",
+  "Cft_caleta_scaled"  = "Conflict in-group",
   "Tst_sa_t2_scaled"   = "Trust Known out-group",
   "Cft_sa_t2_scaled"   = "Conflict Known out-group",
   
   # Belief-based compliance (0–1)
-  "belief_compliance_SA_T1"    = "Prior Beliefs Compliance Shared Area Unknown out-group",
-  "belief_compliance_union_T1" = "Prior Beliefs Compliance Shared Area in-group (rounds 1–8)",
-  "belief_compliance_SA_T2"    = "Prior Beliefs Compliance Shared Area Known out-group",
-  "belief_compliance_union_T2" = "Prior Beliefs Compliance Shared Area in-group (rounds 9–16)",
+  "belief_compliance_SA_T1"    = "Prior Beliefs Shared Area Unknown out-group (rounds 1–8)",
+  "belief_compliance_union_T1" = "Prior Beliefs Shared Area in-group (rounds 1–8)",
+  "belief_compliance_SA_T2"    = "Prior Beliefs Shared Area Known out-group (rounds 9–16)",
+  "belief_compliance_union_T2" = "Prior Beliefs Shared Area in-group (rounds 9–16)",
   
   # Continuous demographic
   "survey3.1.player.horas_trabajo" = "Hours in loco fishing",
@@ -230,10 +230,10 @@ summary_all <- summary_combined %>%
   select(Variable = VariableLabel, Mean, SD, N)
 
 # --- pretty table ---
-modelsummary::datasummary_df(
+datasummary_df(
   summary_all,
   title  = "Summary Statistics",
-  output = paste0(path_github, "Outputs/summary.docx")
+  output = paste0(path_github, "Outputs/summary_statistics.docx")
 )
 
 
