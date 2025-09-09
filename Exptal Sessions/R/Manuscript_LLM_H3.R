@@ -380,9 +380,9 @@ coef_dict <- c(
 # options(modelsummary_rewrite_terms = FALSE)
 
 mods <- list(
-  "(Trust/Conflict)"                        = oaplm1,
+  "(Trust/Conflict)"                 = oaplm1,
   "(Beliefs)"                        = oaplm3,
-  "(Beliefs +)"                        = oaplm4
+  "(Beliefs +)"                      = oaplm4
 )
 
 vcvs <- list(oa1$V, oa3$V, oa4$V)
