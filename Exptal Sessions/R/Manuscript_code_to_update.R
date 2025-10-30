@@ -47,12 +47,12 @@ load(paste0(path_datos, "/Datos_islitas_long.Rdata"))
 df <- df %>%
   mutate(
     # Scales (0–1)
-    Tst_sa_T1_scaled  = (survey1.1.player.confianza_pm        - 1) / 3,
-    Cft_sa_T1_scaled  = (survey1.1.player.conflicto_pm        - 1) / 3,
-    Tst_caleta_scaled = (survey1.1.player.confianza_caleta    - 1) / 3,
-    Cft_caleta_scaled = (survey1.1.player.conflicto_caleta    - 1) / 3,
-    Tst_sa_t2_scaled  = (survey2.1.player.confianza_caleta_conocida_mean  - 1) / 3,
-    Cft_sa_t2_scaled  = (survey2.1.player.conflicto_caleta_conocida_mean  - 1) / 3,
+    Tst_sa_T1_scaled  = as.numeric(scale((survey1.1.player.confianza_pm))),
+    Cft_sa_T1_scaled  = as.numeric(scale((survey1.1.player.conflicto_pm))),
+    Tst_caleta_scaled = as.numeric(scale((survey1.1.player.confianza_caleta))),
+    Cft_caleta_scaled = as.numeric(scale((survey1.1.player.conflicto_caleta))),
+    Tst_sa_t2_scaled  = as.numeric(scale((survey2.1.player.confianza_caleta_conocida_mean))),
+    Cft_sa_t2_scaled  = as.numeric(scale((survey2.1.player.conflicto_caleta_conocida_mean))),
     
     # Beliefs → compliance (0–1)
     belief_compliance_SA_T1    = 1 - (beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini / 50),
@@ -163,12 +163,12 @@ summary_combined <- bind_rows(summary_num, cat_panel) %>%
 ######################### Exporting correctly
 var_labels <- c(
   # Trust / Conflict (scales 0–1)
-  "Tst_sa_T1_scaled"   = "Trust Unknown out-group",
-  "Cft_sa_T1_scaled"   = "Conflict Unknown out-group",
-  "Tst_caleta_scaled"  = "Trust in-group",
-  "Cft_caleta_scaled"  = "Conflict in-group",
-  "Tst_sa_t2_scaled"   = "Trust Known out-group",
-  "Cft_sa_t2_scaled"   = "Conflict Known out-group",
+  "Tst_sa_T1_scaled"   = "Trust Unknown out-group (standarized)",
+  "Cft_sa_T1_scaled"   = "Conflict Unknown out-group (standarized)",
+  "Tst_caleta_scaled"  = "Trust in-group (standarized)",
+  "Cft_caleta_scaled"  = "Conflict in-group (standarized)",
+  "Tst_sa_t2_scaled"   = "Trust Known out-group (standarized)",
+  "Cft_sa_t2_scaled"   = "Conflict Known out-group (standarized)",
   
   # Belief-based compliance (0–1)
   "belief_compliance_SA_T1"    = "Prior Beliefs Shared Area Unknown out-group (rounds 1–8)",
@@ -300,6 +300,99 @@ means_ci_by_treatment$treatment <- factor(means_ci_by_treatment$treatment,
 
 
 print(means_ci_by_treatment)
+
+##################################
+### Figure graphical abstract
+##################################
+
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+# --- Create a sample data frame named 'dfs_long' ---
+# In your actual script, you would load your own 'dfs_long' data here.
+
+# --- 1. Data Preparation ---
+# We need to calculate the mean, count, sd, and 95% CI for each variable.
+
+summary_data <- dfs_long %>%
+  # Select just the columns we want to plot
+  select(compliance_extraction_amerb, compliance_extraction_OA) %>%
+  
+  # Reshape data from "wide" to "long" format.
+  # This creates two columns: 'variable' (with names "extraction_amerb", "extraction_OA")
+  # and 'value' (with the corresponding numeric values).
+  pivot_longer(
+    cols = everything(), 
+    names_to = "variable", 
+    values_to = "value"
+  ) %>%
+  
+  # Group by the new 'variable' column to calculate stats for each
+  group_by(variable) %>%
+  
+  # Calculate the summary statistics
+  summarise(
+    mean = mean(value, na.rm = TRUE),
+    sd = sd(value, na.rm = TRUE),
+    n = n()
+  ) %>%
+  
+  # Calculate the standard error and the 95% confidence interval margin
+  mutate(
+    se = sd / sqrt(n),
+    # qt(0.975, ...) gives the t-distribution value for 95% CI
+    ci_margin = qt(0.975, df = n - 1) * se, 
+    ci_lower = mean - ci_margin,
+    ci_upper = mean + ci_margin
+  )
+
+# Print the summary data to see the calculated stats
+print(summary_data)
+
+# --- 2. Create the Plot ---
+
+ggplot(summary_data, aes(x = variable, y = mean, fill = variable)) +
+  
+  # Add the bars
+  # stat = "identity" tells ggplot to use the 'y' value (our mean) directly
+  geom_bar(stat = "identity", width = 0.7, color = "black", alpha = 0.8) +
+  
+  # Add the confidence interval error bars
+  geom_errorbar(
+    aes(ymin = ci_lower, ymax = ci_upper),
+    width = 0.2,  # Width of the error bar caps
+    linewidth = 0.7 # Thickness of the error bar lines
+  ) +
+  
+  # Customize labels and title
+  labs(
+    title = "",
+    x = "Area",
+    y = "Mean compliance"
+  ) +
+  scale_x_discrete(
+    labels = c("compliance_extraction_amerb" = "TURF", "compliance_extraction_OA" = "Shared Area")
+  ) +
+  # Use a clean theme
+  theme_minimal(base_size = 14) +
+  coord_cartesian(ylim = c(0, 1)) +
+  
+  # Pre-set color palettes (optional)
+  scale_fill_brewer(palette = "Pastel1") +
+  
+  # Remove the fill legend since the x-axis labels are sufficient
+  theme(legend.position = "none")
+
+# To save the plot, you can add:
+# ggsave("extraction_plot.png", width = 8, height = 6)
+ggsave(
+  paste0(path_github, "Outputs/mean_extraction_plot.pdf"), 
+  width = 8,
+  height = 6
+)
+
+
 
 #######################################
 #### Data Manipulation for H1 and H2

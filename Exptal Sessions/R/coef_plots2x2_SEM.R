@@ -151,7 +151,7 @@ bel_SA_T1 <- subset(pe_bel_SA_T1, op == "~", select = c("lhs", "rhs", "est", "se
 # FIX 1: Use the full, correct mapping for belief predictors
 bel_SA_T1$Predictor <- factor(sa_T1_compliance_labels[bel_SA_T1$rhs], levels = all_predictor_labels)
 bel_SA_T1$Outcome <- factor(c("belief_compliance_pm" = "Out-group (Unknown)", 
-                              "belief_compliance_union" = "In-group (s1)")[bel_SA_T1$lhs])
+                              "belief_compliance_union" = "In-group (T1)")[bel_SA_T1$lhs])
 
 
 ############################################################
@@ -272,7 +272,7 @@ bel_SA_T2 <- subset(pe_bel_SA_T2, op == "~", select = c("lhs", "rhs", "est", "se
 bel_SA_T2$Predictor <- factor(sa_T2_compliance_labels[bel_SA_T2$rhs], levels = all_predictor_labels)
 bel_SA_T2$Outcome <- factor(c(
   "belief_compliance_pm_T2"    = "Out-group (Known)",
-  "belief_compliance_union_T2" = "In-group (s2)"
+  "belief_compliance_union_T2" = "In-group (T2)"
 )[bel_SA_T2$lhs])
 
 
@@ -319,12 +319,12 @@ p_compliance_T1 <- ggplot(compliance_results_SA, aes(x = est, y = label, group =
   coord_cartesian(xlim = c(-0.3, 0.6)) +
   scale_color_manual(values = predictor_colors, name = "Predictor", drop = FALSE) +
   scale_shape_manual(values = predictor_shapes, name = "Predictor", drop = FALSE) +
-  scale_alpha_manual(values = c("p < 0.05" = 1, "p >= 0.05" = 0.3), guide = "none") +
+  scale_alpha_manual(values = c("p < 0.05" = 1, "p >= 0.05" = 0.4), guide = "none") +
   # Add size scale for thicker lines
   scale_size_manual(values = c("p < 0.05" = 1, "p >= 0.05" = 0.5), guide = "none") +
   scale_y_discrete(limits = rev(levels(compliance_results_SA$label))) +
   labs(
-    title = "a.1) Compliance Shared Area (s1 - Unknown Out-group)",
+    title = "a.1) Compliance Shared Area (T1 - Unknown Out-group)",
     x = NULL, # Remove individual x-axis titles
     y = "Time Period"
   ) +
@@ -354,12 +354,12 @@ p_compliance_T2 <- ggplot(compliance_results_SA_T2, aes(x = est, y = label, grou
   coord_cartesian(xlim = c(-0.3, 0.6)) +
   scale_color_manual(values = predictor_colors, name = "Predictor", drop = FALSE) +
   scale_shape_manual(values = predictor_shapes, name = "Predictor", drop = FALSE) +
-  scale_alpha_manual(values = c("p < 0.05" = 1, "p >= 0.05" = 0.3), guide = "none") +
+  scale_alpha_manual(values = c("p < 0.05" = 1, "p >= 0.05" = 0.4), guide = "none") +
   # Add size scale for thicker lines
   scale_size_manual(values = c("p < 0.05" = 1, "p >= 0.05" = 0.5), guide = "none") +
   scale_y_discrete(limits = rev(levels(compliance_results_SA_T2$label))) +
   labs(
-    title = "a.2) Compliance Shared Area (s2 - Known Out-group)",
+    title = "a.2) Compliance Shared Area (T2 - Known Out-group)",
     x = NULL, 
     y = ""
   ) +
@@ -373,12 +373,12 @@ p_compliance_T2 <- ggplot(compliance_results_SA_T2, aes(x = est, y = label, grou
   )
 
 
-# --- Plot C: Beliefs Shared Area (s1 - Unknown Out-group) ---
+# --- Plot C: Beliefs Shared Area (T1 - Unknown Out-group) ---
 bel_SA_T1$Significance <- ifelse(bel_SA_T1$pvalue < 0.05, "p < 0.05", "p >= 0.05")
-outcome_order_s1 <- c("Out-group (Unknown)", "In-group (s1)")
-bel_SA_T1$Outcome <- factor(bel_SA_T1$Outcome, levels = rev(outcome_order_s1))
+outcome_order_T1 <- c("Out-group (Unknown)", "In-group (T1)")
+bel_SA_T1$Outcome <- factor(bel_SA_T1$Outcome, levels = rev(outcome_order_T1))
 
-p_beliefs_s1 <- ggplot(bel_SA_T1, aes(x = est, y = Outcome, color = Predictor, shape = Predictor)) +
+p_beliefs_T1 <- ggplot(bel_SA_T1, aes(x = est, y = Outcome, color = Predictor, shape = Predictor)) +
   geom_errorbarh(aes(xmin = est - 1.96 * se, xmax = est + 1.96 * se, alpha = Significance, size = Significance), height = 0.0, position = position_dodge(width = 0.6)) +
   geom_point(aes(alpha = Significance), position = position_dodge(width = 0.6), size = 3) +
   geom_text(data = subset(bel_SA_T1, Significance == "p < 0.05"),
@@ -392,10 +392,10 @@ p_beliefs_s1 <- ggplot(bel_SA_T1, aes(x = est, y = Outcome, color = Predictor, s
   coord_cartesian(xlim = c(-0.3, 0.6)) +
   scale_color_manual(values = predictor_colors, name = "Predictor", drop = FALSE) +
   scale_shape_manual(values = predictor_shapes, name = "Predictor", drop = FALSE) +
-  scale_alpha_manual(values = c("p < 0.05" = 1, "p >= 0.05" = 0.3), guide = "none") +
+  scale_alpha_manual(values = c("p < 0.05" = 1, "p >= 0.05" = 0.4), guide = "none") +
   scale_size_manual(values = c("p < 0.05" = 1, "p >= 0.05" = 0.5), guide = "none") +
   labs(
-    title = "b.1) Beliefs Shared Area (s1 - Unknown Out-group)",
+    title = "b.1) Beliefs Shared Area (T1 - Unknown Out-group)",
     x = "Beta Coefficient (95% CI)",
     y = "Beliefs About"
   ) +
@@ -408,12 +408,12 @@ p_beliefs_s1 <- ggplot(bel_SA_T1, aes(x = est, y = Outcome, color = Predictor, s
     plot.margin = margin(b = 40)
   )
 
-# --- Plot D: Beliefs Shared Area (s2 - Known Out-group) ---
+# --- Plot D: Beliefs Shared Area (T2 - Known Out-group) ---
 bel_SA_T2$Significance <- ifelse(bel_SA_T2$pvalue < 0.05, "p < 0.05", "p >= 0.05")
-outcome_order_s2 <- c("Out-group (Known)", "In-group (s2)")
-bel_SA_T2$Outcome <- factor(bel_SA_T2$Outcome, levels = rev(outcome_order_s2))
+outcome_order_T2 <- c("Out-group (Known)", "In-group (T2)")
+bel_SA_T2$Outcome <- factor(bel_SA_T2$Outcome, levels = rev(outcome_order_T2))
 
-p_beliefs_s2 <- ggplot(bel_SA_T2, aes(x = est, y = Outcome, color = Predictor, shape = Predictor)) +
+p_beliefs_T2 <- ggplot(bel_SA_T2, aes(x = est, y = Outcome, color = Predictor, shape = Predictor)) +
   geom_errorbarh(aes(xmin = est - 1.96 * se, xmax = est + 1.96 * se, alpha = Significance, size = Significance), height = 0.0, position = position_dodge(width = 0.6)) +
   geom_point(aes(alpha = Significance), position = position_dodge(width = 0.6), size = 3) +
   geom_text(data = subset(bel_SA_T2, Significance == "p < 0.05"),
@@ -427,10 +427,10 @@ p_beliefs_s2 <- ggplot(bel_SA_T2, aes(x = est, y = Outcome, color = Predictor, s
   coord_cartesian(xlim = c(-0.3, 0.6)) +
   scale_color_manual(values = predictor_colors, name = "Predictor", drop = FALSE) +
   scale_shape_manual(values = predictor_shapes, name = "Predictor", drop = FALSE) +
-  scale_alpha_manual(values = c("p < 0.05" = 1, "p >= 0.05" = 0.3), guide = "none") +
+  scale_alpha_manual(values = c("p < 0.05" = 1, "p >= 0.05" = 0.4), guide = "none") +
   scale_size_manual(values = c("p < 0.05" = 1, "p >= 0.05" = 0.5), guide = "none") +
   labs(
-    title = "b.2) Beliefs Shared Area (s2 - Known Out-group)",
+    title = "b.2) Beliefs Shared Area (T2 - Known Out-group)",
     x = "Beta Coefficient (95% CI)",
     y = ""
   ) +
@@ -467,7 +467,7 @@ significance_legend_data <- data.frame(
 )
 significance_legend_plot <- ggplot(significance_legend_data, aes(x = 1, y = Significance, alpha = Significance)) +
   geom_point(size = 3, shape = 8, fill = "grey") +
-  scale_alpha_manual(name = "Significance", values = c("p < 0.05" = 1, "p >= 0.05" = 0.3)) +
+  scale_alpha_manual(name = "Significance", values = c("p < 0.05" = 1, "p >= 0.05" = 0.4)) +
   theme_minimal() +
   theme(legend.position = "bottom",
         legend.title = element_text(size = 18),
@@ -482,14 +482,14 @@ combined_legends <- wrap_plots(predictor_legend, significance_legend, ncol = 2, 
 
 # 5. Arrange all plots and the combined legend
 final_plot <- (p_compliance_T1 + p_compliance_T2) / 
-  (p_beliefs_s1 + p_beliefs_s2) / 
+  (p_beliefs_T1 + p_beliefs_T2) / 
   combined_legends + 
   plot_layout(heights = c(0.7, 0.2, 0.1)) # Give more height to legend row for spacing
 
 
 # Save the final combined plot
 ggsave(
-  paste0(path_github, "Outputs/Combined_SEM_Plot_2x2.tiff"), 
+  paste0(path_github, "Outputs/Combined_SEM_Plot_2x2_manuscript.tiff"), 
   final_plot, 
   width = 22,
   height = 16
