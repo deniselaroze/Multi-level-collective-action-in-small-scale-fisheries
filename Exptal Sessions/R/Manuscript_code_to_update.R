@@ -506,45 +506,56 @@ bootstrap_lmer <- function(model_formula, data, cluster_var, B = 2000, seed = 62
 
 #----------- Estimate models ##############
 # Your models (ML fits are inside the bootstrap anyway)
-model  <- lmer(compliance ~ treat.area + (1 | participant.code), data = df_long_ext)
+
+model  <- lmer(compliance ~ area + (1 | participant.code), data = df_long_ext)
 model2 <- lmer(compliance ~ area * treatment + (1 | participant.code), data = df_long_ext)
+model3 <- lmer(compliance_extraction_OA~ compliance_extraction_amerb + (1 | participant.code), data = dfs_long)
+
 
 # Cluster variable is the subject id:
 clvar <- "gid.treat" # for TURF or "gid.treat" for Shared Area
 
 # Run the cluster bootstrap (increase B for publication results)
-res1 <- bootstrap_lmer(compliance ~ treat.area + (1 | participant.code),
+res1 <- bootstrap_lmer(compliance ~ area + (1 | participant.code),
                        data = df_long_ext, cluster_var = clvar, B = 2000)
 res2 <- bootstrap_lmer(compliance ~ area * treatment + (1 | participant.code),
                        data = df_long_ext, cluster_var = clvar, B = 2000)
 
-# If you use modelsummary, pass the bootstrap vcov so p-values/SEs reflect the cluster bootstrap:
-library(modelsummary)
-
-# Optional: label coefficients
-my_labels <- c(
-  "(Intercept)"              = "Intercept (TURF rounds 1–8)",
-  "treat.areaTURF_T2"        = "TURF rounds 9–16",
-  "treat.areaShared_Area_T1" = "Shared Area Unknown Out-group",
-  "treat.areaShared_Area_T2" = "Shared Area Known Out-group",
-  "areaShared_Area"          = "Area (Shared)",
-  "treatmentT2"              = "Stage (Rounds 9–16)",
-  "areaShared_Area:treatmentT2" = "Area × Stage"
-)
-
+res3 <- bootstrap_lmer(compliance_extraction_OA~ compliance_extraction_amerb + (1 | participant.code),
+                       data = dfs_long, cluster_var = clvar, B = 2000)
 # Make sure the vcov matrices align with the fitted object coef order
 vcov1 <- res1$V[ names(fixef(res1$base_fit)), names(fixef(res1$base_fit)) ]
 vcov2 <- res2$V[ names(fixef(res2$base_fit)), names(fixef(res2$base_fit)) ]
+vcov3 <- res3$V[ names(fixef(res3$base_fit)), names(fixef(res3$base_fit)) ]
+
+
+# Optional: label coefficients
+my_labels <- c(
+  "(Intercept)"              = "Constant",
+  "areaShared_Area"        = "Shared Area",
+  "treatmentT2"              = "Condition 2 (Rounds 9–16)",
+  "areaShared_Area:treatmentT2" = "Shared Area × Condition 2",
+  "compliance_extraction_amerb" = "Compliance TURF"
+)
+
+
+
 
 modelsummary(
-  list("H1: TURF vs Shared Area" = res1$base_fit,
-       "H2: Area × Stage" = res2$base_fit),
-  vcov      = list(vcov1, vcov2),
+  list("TURF vs Shared Area" = res1$base_fit,
+       "Compliance in Shared Area" = res3$base_fit, 
+       "Differences in Shared Area" = res2$base_fit),
+  vcov      = list(vcov1, vcov3, vcov2),
   coef_map  = my_labels,
   stars     = c("*" = .05, "**" = .01, "***" = .001),  # only these three
   gof_omit  = "IC|Log.Lik|AIC|BIC",                    # cleaner table
-  output    = paste0(path_github, "Outputs/LMM_H1_H2_boot_gid.treat.docx")
+  output    = paste0(path_github, "Outputs/LMM_H1_H2_boot_gid.treat_vnov20252.docx")
 )
+
+
+
+
+
 
 
 ######################################################################################
