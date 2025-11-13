@@ -282,7 +282,8 @@ bel_SA_T2$Outcome <- factor(c(
 
 ###################################################
 # --- Prepare Individual Plots for Combination ---
-#################################################### Define a consistent set of labels, colors, and shapes for all plots
+###################################################
+# Define a consistent set of labels, colors, and shapes for all plots
 
 # Use in a ggplot2 chart:
 #scale_colour_paletteer_d("ggthemes::Classic_Cyclic")
@@ -311,12 +312,12 @@ pd <- position_dodge(width = 0.6)
 p_compliance_T1 <- ggplot(compliance_results_SA, aes(x = est, y = label, group = Predictor)) +
   # FIX 2: Add size mapping for bolder lines AND make height consistent
   geom_errorbarh(aes(xmin = est - 1.96 * se, xmax = est + 1.96 * se, color = Predictor, alpha = Significance, size = Significance), height = 0.0, position = pd) +
-  geom_point(aes(color = Predictor, shape = Predictor, alpha = Significance), position = pd, size = 3) +
+  geom_point(aes(color = Predictor, shape = Predictor, alpha = Significance), position = pd, size = 6) +
   geom_text(data = subset(compliance_results_SA, Significance == "p < 0.05"),
             aes(label = round(est, 2)),
             position = pd,
             vjust = -1,
-            size = 6,
+            size = 10,
             show.legend = FALSE) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray50") +
   # FIX 3: Set consistent X-axis limits
@@ -325,19 +326,19 @@ p_compliance_T1 <- ggplot(compliance_results_SA, aes(x = est, y = label, group =
   scale_shape_manual(values = predictor_shapes, name = "Predictor", drop = FALSE) +
   scale_alpha_manual(values = c("p < 0.05" = 1, "p >= 0.05" = 0.3), guide = "none") +
   # Add size scale for thicker lines
-  scale_size_manual(values = c("p < 0.05" = 1, "p >= 0.05" = 0.5), guide = "none") +
+  scale_size_manual(values = c("p < 0.05" = 2.5, "p >= 0.05" = 0.5), guide = "none") +
   scale_y_discrete(limits = rev(levels(compliance_results_SA$label))) +
   labs(
-    title = "a.1) Compliance Shared Area (s1 - Unknown Out-group)",
+    title = "a.1) Compliance Shared Area (Stage 1)",
     x = NULL, # Remove individual x-axis titles
     y = "Time Period"
   ) +
   theme_minimal() +
   theme(
-    plot.title = element_text(hjust = 1, size = 22, face = "bold"), 
+    plot.title = element_text(hjust = 1, size = 32, face = "bold"), 
     legend.position = "none",
-    axis.text = element_text(size = 18),
-    axis.title = element_text(size = 18),
+    axis.text = element_text(size = 28),
+    axis.title = element_text(size = 28),
     plot.margin = margin(b = 40)
   )
 
@@ -346,12 +347,12 @@ p_compliance_T1 <- ggplot(compliance_results_SA, aes(x = est, y = label, group =
 p_compliance_T2 <- ggplot(compliance_results_SA_T2, aes(x = est, y = label, group = Predictor)) +
   # FIX 2: Add size mapping for bolder lines AND make height consistent
   geom_errorbarh(aes(xmin = est - 1.96 * se, xmax = est + 1.96 * se, color = Predictor, alpha = Significance, size = Significance), height = 0.0, position = pd) +
-  geom_point(aes(color = Predictor, shape = Predictor, alpha = Significance), position = pd, size = 3) +
+  geom_point(aes(color = Predictor, shape = Predictor, alpha = Significance), position = pd, size = 6) +
   geom_text(data = subset(compliance_results_SA_T2, Significance == "p < 0.05"),
             aes(label = round(est, 2)),
             position = pd,
             vjust = -1,
-            size = 6,
+            size = 10,
             show.legend = FALSE) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray50") +
   # FIX 3: Set consistent X-axis limits
@@ -360,19 +361,19 @@ p_compliance_T2 <- ggplot(compliance_results_SA_T2, aes(x = est, y = label, grou
   scale_shape_manual(values = predictor_shapes, name = "Predictor", drop = FALSE) +
   scale_alpha_manual(values = c("p < 0.05" = 1, "p >= 0.05" = 0.3), guide = "none") +
   # Add size scale for thicker lines
-  scale_size_manual(values = c("p < 0.05" = 1, "p >= 0.05" = 0.5), guide = "none") +
+  scale_size_manual(values = c("p < 0.05" = 2.5, "p >= 0.05" = 0.5), guide = "none") +
   scale_y_discrete(limits = rev(levels(compliance_results_SA_T2$label))) +
   labs(
-    title = "a.2) Compliance Shared Area (s2 - Known Out-group)",
+    title = "a.2) Compliance Shared Area (Stage 2)",
     x = NULL, 
     y = ""
   ) +
   theme_minimal() +
   theme(
-    plot.title = element_text(hjust = 1, size=22, face = "bold"), 
+    plot.title = element_text(hjust = 1, size=32, face = "bold"), 
     legend.position = "none",
-    axis.text = element_text(size = 18),
-    axis.title = element_text(size = 18),
+    axis.text = element_text(size = 28),
+    axis.title = element_text(size = 28),
     plot.margin = margin(b = 40)
   )
 
@@ -384,12 +385,12 @@ bel_SA_T1$Outcome <- factor(bel_SA_T1$Outcome, levels = rev(outcome_order_s1))
 
 p_beliefs_s1 <- ggplot(bel_SA_T1, aes(x = est, y = Outcome, color = Predictor, shape = Predictor)) +
   geom_errorbarh(aes(xmin = est - 1.96 * se, xmax = est + 1.96 * se, alpha = Significance, size = Significance), height = 0.0, position = position_dodge(width = 0.6)) +
-  geom_point(aes(alpha = Significance), position = position_dodge(width = 0.6), size = 3) +
+  geom_point(aes(alpha = Significance), position = position_dodge(width = 0.6), size = 6) +
   geom_text(data = subset(bel_SA_T1, Significance == "p < 0.05"),
             aes(label = round(est, 2)),
             position = pd,
             vjust = -1,
-            size = 6,
+            size = 10,
             show.legend = FALSE,
             color = "black") +
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray50") +
@@ -397,17 +398,17 @@ p_beliefs_s1 <- ggplot(bel_SA_T1, aes(x = est, y = Outcome, color = Predictor, s
   scale_color_manual(values = predictor_colors, name = "Predictor", drop = FALSE) +
   scale_shape_manual(values = predictor_shapes, name = "Predictor", drop = FALSE) +
   scale_alpha_manual(values = c("p < 0.05" = 1, "p >= 0.05" = 0.3), guide = "none") +
-  scale_size_manual(values = c("p < 0.05" = 1, "p >= 0.05" = 0.5), guide = "none") +
+  scale_size_manual(values = c("p < 0.05" = 2.5, "p >= 0.05" = 0.5), guide = "none") +
   labs(
-    title = "b.1) Beliefs Shared Area (s1 - Unknown Out-group)",
+    title = "b.1) Beliefs Shared Area (Stage 1)",
     x = "Beta Coefficient (95% CI)",
     y = "Beliefs About"
   ) +
   theme_minimal() +
   theme(
-    plot.title = element_text(hjust = 1, size = 22, face = "bold"),
-    axis.text = element_text(size = 18),
-    axis.title = element_text(size = 18),
+    plot.title = element_text(hjust = 1, size = 32, face = "bold"),
+    axis.text = element_text(size = 28),
+    axis.title = element_text(size = 28),
     legend.position = "none",
     plot.margin = margin(b = 40)
   )
@@ -419,12 +420,12 @@ bel_SA_T2$Outcome <- factor(bel_SA_T2$Outcome, levels = rev(outcome_order_s2))
 
 p_beliefs_s2 <- ggplot(bel_SA_T2, aes(x = est, y = Outcome, color = Predictor, shape = Predictor)) +
   geom_errorbarh(aes(xmin = est - 1.96 * se, xmax = est + 1.96 * se, alpha = Significance, size = Significance), height = 0.0, position = position_dodge(width = 0.6)) +
-  geom_point(aes(alpha = Significance), position = position_dodge(width = 0.6), size = 3) +
+  geom_point(aes(alpha = Significance), position = position_dodge(width = 0.6), size = 6) +
   geom_text(data = subset(bel_SA_T2, Significance == "p < 0.05"),
             aes(label = round(est, 2)),
             position = pd,
             vjust = -1,
-            size = 6,
+            size = 10,
             show.legend = FALSE,
             color = "black") +
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray50") +
@@ -432,17 +433,17 @@ p_beliefs_s2 <- ggplot(bel_SA_T2, aes(x = est, y = Outcome, color = Predictor, s
   scale_color_manual(values = predictor_colors, name = "Predictor", drop = FALSE) +
   scale_shape_manual(values = predictor_shapes, name = "Predictor", drop = FALSE) +
   scale_alpha_manual(values = c("p < 0.05" = 1, "p >= 0.05" = 0.3), guide = "none") +
-  scale_size_manual(values = c("p < 0.05" = 1, "p >= 0.05" = 0.5), guide = "none") +
+  scale_size_manual(values = c("p < 0.05" = 2.5, "p >= 0.05" = 0.5), guide = "none") +
   labs(
-    title = "b.2) Beliefs Shared Area (s2 - Known Out-group)",
+    title = "b.2) Beliefs Shared Area (Stage 2)",
     x = "Beta Coefficient (95% CI)",
     y = ""
   ) +
   theme_minimal() +
   theme(
-    plot.title = element_text(hjust = 1, size = 22, face = "bold"),
-    axis.text = element_text(size = 18),
-    axis.title = element_text(size = 18),
+    plot.title = element_text(hjust = 1, size = 32, face = "bold"),
+    axis.text = element_text(size = 28),
+    axis.title = element_text(size = 28),
     legend.position = "none",
     plot.margin = margin(b = 40)
   )
@@ -455,27 +456,27 @@ predictor_legend_plot <- ggplot(data.frame(
   Predictor = factor(all_predictor_labels, levels = all_predictor_labels),
   est = 0, se = 1
 ), aes(x = est, y = Predictor, color = Predictor, shape = Predictor)) +
-  geom_errorbarh(aes(xmin = est - se, xmax = est + se)) +
-  geom_point(size = 3) +
+  geom_errorbarh(aes(xmin = est - se, xmax = est + se), size = 2.5) +
+  geom_point(size = 6) +
   scale_color_manual(values = predictor_colors, name = "Predictor", drop = FALSE) +
   scale_shape_manual(values = predictor_shapes, name = "Predictor", drop = FALSE) +
   theme_minimal() +
-  guides(color = guide_legend(nrow = 2), shape = guide_legend(nrow = 2)) +
+  guides(color = guide_legend(nrow = 4), shape = guide_legend(nrow = 2)) +
   theme(legend.position = "bottom",
-        legend.title = element_text(size = 18),
-        legend.text = element_text(size = 18))
+        legend.title = element_text(size = 28),
+        legend.text = element_text(size = 28))
 
 # 2. Create a standalone legend plot for Significance
 significance_legend_data <- data.frame(
   Significance = factor(c("p < 0.05", "p >= 0.05"), levels = c("p < 0.05", "p >= 0.05"))
 )
 significance_legend_plot <- ggplot(significance_legend_data, aes(x = 1, y = Significance, alpha = Significance)) +
-  geom_point(size = 3, shape = 8, fill = "grey") +
+  geom_point(size = 4, shape = 8, fill = "grey") +
   scale_alpha_manual(name = "Significance", values = c("p < 0.05" = 1, "p >= 0.05" = 0.3)) +
   theme_minimal() +
   theme(legend.position = "bottom",
-        legend.title = element_text(size = 18),
-        legend.text = element_text(size = 18))
+        legend.title = element_text(size = 24),
+        legend.text = element_text(size = 24))
 
 # 3. Extract legends
 predictor_legend <- get_legend(predictor_legend_plot)
@@ -493,9 +494,90 @@ final_plot <- (p_compliance_T1 + p_compliance_T2) /
 
 # Save the final combined plot
 ggsave(
-  paste0(path_github, "Outputs/Combined_SEM_Plot_2x2_tmp_retest.pdf"), 
+  paste0(path_github, "Outputs/Combined_SEM_Plot_2x2_tmp_retest5.pdf"), 
   final_plot, 
-  width = 30,
-  height = 30
+  width = 28,
+  height = 24
 )
 
+
+
+
+
+
+
+
+###################################################
+# --- Generate Supplementary Material Table ---
+###################################################
+# This section combines the data used for the figures into a single summary table.
+# It includes the dynamic compliance results and the static belief formation results.
+
+# 1. Wrangle T1 Compliance data
+df_table_1 <- compliance_results_SA
+df_table_1$Context <- "T1 (Unknown)"
+df_table_1$Outcome <- "Compliance"
+df_table_1$Time <- df_table_1$label
+df_table_1 <- df_table_1[, c("Context", "Outcome", "Time", "Predictor", "est", "se", "pvalue")]
+names(df_table_1) <- c("Context", "Outcome", "Time", "Predictor", "Estimate", "SE", "P_value")
+
+# 2. Wrangle T2 Compliance data
+df_table_2 <- compliance_results_SA_T2
+df_table_2$Context <- "T2 (Known)"
+df_table_2$Outcome <- "Compliance"
+df_table_2$Time <- df_table_2$label
+df_table_2 <- df_table_2[, c("Context", "Outcome", "Time", "Predictor", "est", "se", "pvalue")]
+names(df_table_2) <- c("Context", "Outcome", "Time", "Predictor", "Estimate", "SE", "P_value")
+
+# 3. Wrangle T1 Beliefs data (from static model)
+df_table_3 <- bel_SA_T1
+df_table_3$Context <- "T1 (Unknown)"
+df_table_3$Time <- "Initial (Static)"
+# 'Outcome' and 'Predictor' columns already exist
+df_table_3 <- df_table_3[, c("Context", "Outcome", "Time", "Predictor", "est", "se", "pvalue")]
+names(df_table_3) <- c("Context", "Outcome", "Time", "Predictor", "Estimate", "SE", "P_value")
+
+# 4. Wrangle T2 Beliefs data (from static model)
+df_table_4 <- bel_SA_T2
+df_table_4$Context <- "T2 (Known)"
+df_table_4$Time <- "Initial (Static)"
+# 'Outcome' and 'Predictor' columns already exist
+df_table_4 <- df_table_4[, c("Context", "Outcome", "Time", "Predictor", "est", "se", "pvalue")]
+names(df_table_4) <- c("Context", "Outcome", "Time", "Predictor", "Estimate", "SE", "P_value")
+
+# 5. Combine all dataframes
+summary_table <- rbind(df_table_1, df_table_2, df_table_3, df_table_4)
+
+# 6. Format and round the table
+summary_table$Estimate <- round(summary_table$Estimate, 3)
+summary_table$SE <- round(summary_table$SE, 3)
+summary_table$P_value <- round(summary_table$P_value, 3)
+
+# 7. Save to Word (.docx) using flextable
+# Create a flextable object
+ft <- flextable(summary_table)
+ft <- autofit(ft) # Adjust column widths
+ft <- theme_booktabs(ft) # Apply a clean theme
+
+# Define file path for Word
+table_file_path_docx <- paste0(path_github, "Outputs/SEM_Summary_Table_Supplementary.docx")
+
+# Save the flextable as a Word document
+# This requires the 'officer' package to be installed
+if (requireNamespace("officer", quietly = TRUE)) {
+  save_as_docx(ft, path = table_file_path_docx)
+  message("Summary table saved to: ", table_file_path_docx)
+} else {
+  message("Please install the 'officer' package to save to .docx")
+  message("You can install it with: install.packages(\"officer\")")
+}
+
+# 8. Save to Text (.txt) using knitr::kable
+table_file_path_txt <- paste0(path_github, "Outputs/SEM_Summary_Table_Supplementary.txt")
+
+# Create a text table (using a clean markdown format)
+table_txt_lines <- kable(summary_table, format = "pipe")
+
+# Save the text table to a file
+writeLines(table_txt_lines, table_file_path_txt)
+message("Summary table saved to: ", table_file_path_txt)
