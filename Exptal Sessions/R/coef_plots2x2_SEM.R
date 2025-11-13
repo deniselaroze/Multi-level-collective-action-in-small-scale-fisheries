@@ -489,9 +489,9 @@ final_plot <- (p_compliance_T1 + p_compliance_T2) /
 
 # Save the final combined plot
 ggsave(
-  paste0(path_github, "Outputs/Combined_SEM_Plot_2x2_manuscript.tiff"), 
+  paste0(path_github, "Outputs/Combined_SEM_Plot_2x2_manuscript2.tiff"), 
   final_plot, 
   width = 22,
-  height = 16
+  height = 30
 )
 

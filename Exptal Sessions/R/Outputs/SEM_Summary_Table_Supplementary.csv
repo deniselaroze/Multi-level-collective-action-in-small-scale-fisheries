@@ -1,0 +1,121 @@
+"Context","Outcome","Time","Predictor","Estimate","SE","P_value"
+"T1 (Unknown)","Compliance","Mean rounds 2-8","Prior Beliefs Out-group",0.149,0.087,0.086
+"T1 (Unknown)","Compliance","Mean rounds 2-8","Prior Beliefs In-group",0.233,0.08,0.003
+"T1 (Unknown)","Compliance","Mean rounds 2-8","Trust Out-group",-0.007,0.024,0.763
+"T1 (Unknown)","Compliance","Mean rounds 2-8","Conflict Out-group",-0.016,0.023,0.484
+"T1 (Unknown)","Compliance","Mean rounds 2-8","Trust In-group",0.033,0.027,0.224
+"T1 (Unknown)","Compliance","Mean rounds 2-8","Conflict In-group",0.022,0.026,0.401
+"T1 (Unknown)","Compliance","Mean rounds 2-8","Observed Compliance (t−1)",0.093,0.033,0.004
+"T1 (Unknown)","Compliance","Round 2","Prior Beliefs Out-group",0.158,0.094,0.094
+"T1 (Unknown)","Compliance","Round 2","Prior Beliefs In-group",0.286,0.089,0.001
+"T1 (Unknown)","Compliance","Round 2","Trust Out-group",-0.028,0.031,0.358
+"T1 (Unknown)","Compliance","Round 2","Conflict Out-group",0.007,0.026,0.8
+"T1 (Unknown)","Compliance","Round 2","Trust In-group",0.072,0.031,0.02
+"T1 (Unknown)","Compliance","Round 2","Conflict In-group",0.012,0.033,0.72
+"T1 (Unknown)","Compliance","Round 2","Observed Compliance (t−1)",0.089,0.038,0.02
+"T1 (Unknown)","Compliance","Round 3","Prior Beliefs Out-group",0.2,0.099,0.043
+"T1 (Unknown)","Compliance","Round 3","Prior Beliefs In-group",0.212,0.095,0.025
+"T1 (Unknown)","Compliance","Round 3","Trust Out-group",-0.012,0.028,0.662
+"T1 (Unknown)","Compliance","Round 3","Conflict Out-group",-0.037,0.029,0.209
+"T1 (Unknown)","Compliance","Round 3","Trust In-group",0.019,0.032,0.542
+"T1 (Unknown)","Compliance","Round 3","Conflict In-group",-0.008,0.031,0.809
+"T1 (Unknown)","Compliance","Round 3","Observed Compliance (t−1)",0.112,0.036,0.002
+"T1 (Unknown)","Compliance","Round 4","Prior Beliefs Out-group",0.147,0.095,0.123
+"T1 (Unknown)","Compliance","Round 4","Prior Beliefs In-group",0.309,0.091,0.001
+"T1 (Unknown)","Compliance","Round 4","Trust Out-group",-0.028,0.028,0.316
+"T1 (Unknown)","Compliance","Round 4","Conflict Out-group",-0.024,0.027,0.384
+"T1 (Unknown)","Compliance","Round 4","Trust In-group",0.05,0.031,0.104
+"T1 (Unknown)","Compliance","Round 4","Conflict In-group",0.017,0.031,0.582
+"T1 (Unknown)","Compliance","Round 4","Observed Compliance (t−1)",0.05,0.039,0.198
+"T1 (Unknown)","Compliance","Round 5","Prior Beliefs Out-group",0.125,0.102,0.22
+"T1 (Unknown)","Compliance","Round 5","Prior Beliefs In-group",0.258,0.091,0.005
+"T1 (Unknown)","Compliance","Round 5","Trust Out-group",0.002,0.029,0.936
+"T1 (Unknown)","Compliance","Round 5","Conflict Out-group",-0.019,0.029,0.508
+"T1 (Unknown)","Compliance","Round 5","Trust In-group",0.034,0.03,0.261
+"T1 (Unknown)","Compliance","Round 5","Conflict In-group",0.072,0.031,0.02
+"T1 (Unknown)","Compliance","Round 5","Observed Compliance (t−1)",0.154,0.036,0
+"T1 (Unknown)","Compliance","Round 6","Prior Beliefs Out-group",0.083,0.1,0.406
+"T1 (Unknown)","Compliance","Round 6","Prior Beliefs In-group",0.188,0.096,0.051
+"T1 (Unknown)","Compliance","Round 6","Trust Out-group",0.003,0.03,0.917
+"T1 (Unknown)","Compliance","Round 6","Conflict Out-group",-0.017,0.028,0.54
+"T1 (Unknown)","Compliance","Round 6","Trust In-group",0.016,0.029,0.588
+"T1 (Unknown)","Compliance","Round 6","Conflict In-group",0.03,0.034,0.381
+"T1 (Unknown)","Compliance","Round 6","Observed Compliance (t−1)",0.153,0.036,0
+"T1 (Unknown)","Compliance","Round 7","Prior Beliefs Out-group",0.067,0.104,0.519
+"T1 (Unknown)","Compliance","Round 7","Prior Beliefs In-group",0.112,0.098,0.251
+"T1 (Unknown)","Compliance","Round 7","Trust Out-group",-0.006,0.03,0.843
+"T1 (Unknown)","Compliance","Round 7","Conflict Out-group",-0.062,0.032,0.051
+"T1 (Unknown)","Compliance","Round 7","Trust In-group",0.029,0.033,0.381
+"T1 (Unknown)","Compliance","Round 7","Conflict In-group",0.03,0.034,0.38
+"T1 (Unknown)","Compliance","Round 7","Observed Compliance (t−1)",0.129,0.036,0
+"T1 (Unknown)","Compliance","Round 8","Prior Beliefs Out-group",0.012,0.101,0.907
+"T1 (Unknown)","Compliance","Round 8","Prior Beliefs In-group",0.3,0.092,0.001
+"T1 (Unknown)","Compliance","Round 8","Trust Out-group",0.01,0.03,0.746
+"T1 (Unknown)","Compliance","Round 8","Conflict Out-group",0.034,0.029,0.244
+"T1 (Unknown)","Compliance","Round 8","Trust In-group",0.018,0.03,0.557
+"T1 (Unknown)","Compliance","Round 8","Conflict In-group",0.048,0.032,0.13
+"T1 (Unknown)","Compliance","Round 8","Observed Compliance (t−1)",0.098,0.038,0.009
+"T2 (Known)","Compliance","Mean rounds 2-8","Prior Beliefs Out-group",0.382,0.072,0
+"T2 (Known)","Compliance","Mean rounds 2-8","Prior Beliefs In-group",0.271,0.065,0
+"T2 (Known)","Compliance","Mean rounds 2-8","Trust Out-group",-0.039,0.018,0.027
+"T2 (Known)","Compliance","Mean rounds 2-8","Conflict Out-group",-0.008,0.018,0.661
+"T2 (Known)","Compliance","Mean rounds 2-8","Trust In-group",0.025,0.021,0.242
+"T2 (Known)","Compliance","Mean rounds 2-8","Conflict In-group",0.007,0.022,0.755
+"T2 (Known)","Compliance","Mean rounds 2-8","Observed Compliance (t−1)",0.08,0.024,0.001
+"T2 (Known)","Compliance","Round 2","Prior Beliefs Out-group",0.402,0.099,0
+"T2 (Known)","Compliance","Round 2","Prior Beliefs In-group",0.238,0.091,0.009
+"T2 (Known)","Compliance","Round 2","Trust Out-group",-0.029,0.021,0.183
+"T2 (Known)","Compliance","Round 2","Conflict Out-group",-0.028,0.023,0.216
+"T2 (Known)","Compliance","Round 2","Trust In-group",0.013,0.027,0.629
+"T2 (Known)","Compliance","Round 2","Conflict In-group",0,0.029,0.995
+"T2 (Known)","Compliance","Round 2","Observed Compliance (t−1)",0.067,0.033,0.04
+"T2 (Known)","Compliance","Round 3","Prior Beliefs Out-group",0.305,0.101,0.003
+"T2 (Known)","Compliance","Round 3","Prior Beliefs In-group",0.309,0.087,0
+"T2 (Known)","Compliance","Round 3","Trust Out-group",-0.037,0.03,0.221
+"T2 (Known)","Compliance","Round 3","Conflict Out-group",-0.029,0.023,0.21
+"T2 (Known)","Compliance","Round 3","Trust In-group",0.049,0.025,0.053
+"T2 (Known)","Compliance","Round 3","Conflict In-group",0.031,0.025,0.221
+"T2 (Known)","Compliance","Round 3","Observed Compliance (t−1)",0.066,0.034,0.053
+"T2 (Known)","Compliance","Round 4","Prior Beliefs Out-group",0.425,0.101,0
+"T2 (Known)","Compliance","Round 4","Prior Beliefs In-group",0.229,0.088,0.01
+"T2 (Known)","Compliance","Round 4","Trust Out-group",-0.054,0.023,0.019
+"T2 (Known)","Compliance","Round 4","Conflict Out-group",-0.016,0.022,0.461
+"T2 (Known)","Compliance","Round 4","Trust In-group",0.022,0.027,0.402
+"T2 (Known)","Compliance","Round 4","Conflict In-group",0.018,0.025,0.474
+"T2 (Known)","Compliance","Round 4","Observed Compliance (t−1)",0.05,0.039,0.2
+"T2 (Known)","Compliance","Round 5","Prior Beliefs Out-group",0.245,0.095,0.01
+"T2 (Known)","Compliance","Round 5","Prior Beliefs In-group",0.323,0.083,0
+"T2 (Known)","Compliance","Round 5","Trust Out-group",-0.039,0.021,0.065
+"T2 (Known)","Compliance","Round 5","Conflict Out-group",0.008,0.025,0.743
+"T2 (Known)","Compliance","Round 5","Trust In-group",0.009,0.025,0.729
+"T2 (Known)","Compliance","Round 5","Conflict In-group",-0.017,0.027,0.537
+"T2 (Known)","Compliance","Round 5","Observed Compliance (t−1)",0.101,0.034,0.003
+"T2 (Known)","Compliance","Round 6","Prior Beliefs Out-group",0.362,0.091,0
+"T2 (Known)","Compliance","Round 6","Prior Beliefs In-group",0.317,0.081,0
+"T2 (Known)","Compliance","Round 6","Trust Out-group",-0.053,0.023,0.02
+"T2 (Known)","Compliance","Round 6","Conflict Out-group",0.012,0.025,0.633
+"T2 (Known)","Compliance","Round 6","Trust In-group",0.011,0.024,0.652
+"T2 (Known)","Compliance","Round 6","Conflict In-group",0.001,0.028,0.966
+"T2 (Known)","Compliance","Round 6","Observed Compliance (t−1)",0.041,0.032,0.197
+"T2 (Known)","Compliance","Round 7","Prior Beliefs Out-group",0.377,0.089,0
+"T2 (Known)","Compliance","Round 7","Prior Beliefs In-group",0.267,0.077,0.001
+"T2 (Known)","Compliance","Round 7","Trust Out-group",-0.028,0.021,0.174
+"T2 (Known)","Compliance","Round 7","Conflict Out-group",0.001,0.025,0.96
+"T2 (Known)","Compliance","Round 7","Trust In-group",0.031,0.025,0.201
+"T2 (Known)","Compliance","Round 7","Conflict In-group",0.008,0.024,0.73
+"T2 (Known)","Compliance","Round 7","Observed Compliance (t−1)",0.071,0.034,0.035
+"T2 (Known)","Compliance","Round 8","Prior Beliefs Out-group",0.322,0.101,0.001
+"T2 (Known)","Compliance","Round 8","Prior Beliefs In-group",0.298,0.087,0.001
+"T2 (Known)","Compliance","Round 8","Trust Out-group",-0.028,0.023,0.236
+"T2 (Known)","Compliance","Round 8","Conflict Out-group",0.042,0.032,0.181
+"T2 (Known)","Compliance","Round 8","Trust In-group",0.006,0.026,0.828
+"T2 (Known)","Compliance","Round 8","Conflict In-group",-0.018,0.028,0.519
+"T2 (Known)","Compliance","Round 8","Observed Compliance (t−1)",0.063,0.037,0.091
+"T1 (Unknown)","Out-group (Unknown)","Initial (Static)","Trust Out-group",0.05,0.025,0.041
+"T1 (Unknown)","Out-group (Unknown)","Initial (Static)","Conflict Out-group",-0.018,0.024,0.445
+"T1 (Unknown)","In-group (T1)","Initial (Static)","Trust In-group",0.016,0.03,0.594
+"T1 (Unknown)","In-group (T1)","Initial (Static)","Conflict In-group",-0.089,0.023,0
+"T2 (Known)","Out-group (Known)","Initial (Static)","Trust Out-group",0.053,0.02,0.006
+"T2 (Known)","Out-group (Known)","Initial (Static)","Conflict Out-group",-0.008,0.016,0.618
+"T2 (Known)","In-group (T2)","Initial (Static)","Trust In-group",0.034,0.027,0.205
+"T2 (Known)","In-group (T2)","Initial (Static)","Conflict In-group",-0.013,0.024,0.582

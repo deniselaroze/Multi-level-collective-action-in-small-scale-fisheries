@@ -1,0 +1,122 @@
+|    |Context      |Outcome             |Time             |Predictor                 | Estimate|    SE| P_value|
+|:---|:------------|:-------------------|:----------------|:-------------------------|--------:|-----:|-------:|
+|5   |T1 (Unknown) |Compliance          |Mean rounds 2-8  |Prior Beliefs Out-group   |    0.149| 0.087|   0.086|
+|6   |T1 (Unknown) |Compliance          |Mean rounds 2-8  |Prior Beliefs In-group    |    0.233| 0.080|   0.003|
+|7   |T1 (Unknown) |Compliance          |Mean rounds 2-8  |Trust Out-group           |   -0.007| 0.024|   0.763|
+|8   |T1 (Unknown) |Compliance          |Mean rounds 2-8  |Conflict Out-group        |   -0.016| 0.023|   0.484|
+|9   |T1 (Unknown) |Compliance          |Mean rounds 2-8  |Trust In-group            |    0.033| 0.027|   0.224|
+|10  |T1 (Unknown) |Compliance          |Mean rounds 2-8  |Conflict In-group         |    0.022| 0.026|   0.401|
+|11  |T1 (Unknown) |Compliance          |Mean rounds 2-8  |Observed Compliance (t−1) |    0.093| 0.033|   0.004|
+|16  |T1 (Unknown) |Compliance          |Round 2          |Prior Beliefs Out-group   |    0.158| 0.094|   0.094|
+|17  |T1 (Unknown) |Compliance          |Round 2          |Prior Beliefs In-group    |    0.286| 0.089|   0.001|
+|18  |T1 (Unknown) |Compliance          |Round 2          |Trust Out-group           |   -0.028| 0.031|   0.358|
+|19  |T1 (Unknown) |Compliance          |Round 2          |Conflict Out-group        |    0.007| 0.026|   0.800|
+|20  |T1 (Unknown) |Compliance          |Round 2          |Trust In-group            |    0.072| 0.031|   0.020|
+|21  |T1 (Unknown) |Compliance          |Round 2          |Conflict In-group         |    0.012| 0.033|   0.720|
+|22  |T1 (Unknown) |Compliance          |Round 2          |Observed Compliance (t−1) |    0.089| 0.038|   0.020|
+|27  |T1 (Unknown) |Compliance          |Round 3          |Prior Beliefs Out-group   |    0.200| 0.099|   0.043|
+|28  |T1 (Unknown) |Compliance          |Round 3          |Prior Beliefs In-group    |    0.212| 0.095|   0.025|
+|29  |T1 (Unknown) |Compliance          |Round 3          |Trust Out-group           |   -0.012| 0.028|   0.662|
+|30  |T1 (Unknown) |Compliance          |Round 3          |Conflict Out-group        |   -0.037| 0.029|   0.209|
+|31  |T1 (Unknown) |Compliance          |Round 3          |Trust In-group            |    0.019| 0.032|   0.542|
+|32  |T1 (Unknown) |Compliance          |Round 3          |Conflict In-group         |   -0.008| 0.031|   0.809|
+|33  |T1 (Unknown) |Compliance          |Round 3          |Observed Compliance (t−1) |    0.112| 0.036|   0.002|
+|38  |T1 (Unknown) |Compliance          |Round 4          |Prior Beliefs Out-group   |    0.147| 0.095|   0.123|
+|39  |T1 (Unknown) |Compliance          |Round 4          |Prior Beliefs In-group    |    0.309| 0.091|   0.001|
+|40  |T1 (Unknown) |Compliance          |Round 4          |Trust Out-group           |   -0.028| 0.028|   0.316|
+|41  |T1 (Unknown) |Compliance          |Round 4          |Conflict Out-group        |   -0.024| 0.027|   0.384|
+|42  |T1 (Unknown) |Compliance          |Round 4          |Trust In-group            |    0.050| 0.031|   0.104|
+|43  |T1 (Unknown) |Compliance          |Round 4          |Conflict In-group         |    0.017| 0.031|   0.582|
+|44  |T1 (Unknown) |Compliance          |Round 4          |Observed Compliance (t−1) |    0.050| 0.039|   0.198|
+|49  |T1 (Unknown) |Compliance          |Round 5          |Prior Beliefs Out-group   |    0.125| 0.102|   0.220|
+|50  |T1 (Unknown) |Compliance          |Round 5          |Prior Beliefs In-group    |    0.258| 0.091|   0.005|
+|51  |T1 (Unknown) |Compliance          |Round 5          |Trust Out-group           |    0.002| 0.029|   0.936|
+|52  |T1 (Unknown) |Compliance          |Round 5          |Conflict Out-group        |   -0.019| 0.029|   0.508|
+|53  |T1 (Unknown) |Compliance          |Round 5          |Trust In-group            |    0.034| 0.030|   0.261|
+|54  |T1 (Unknown) |Compliance          |Round 5          |Conflict In-group         |    0.072| 0.031|   0.020|
+|55  |T1 (Unknown) |Compliance          |Round 5          |Observed Compliance (t−1) |    0.154| 0.036|   0.000|
+|60  |T1 (Unknown) |Compliance          |Round 6          |Prior Beliefs Out-group   |    0.083| 0.100|   0.406|
+|61  |T1 (Unknown) |Compliance          |Round 6          |Prior Beliefs In-group    |    0.188| 0.096|   0.051|
+|62  |T1 (Unknown) |Compliance          |Round 6          |Trust Out-group           |    0.003| 0.030|   0.917|
+|63  |T1 (Unknown) |Compliance          |Round 6          |Conflict Out-group        |   -0.017| 0.028|   0.540|
+|64  |T1 (Unknown) |Compliance          |Round 6          |Trust In-group            |    0.016| 0.029|   0.588|
+|65  |T1 (Unknown) |Compliance          |Round 6          |Conflict In-group         |    0.030| 0.034|   0.381|
+|66  |T1 (Unknown) |Compliance          |Round 6          |Observed Compliance (t−1) |    0.153| 0.036|   0.000|
+|71  |T1 (Unknown) |Compliance          |Round 7          |Prior Beliefs Out-group   |    0.067| 0.104|   0.519|
+|72  |T1 (Unknown) |Compliance          |Round 7          |Prior Beliefs In-group    |    0.112| 0.098|   0.251|
+|73  |T1 (Unknown) |Compliance          |Round 7          |Trust Out-group           |   -0.006| 0.030|   0.843|
+|74  |T1 (Unknown) |Compliance          |Round 7          |Conflict Out-group        |   -0.062| 0.032|   0.051|
+|75  |T1 (Unknown) |Compliance          |Round 7          |Trust In-group            |    0.029| 0.033|   0.381|
+|76  |T1 (Unknown) |Compliance          |Round 7          |Conflict In-group         |    0.030| 0.034|   0.380|
+|77  |T1 (Unknown) |Compliance          |Round 7          |Observed Compliance (t−1) |    0.129| 0.036|   0.000|
+|82  |T1 (Unknown) |Compliance          |Round 8          |Prior Beliefs Out-group   |    0.012| 0.101|   0.907|
+|83  |T1 (Unknown) |Compliance          |Round 8          |Prior Beliefs In-group    |    0.300| 0.092|   0.001|
+|84  |T1 (Unknown) |Compliance          |Round 8          |Trust Out-group           |    0.010| 0.030|   0.746|
+|85  |T1 (Unknown) |Compliance          |Round 8          |Conflict Out-group        |    0.034| 0.029|   0.244|
+|86  |T1 (Unknown) |Compliance          |Round 8          |Trust In-group            |    0.018| 0.030|   0.557|
+|87  |T1 (Unknown) |Compliance          |Round 8          |Conflict In-group         |    0.048| 0.032|   0.130|
+|88  |T1 (Unknown) |Compliance          |Round 8          |Observed Compliance (t−1) |    0.098| 0.038|   0.009|
+|56  |T2 (Known)   |Compliance          |Mean rounds 2-8  |Prior Beliefs Out-group   |    0.382| 0.072|   0.000|
+|67  |T2 (Known)   |Compliance          |Mean rounds 2-8  |Prior Beliefs In-group    |    0.271| 0.065|   0.000|
+|78  |T2 (Known)   |Compliance          |Mean rounds 2-8  |Trust Out-group           |   -0.039| 0.018|   0.027|
+|81  |T2 (Known)   |Compliance          |Mean rounds 2-8  |Conflict Out-group        |   -0.008| 0.018|   0.661|
+|91  |T2 (Known)   |Compliance          |Mean rounds 2-8  |Trust In-group            |    0.025| 0.021|   0.242|
+|101 |T2 (Known)   |Compliance          |Mean rounds 2-8  |Conflict In-group         |    0.007| 0.022|   0.755|
+|111 |T2 (Known)   |Compliance          |Mean rounds 2-8  |Observed Compliance (t−1) |    0.080| 0.024|   0.001|
+|161 |T2 (Known)   |Compliance          |Round 2          |Prior Beliefs Out-group   |    0.402| 0.099|   0.000|
+|171 |T2 (Known)   |Compliance          |Round 2          |Prior Beliefs In-group    |    0.238| 0.091|   0.009|
+|181 |T2 (Known)   |Compliance          |Round 2          |Trust Out-group           |   -0.029| 0.021|   0.183|
+|191 |T2 (Known)   |Compliance          |Round 2          |Conflict Out-group        |   -0.028| 0.023|   0.216|
+|201 |T2 (Known)   |Compliance          |Round 2          |Trust In-group            |    0.013| 0.027|   0.629|
+|211 |T2 (Known)   |Compliance          |Round 2          |Conflict In-group         |    0.000| 0.029|   0.995|
+|221 |T2 (Known)   |Compliance          |Round 2          |Observed Compliance (t−1) |    0.067| 0.033|   0.040|
+|271 |T2 (Known)   |Compliance          |Round 3          |Prior Beliefs Out-group   |    0.305| 0.101|   0.003|
+|281 |T2 (Known)   |Compliance          |Round 3          |Prior Beliefs In-group    |    0.309| 0.087|   0.000|
+|291 |T2 (Known)   |Compliance          |Round 3          |Trust Out-group           |   -0.037| 0.030|   0.221|
+|301 |T2 (Known)   |Compliance          |Round 3          |Conflict Out-group        |   -0.029| 0.023|   0.210|
+|311 |T2 (Known)   |Compliance          |Round 3          |Trust In-group            |    0.049| 0.025|   0.053|
+|321 |T2 (Known)   |Compliance          |Round 3          |Conflict In-group         |    0.031| 0.025|   0.221|
+|331 |T2 (Known)   |Compliance          |Round 3          |Observed Compliance (t−1) |    0.066| 0.034|   0.053|
+|381 |T2 (Known)   |Compliance          |Round 4          |Prior Beliefs Out-group   |    0.425| 0.101|   0.000|
+|391 |T2 (Known)   |Compliance          |Round 4          |Prior Beliefs In-group    |    0.229| 0.088|   0.010|
+|401 |T2 (Known)   |Compliance          |Round 4          |Trust Out-group           |   -0.054| 0.023|   0.019|
+|411 |T2 (Known)   |Compliance          |Round 4          |Conflict Out-group        |   -0.016| 0.022|   0.461|
+|421 |T2 (Known)   |Compliance          |Round 4          |Trust In-group            |    0.022| 0.027|   0.402|
+|431 |T2 (Known)   |Compliance          |Round 4          |Conflict In-group         |    0.018| 0.025|   0.474|
+|441 |T2 (Known)   |Compliance          |Round 4          |Observed Compliance (t−1) |    0.050| 0.039|   0.200|
+|491 |T2 (Known)   |Compliance          |Round 5          |Prior Beliefs Out-group   |    0.245| 0.095|   0.010|
+|501 |T2 (Known)   |Compliance          |Round 5          |Prior Beliefs In-group    |    0.323| 0.083|   0.000|
+|511 |T2 (Known)   |Compliance          |Round 5          |Trust Out-group           |   -0.039| 0.021|   0.065|
+|521 |T2 (Known)   |Compliance          |Round 5          |Conflict Out-group        |    0.008| 0.025|   0.743|
+|531 |T2 (Known)   |Compliance          |Round 5          |Trust In-group            |    0.009| 0.025|   0.729|
+|541 |T2 (Known)   |Compliance          |Round 5          |Conflict In-group         |   -0.017| 0.027|   0.537|
+|551 |T2 (Known)   |Compliance          |Round 5          |Observed Compliance (t−1) |    0.101| 0.034|   0.003|
+|601 |T2 (Known)   |Compliance          |Round 6          |Prior Beliefs Out-group   |    0.362| 0.091|   0.000|
+|611 |T2 (Known)   |Compliance          |Round 6          |Prior Beliefs In-group    |    0.317| 0.081|   0.000|
+|621 |T2 (Known)   |Compliance          |Round 6          |Trust Out-group           |   -0.053| 0.023|   0.020|
+|631 |T2 (Known)   |Compliance          |Round 6          |Conflict Out-group        |    0.012| 0.025|   0.633|
+|641 |T2 (Known)   |Compliance          |Round 6          |Trust In-group            |    0.011| 0.024|   0.652|
+|651 |T2 (Known)   |Compliance          |Round 6          |Conflict In-group         |    0.001| 0.028|   0.966|
+|661 |T2 (Known)   |Compliance          |Round 6          |Observed Compliance (t−1) |    0.041| 0.032|   0.197|
+|711 |T2 (Known)   |Compliance          |Round 7          |Prior Beliefs Out-group   |    0.377| 0.089|   0.000|
+|721 |T2 (Known)   |Compliance          |Round 7          |Prior Beliefs In-group    |    0.267| 0.077|   0.001|
+|731 |T2 (Known)   |Compliance          |Round 7          |Trust Out-group           |   -0.028| 0.021|   0.174|
+|741 |T2 (Known)   |Compliance          |Round 7          |Conflict Out-group        |    0.001| 0.025|   0.960|
+|751 |T2 (Known)   |Compliance          |Round 7          |Trust In-group            |    0.031| 0.025|   0.201|
+|761 |T2 (Known)   |Compliance          |Round 7          |Conflict In-group         |    0.008| 0.024|   0.730|
+|771 |T2 (Known)   |Compliance          |Round 7          |Observed Compliance (t−1) |    0.071| 0.034|   0.035|
+|821 |T2 (Known)   |Compliance          |Round 8          |Prior Beliefs Out-group   |    0.322| 0.101|   0.001|
+|831 |T2 (Known)   |Compliance          |Round 8          |Prior Beliefs In-group    |    0.298| 0.087|   0.001|
+|841 |T2 (Known)   |Compliance          |Round 8          |Trust Out-group           |   -0.028| 0.023|   0.236|
+|851 |T2 (Known)   |Compliance          |Round 8          |Conflict Out-group        |    0.042| 0.032|   0.181|
+|861 |T2 (Known)   |Compliance          |Round 8          |Trust In-group            |    0.006| 0.026|   0.828|
+|871 |T2 (Known)   |Compliance          |Round 8          |Conflict In-group         |   -0.018| 0.028|   0.519|
+|881 |T2 (Known)   |Compliance          |Round 8          |Observed Compliance (t−1) |    0.063| 0.037|   0.091|
+|1   |T1 (Unknown) |Out-group (Unknown) |Initial (Static) |Trust Out-group           |    0.050| 0.025|   0.041|
+|2   |T1 (Unknown) |Out-group (Unknown) |Initial (Static) |Conflict Out-group        |   -0.018| 0.024|   0.445|
+|3   |T1 (Unknown) |In-group (T1)       |Initial (Static) |Trust In-group            |    0.016| 0.030|   0.594|
+|4   |T1 (Unknown) |In-group (T1)       |Initial (Static) |Conflict In-group         |   -0.089| 0.023|   0.000|
+|12  |T2 (Known)   |Out-group (Known)   |Initial (Static) |Trust Out-group           |    0.053| 0.020|   0.006|
+|23  |T2 (Known)   |Out-group (Known)   |Initial (Static) |Conflict Out-group        |   -0.008| 0.016|   0.618|
+|34  |T2 (Known)   |In-group (T2)       |Initial (Static) |Trust In-group            |    0.034| 0.027|   0.205|
+|45  |T2 (Known)   |In-group (T2)       |Initial (Static) |Conflict In-group         |   -0.013| 0.024|   0.582|
