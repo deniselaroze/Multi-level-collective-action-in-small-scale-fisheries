@@ -254,6 +254,21 @@ summary(df$survey3.1.player.horas_trabajo)
 sd(df$survey3.1.player.horas_trabajo)
 
 
+#Number of people that declare knowing something about the other community in the session.  
+
+exp_counts <- df %>%
+  group_by(session.code, participant.caleta) %>%
+  summarise(
+    # Count unique participants who meet the condition (>1)
+    # na.rm = TRUE ignores missing values in the variable
+    people_with_experience = n_distinct(participant.code[survey2.1.player.experiencia_caleta_conocida1 > 1], na.rm = TRUE),
+    .groups = "drop"
+  ) 
+
+print(exp_counts)
+
+
+
 ##########################
 ### Mean comparisons
 ##########################
