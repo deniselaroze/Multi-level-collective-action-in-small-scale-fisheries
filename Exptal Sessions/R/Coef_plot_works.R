@@ -17,11 +17,11 @@ rm(list = ls())
 
 # --- 1. Setup: Paths, Data, Colors, and Shapes ---
 # Ensure these paths are correct for your system
-path_github <- "C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-path_datos  <- "C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+#path_github <- "C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos  <- "C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
-#path_github <- "C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-#path_datos  <- "C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+path_github <- "C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos  <- "C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 
 # Load data
@@ -88,7 +88,7 @@ coef_SA_T1_sem <- function(data, R_start, R_end) {
   '
   
   # MODIFICATION: Reduced bootstrap iterations
-  fit <- sem(sem_model, data = data, estimator = "ML", se = "bootstrap", bootstrap = 100, parallel = "multicore", ncpus = 4)
+  fit <- sem(sem_model, data = data, estimator = "ML", se = "bootstrap", bootstrap = 1000, parallel = "multicore", ncpus = 4)
   return(fit)
 }
 
@@ -148,14 +148,14 @@ df$conflicto_pm<- as.numeric(scale(df$survey1.1.player.conflicto_pm))
 
 
 # MODIFICATION: Reduced bootstrap iterations
-fit_bel_SA_T1 <- sem(sem_model_beliefs_SA_T1, data = df, estimator = "ML", se = "bootstrap", bootstrap = 100, parallel = "multicore", ncpus = 4)
+fit_bel_SA_T1 <- sem(sem_model_beliefs_SA_T1, data = df, estimator = "ML", se = "bootstrap", bootstrap = 1000, parallel = "multicore", ncpus = 4)
 pe_bel_SA_T1 <- parameterEstimates(fit_bel_SA_T1)
 bel_SA_T1 <- subset(pe_bel_SA_T1, op == "~", select = c("lhs", "rhs", "est", "se", "pvalue"))
 
 # FIX 1: Use the full, correct mapping for belief predictors
 bel_SA_T1$Predictor <- factor(sa_T1_compliance_labels[bel_SA_T1$rhs], levels = all_predictor_labels)
 bel_SA_T1$Outcome <- factor(c("belief_compliance_pm" = "Out-group (Unknown)", 
-                              "belief_compliance_union" = "In-group (s1)")[bel_SA_T1$lhs])
+                              "belief_compliance_union" = "In-group")[bel_SA_T1$lhs])
 
 
 ############################################################
@@ -202,7 +202,7 @@ coef_SA_T2_sem <- function(data, R_start, R_end) {
   '
   
   # MODIFICATION: Reduced bootstrap iterations
-  fit <- sem(sem_model, data = data, estimator = "ML", se = "bootstrap", bootstrap = 100, parallel  = "multicore", ncpus = 4)
+  fit <- sem(sem_model, data = data, estimator = "ML", se = "bootstrap", bootstrap = 1000, parallel  = "multicore", ncpus = 4)
   return(fit)
 }
 
@@ -268,7 +268,7 @@ sem_model_beliefs_SA_T2 <- '
 '
 
 # MODIFICATION: Reduced bootstrap iterations
-fit_bel_SA_T2 <- sem(sem_model_beliefs_SA_T2, data = df, estimator = "ML", se = "bootstrap", bootstrap = 100, parallel = "multicore", ncpus = 4)
+fit_bel_SA_T2 <- sem(sem_model_beliefs_SA_T2, data = df, estimator = "ML", se = "bootstrap", bootstrap = 1000, parallel = "multicore", ncpus = 4)
 pe_bel_SA_T2 <- parameterEstimates(fit_bel_SA_T2)
 bel_SA_T2 <- subset(pe_bel_SA_T2, op == "~", select = c("lhs", "rhs", "est", "se", "pvalue"))
 
@@ -276,7 +276,7 @@ bel_SA_T2 <- subset(pe_bel_SA_T2, op == "~", select = c("lhs", "rhs", "est", "se
 bel_SA_T2$Predictor <- factor(sa_T2_compliance_labels[bel_SA_T2$rhs], levels = all_predictor_labels)
 bel_SA_T2$Outcome <- factor(c(
   "belief_compliance_pm_T2"    = "Out-group (Known)",
-  "belief_compliance_union_T2" = "In-group (s2)"
+  "belief_compliance_union_T2" = "In-group"
 )[bel_SA_T2$lhs])
 
 
@@ -285,21 +285,12 @@ bel_SA_T2$Outcome <- factor(c(
 ###################################################
 # Define a consistent set of labels, colors, and shapes for all plots
 
-# Use in a ggplot2 chart:
-#scale_colour_paletteer_d("ggthemes::Classic_Cyclic")
-#scale_fill_paletteer_d("ggthemes::Classic_Cyclic")
-
-#high_contrast_palette<-c("#1F83B4FF", "#12A2A8FF", "#2CA030FF", "#78A641FF","#BCBD22FF", "#FFBF50FF", "#FFAA0EFF","#FF7F0EFF", "#D63A3AFF", "#C7519CFF","#BA43B4FF","#8A60B0FF","#6F63BBFF")
-#palette<-c("#1F83B4FF", "#12A2A8FF", "#2CA030FF", "#78A641FF","#BCBD22FF",  "#D63A3AFF","#8A60B0FF", "#FFAA0EFF")
 high_contrast_palette<-c( "#D63A3AFF","#8A60B0FF", "#FFAA0EFF","#1F83B4FF", "#12A2A8FF", "#2CA030FF", "#78A641FF","#BCBD22FF" )
-
-
 predictor_colors <- setNames(
   high_contrast_palette,
   all_predictor_labels
 )
 
-# MODIFICATION: Added shape palette
 predictor_shapes <- setNames(
   c(8, 3, 4, 18, 15, 17, 16),
   #c(16, 17, 15, 18, 4, 3, 8),
@@ -335,10 +326,10 @@ p_compliance_T1 <- ggplot(compliance_results_SA, aes(x = est, y = label, group =
   ) +
   theme_minimal() +
   theme(
-    plot.title = element_text(hjust = 1, size = 32, face = "bold"), 
+    plot.title = element_text(hjust = 1, size = 36, face = "bold"), 
     legend.position = "none",
-    axis.text = element_text(size = 28),
-    axis.title = element_text(size = 28),
+    axis.text = element_text(size = 30),
+    axis.title = element_text(size = 30),
     plot.margin = margin(b = 40)
   )
 
@@ -370,17 +361,17 @@ p_compliance_T2 <- ggplot(compliance_results_SA_T2, aes(x = est, y = label, grou
   ) +
   theme_minimal() +
   theme(
-    plot.title = element_text(hjust = 1, size=32, face = "bold"), 
+    plot.title = element_text(hjust = 1, size=36, face = "bold"), 
     legend.position = "none",
-    axis.text = element_text(size = 28),
-    axis.title = element_text(size = 28),
+    axis.text = element_text(size = 30),
+    axis.title = element_text(size = 30),
     plot.margin = margin(b = 40)
   )
 
 
 # --- Plot C: Beliefs Shared Area (s1 - Unknown Out-group) ---
 bel_SA_T1$Significance <- ifelse(bel_SA_T1$pvalue < 0.05, "p < 0.05", "p >= 0.05")
-outcome_order_s1 <- c("Out-group (Unknown)", "In-group (s1)")
+outcome_order_s1 <- c("Out-group (Unknown)", "In-group")
 bel_SA_T1$Outcome <- factor(bel_SA_T1$Outcome, levels = rev(outcome_order_s1))
 
 p_beliefs_s1 <- ggplot(bel_SA_T1, aes(x = est, y = Outcome, color = Predictor, shape = Predictor)) +
@@ -406,16 +397,16 @@ p_beliefs_s1 <- ggplot(bel_SA_T1, aes(x = est, y = Outcome, color = Predictor, s
   ) +
   theme_minimal() +
   theme(
-    plot.title = element_text(hjust = 1, size = 32, face = "bold"),
-    axis.text = element_text(size = 28),
-    axis.title = element_text(size = 28),
+    plot.title = element_text(hjust = 1, size = 36, face = "bold"),
+    axis.text = element_text(size = 30),
+    axis.title = element_text(size = 30),
     legend.position = "none",
     plot.margin = margin(b = 40)
   )
 
 # --- Plot D: Beliefs Shared Area (s2 - Known Out-group) ---
 bel_SA_T2$Significance <- ifelse(bel_SA_T2$pvalue < 0.05, "p < 0.05", "p >= 0.05")
-outcome_order_s2 <- c("Out-group (Known)", "In-group (s2)")
+outcome_order_s2 <- c("Out-group (Known)", "In-group")
 bel_SA_T2$Outcome <- factor(bel_SA_T2$Outcome, levels = rev(outcome_order_s2))
 
 p_beliefs_s2 <- ggplot(bel_SA_T2, aes(x = est, y = Outcome, color = Predictor, shape = Predictor)) +
@@ -441,9 +432,9 @@ p_beliefs_s2 <- ggplot(bel_SA_T2, aes(x = est, y = Outcome, color = Predictor, s
   ) +
   theme_minimal() +
   theme(
-    plot.title = element_text(hjust = 1, size = 32, face = "bold"),
-    axis.text = element_text(size = 28),
-    axis.title = element_text(size = 28),
+    plot.title = element_text(hjust = 1, size = 36, face = "bold"),
+    axis.text = element_text(size = 30),
+    axis.title = element_text(size = 30),
     legend.position = "none",
     plot.margin = margin(b = 40)
   )
@@ -463,20 +454,20 @@ predictor_legend_plot <- ggplot(data.frame(
   theme_minimal() +
   guides(color = guide_legend(nrow = 4), shape = guide_legend(nrow = 2)) +
   theme(legend.position = "bottom",
-        legend.title = element_text(size = 28),
-        legend.text = element_text(size = 28))
+        legend.title = element_text(size = 30),
+        legend.text = element_text(size = 30))
 
 # 2. Create a standalone legend plot for Significance
 significance_legend_data <- data.frame(
   Significance = factor(c("p < 0.05", "p >= 0.05"), levels = c("p < 0.05", "p >= 0.05"))
 )
 significance_legend_plot <- ggplot(significance_legend_data, aes(x = 1, y = Significance, alpha = Significance)) +
-  geom_point(size = 4, shape = 8, fill = "grey") +
+  geom_point(size = 6, shape = 8, fill = "grey") +
   scale_alpha_manual(name = "Significance", values = c("p < 0.05" = 1, "p >= 0.05" = 0.3)) +
   theme_minimal() +
-  theme(legend.position = "bottom",
-        legend.title = element_text(size = 24),
-        legend.text = element_text(size = 24))
+  theme(legend.position = "left",
+        legend.title = element_text(size = 30),
+        legend.text = element_text(size = 30))
 
 # 3. Extract legends
 predictor_legend <- get_legend(predictor_legend_plot)
@@ -491,13 +482,24 @@ final_plot <- (p_compliance_T1 + p_compliance_T2) /
   combined_legends + 
   plot_layout(heights = c(0.7, 0.2, 0.1)) # Give more height to legend row for spacing
 
+final_plot2 <- combined_legends /
+  (p_compliance_T1 + p_compliance_T2) / 
+  (p_beliefs_s1 + p_beliefs_s2) + 
+  plot_layout(heights = c(0.15, 0.765, 0.2)) # Give more height to legend row for spacing
+
+final_plot2 <- final_plot2 +
+  plot_annotation(
+    title = 'Structural Equation Models',
+    theme = theme(plot.title = element_text(size = 44, face = "bold", hjust = 0.5))
+  )
+
 
 # Save the final combined plot
 ggsave(
-  paste0(path_github, "Outputs/Combined_SEM_Plot_2x2_tmp_retest5.pdf"), 
-  final_plot, 
-  width = 28,
-  height = 24
+  paste0(path_github, "Outputs/coef_plot.jpg"), 
+  final_plot2, 
+  width = 32,
+  height = 28
 )
 
 

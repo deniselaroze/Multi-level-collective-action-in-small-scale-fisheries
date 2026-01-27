@@ -10,10 +10,15 @@ rm(list=ls())
 # --- User Configuration ---
 # NOTE: Please update these paths to match the locations on your computer.
 # Path to the folder where you want to save the output map.
-path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
 # Path to the folder containing the geographic shapefiles.
-path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Geo"
+#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Geo"
+
+path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+# Path to the folder containing the geographic shapefiles.
+path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Geo"
 # --- End of User Configuration ---
+
 
 
 # 1. --- Data Loading and Preparation ---
@@ -110,21 +115,21 @@ valparaiso_cities_filtered <- valparaiso_cities_filtered %>%
 # Assign a session group to each city for color-coding
 valparaiso_cities_filtered <- valparaiso_cities_filtered %>%
   mutate(Color = case_when(
-    Nombre %in% c("LAS CRUCES", "EL QUISCO") ~ "Session 1 and 2",
-    Nombre %in% c("ALGARROBO", "HORCÓN") & !duplicated(Nombre) ~ "Session 3",
-    Nombre %in% c("VALPARAÍSO", "QUINTERO", "QUINTERO EL MANZANO") ~ "Session 4",
-    Nombre %in% c("LOS MOLLES", "LA BALLENA", "PAPUDO") ~ "Session 5",
-    Nombre %in% c("HORCÓN 2", "CACHAGUA", "MAITENCILLO") ~ "Session 6"
+    Nombre %in% c("LAS CRUCES", "EL QUISCO") ~ "1 & 2",
+    Nombre %in% c("ALGARROBO", "HORCÓN") & !duplicated(Nombre) ~ "3",
+    Nombre %in% c("VALPARAÍSO", "QUINTERO", "QUINTERO EL MANZANO") ~ "4",
+    Nombre %in% c("LOS MOLLES", "LA BALLENA", "PAPUDO") ~ "5",
+    Nombre %in% c("HORCÓN 2", "CACHAGUA", "MAITENCILLO") ~ "6"
   ))
 
 # Convert the 'Color' column to a factor for ordered legend
 valparaiso_cities_filtered$Color <- factor(valparaiso_cities_filtered$Color, 
                                            levels = c(
-                                             "Session 1 and 2", 
-                                             "Session 3", 
-                                             "Session 4", 
-                                             "Session 5", 
-                                             "Session 6"
+                                             "1 & 2", 
+                                             "3", 
+                                             "4", 
+                                             "5", 
+                                             "6"
                                            ))
 
 # Define the geographic bounding box to zoom in on the relevant coastal area
@@ -142,6 +147,14 @@ y_limits_with_buffer <- c(y_min, y_top_limit + y_buffer)
 
 
 # 4. --- Create the Main Map (Zoomed In) ---
+high_contrast_palette <- c(
+  "1 & 2" = "#D63A3AFF",
+  "3"     = "#8A60B0FF", 
+  "4"     = "#1F83B4FF", 
+  "5"     = "#12A2A8FF", 
+  "6"     = "#2CA030FF"
+)
+
 
 main_map <- ggplot() +
   # Plot the Valparaíso region with a light gray fill
@@ -173,7 +186,9 @@ main_map <- ggplot() +
   coord_sf(xlim = x_last_bit, ylim = y_limits_with_buffer, expand = FALSE) +
   
   # Apply a color-blind friendly Viridis color palette
-  scale_color_viridis_d(begin = 0, end = 0.9) +
+  #scale_color_viridis_d(begin = 0, end = 0.9) +
+  scale_color_manual(values = high_contrast_palette) +
+  
   
   # Add titles and labels
   labs(
@@ -220,16 +235,18 @@ panel_ymin <- panel_bbox$ymin
 
 context_map <- ggplot() +
   # Draw all regions of Chile in a light gray
-  geom_sf(data = regions, fill = "gray80", color = "white", size = 0.2) +
+  geom_sf(data = regions, fill = "gray90", color = "black", size = 0.2) +
   # Highlight the Valparaíso region in a distinct color to make it stand out
-  geom_sf(data = valparaiso_region, fill = "#440154FF", color = "black") + 
+  geom_sf(data = valparaiso_region, fill = "#8A60B0FF", color = "black") + 
   # Add the black rectangle showing the zoomed-in area
   geom_sf(data = zoom_box, fill = NA, color = "black", size = 1) +
+  
+
   
   # Add a red dot for Santiago
   geom_point(data = santiago, 
              aes(x = st_coordinates(geometry)[,1], y = st_coordinates(geometry)[,2]), 
-             color = "red", 
+             color = "#D63A3AFF", 
              size = 3, 
              shape = 18) + # Using shape 18, a diamond
   
@@ -260,6 +277,16 @@ context_map <- ggplot() +
     color = "black", size = 0.8
   ) +
   
+  # Add a minimal north arrow to the top-right corner
+  annotation_north_arrow(
+    location = "tr",         # Position in the top-right
+    which_north = "true",
+    pad_x = unit(0, "cm"), # Padding from the right edge
+    pad_y = unit(0.2, "cm"), # Padding from the top edge
+    style = north_arrow_minimal, # Use a simple style
+    height = unit(0.8, "cm"),    # Set height
+    width = unit(0.8, "cm")     # Set width
+  ) +
   # Set coordinate limits to crop out distant oceanic islands
   # and add 'clip = "off"' to allow lines to be drawn outside the plot panel
   coord_sf(xlim = c(-82, -66), expand = FALSE, clip = "off") +
@@ -286,5 +313,5 @@ combined_map_with_title <- combined_map +
 print(combined_map_with_title)
 
 # Save the combined map to a file
-ggsave(file = paste0(path_github, "Outputs/Map_with_zoom_lines.png"), plot = combined_map_with_title, device = "png", width = 10, height = 8)
+ggsave(file = paste0(path_github, "Outputs/Map_test.png"), plot = combined_map_with_title, device = "png", width = 10, height = 8)
 
