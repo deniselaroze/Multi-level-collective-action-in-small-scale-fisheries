@@ -17,11 +17,11 @@ rm(list = ls())
 
 # --- 1. Setup: Paths, Data, Colors, and Shapes ---
 # Ensure these paths are correct for your system
-#path_github <- "C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-#path_datos  <- "C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+path_github <- "C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_datos  <- "C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
-path_github <- "C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
-path_datos  <- "C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
+#path_github <- "C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_datos  <- "C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Sessions"
 
 
 # Load data
@@ -86,7 +86,7 @@ coef_SA_T1_sem <- function(data, R_start, R_end) {
   '
   
   # MODIFICATION: Reduced bootstrap iterations
-  fit <- sem(sem_model, data = data, estimator = "ML", se = "bootstrap", bootstrap = 1000, parallel = "multicore", ncpus = 4)
+  fit <- sem(sem_model, data = data, estimator = "ML", se = "bootstrap", bootstrap = 100, parallel = "multicore", ncpus = 4)
   return(fit)
 }
 
@@ -146,14 +146,10 @@ df$conflicto_pm<- as.numeric(scale(df$survey1.1.player.conflicto_pm))
 
 
 # MODIFICATION: Reduced bootstrap iterations
-fit_bel_SA_T1 <- sem(sem_model_beliefs_SA_T1, data = df, estimator = "ML", se = "bootstrap", bootstrap = 1000, parallel = "multicore", ncpus = 4)
-pe_bel_SA_T1 <- parameterEstimates(fit_bel_SA_T1)
-bel_SA_T1 <- subset(pe_bel_SA_T1, op == "~", select = c("lhs", "rhs", "est", "se", "pvalue"))
+#fit_bel_SA_T1 <- sem(sem_model_beliefs_SA_T1, data = df, estimator = "ML", se = "bootstrap", bootstrap = 100, parallel = "multicore", ncpus = 4)
+#pe_bel_SA_T1 <- parameterEstimates(fit_bel_SA_T1)
+#bel_SA_T1 <- subset(pe_bel_SA_T1, op == "~", select = c("lhs", "rhs", "est", "se", "pvalue"))
 
-# FIX 1: Use the full, correct mapping for belief predictors
-bel_SA_T1$Predictor <- factor(sa_T1_compliance_labels[bel_SA_T1$rhs], levels = all_predictor_labels)
-bel_SA_T1$Outcome <- factor(c("belief_compliance_pm" = "Out-group (Unknown)", 
-                              "belief_compliance_union" = "In-group")[bel_SA_T1$lhs])
 
 
 ############################################################
@@ -200,7 +196,7 @@ coef_SA_T2_sem <- function(data, R_start, R_end) {
   '
   
   # MODIFICATION: Reduced bootstrap iterations
-  fit <- sem(sem_model, data = data, estimator = "ML", se = "bootstrap", bootstrap = 1000, parallel  = "multicore", ncpus = 4)
+  fit <- sem(sem_model, data = data, estimator = "ML", se = "bootstrap", bootstrap = 100, parallel  = "multicore", ncpus = 4)
   return(fit)
 }
 
@@ -266,16 +262,28 @@ sem_model_beliefs_SA_T2 <- '
 '
 
 # MODIFICATION: Reduced bootstrap iterations
-fit_bel_SA_T2 <- sem(sem_model_beliefs_SA_T2, data = df, estimator = "ML", se = "bootstrap", bootstrap = 1000, parallel = "multicore", ncpus = 4)
-pe_bel_SA_T2 <- parameterEstimates(fit_bel_SA_T2)
-bel_SA_T2 <- subset(pe_bel_SA_T2, op == "~", select = c("lhs", "rhs", "est", "se", "pvalue"))
+#fit_bel_SA_T2 <- sem(sem_model_beliefs_SA_T2, data = df, estimator = "ML", se = "bootstrap", bootstrap = 100, parallel = "multicore", ncpus = 4)
+#pe_bel_SA_T2 <- parameterEstimates(fit_bel_SA_T2)
+#bel_SA_T2 <- subset(pe_bel_SA_T2, op == "~", select = c("lhs", "rhs", "est", "se", "pvalue"))
 
-# FIX 1: Use the full, correct mapping for belief predictors
+
+##### Extracting the beliefs information for T1 and T2
+
+# --- Extract Beliefs from Full T1 Dynamic Model ---
+bel_SA_T1 <- subset(pe_mean, lhs %in% c("belief_compliance_pm", "belief_compliance_union") & op == "~", select = c("lhs", "rhs", "est", "se", "pvalue"))
+
+bel_SA_T1$Predictor <- factor(sa_T1_compliance_labels[bel_SA_T1$rhs], levels = all_predictor_labels)
+bel_SA_T1$Outcome <- factor(c("belief_compliance_pm" = "Out-group (Unknown)", 
+                              "belief_compliance_union" = "In-group")[bel_SA_T1$lhs])
+
+# --- Extract Beliefs from Full T2 Dynamic Model ---
+bel_SA_T2 <- subset(pe_mean_T2, lhs %in% c("belief_compliance_pm", "belief_compliance_union") & op == "~", select = c("lhs", "rhs", "est", "se", "pvalue"))
+
+# Note: Because we are extracting from the full model, the variable is belief_compliance_pm, not belief_compliance_pm_T2
 bel_SA_T2$Predictor <- factor(sa_T2_compliance_labels[bel_SA_T2$rhs], levels = all_predictor_labels)
-bel_SA_T2$Outcome <- factor(c(
-  "belief_compliance_pm_T2"    = "Out-group (Known)",
-  "belief_compliance_union_T2" = "In-group"
-)[bel_SA_T2$lhs])
+bel_SA_T2$Outcome <- factor(c("belief_compliance_pm" = "Out-group (Known)", 
+                              "belief_compliance_union" = "In-group")[bel_SA_T2$lhs])
+
 
 
 ###################################################
@@ -494,7 +502,7 @@ final_plot2 <- final_plot2 +
 
 # Save the final combined plot
 ggsave(
-  paste0(path_github, "Outputs/coef_plot.jpg"), 
+  paste0(path_github, "Outputs/coef_plot_update.jpg"), 
   final_plot2, 
   width = 32,
   height = 28
