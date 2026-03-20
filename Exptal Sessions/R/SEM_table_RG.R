@@ -64,15 +64,15 @@ coef_SA_T1_sem <- function(data, R_start, R_end) {
   }
   
   sem_model <- '
-    belief_compliance_pm ~ confianza_pm + conflicto_pm
-    belief_compliance_union ~ confianza_caleta + conflicto_caleta
-    average_compliance_ini ~ belief_compliance_pm + belief_compliance_union + confianza_pm + conflicto_pm + confianza_caleta + conflicto_caleta + average_compliance_observed_ini_lag
+    belief_compliance_pm ~ confianza_pm
+    belief_compliance_union ~ confianza_caleta
+    average_compliance_ini ~ belief_compliance_pm + belief_compliance_union  + conflicto_pm + conflicto_caleta + average_compliance_observed_ini_lag
     average_compliance_observed_ini_lag ~~ 0*belief_compliance_union
     average_compliance_observed_ini_lag ~~ 0*belief_compliance_pm
   '
   
   # Using 1000 bootstraps for robust standard errors
-  fit <- sem(sem_model, data = data, estimator = "ML", se = "bootstrap", bootstrap = 1000, parallel = "multicore", ncpus = 4)
+  fit <- sem(sem_model, data = data, estimator = "ML", se = "bootstrap", bootstrap = 100, parallel = "multicore", ncpus = 4)
   return(fit)
 }
 
@@ -102,15 +102,15 @@ coef_SA_T2_sem <- function(data, R_start, R_end) {
   }
   
   sem_model <- '
-    belief_compliance_pm ~ confianza_metat + conflicto_metat
-    belief_compliance_union ~ confianza_caleta + conflicto_caleta
-    average_compliance_ini ~ belief_compliance_pm + belief_compliance_union + confianza_metat + conflicto_metat + confianza_caleta + conflicto_caleta + average_compliance_observed_ini_lag
+    belief_compliance_pm ~ confianza_metat 
+    belief_compliance_union ~ confianza_caleta 
+    average_compliance_ini ~ belief_compliance_pm + belief_compliance_union  + conflicto_metat + conflicto_caleta + average_compliance_observed_ini_lag
     average_compliance_observed_ini_lag ~~ 0*belief_compliance_union
     average_compliance_observed_ini_lag ~~ 0*belief_compliance_pm
   '
   
   # Using 1000 bootstraps for robust standard errors
-  fit <- sem(sem_model, data = data, estimator = "ML", se = "bootstrap", bootstrap = 1000, parallel  = "multicore", ncpus = 4)
+  fit <- sem(sem_model, data = data, estimator = "ML", se = "bootstrap", bootstrap = 100, parallel  = "multicore", ncpus = 4)
   return(fit)
 }
 
@@ -159,9 +159,8 @@ all_coefs <- bind_rows(
     # Assign Significance Stars
     Significance = case_when(
       pvalue < 0.001 ~ "***",
-      pvalue < 0.01  ~ "**",
-      pvalue < 0.05  ~ "*",
-      pvalue < 0.1   ~ "†",  # You can replace "†" with "+" or "✝" if preferred
+      pvalue < 0.01 ~ "**",
+      pvalue < 0.05 ~ "*",
       TRUE ~ ""
     ),
     
@@ -261,13 +260,13 @@ final_table <- bind_rows(wide_table, gof_table)
 # --- 6. Export to Word Table ---
 
 # Define path for the output Word file
-table_file_path_docx <- paste0(path_github, "Outputs/SEM_Round8_Summary_Table.docx")
+table_file_path_docx <- paste0(path_github, "Outputs/SEM_Round8_Summary_Table_RG.docx")
 
 # Export to Word using datasummary_df
 datasummary_df(
   final_table,
   title = "Structural Equation Models for Compliance and Beliefs in Round 8",
-  notes = c("† p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001",
+  notes = c("* p < 0.05, ** p < 0.01, *** p < 0.001",
             "Standard errors come from a bootstrapped model with 1000 iterations."),
   output = table_file_path_docx
 )

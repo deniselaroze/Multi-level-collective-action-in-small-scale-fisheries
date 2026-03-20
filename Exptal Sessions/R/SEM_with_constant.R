@@ -71,8 +71,8 @@ coef_SA_T1_sem <- function(data, R_start, R_end) {
     average_compliance_observed_ini_lag ~~ 0*belief_compliance_pm
   '
   
-  # Using 1000 bootstraps for robust standard errors
-  fit <- sem(sem_model, data = data, estimator = "ML", se = "bootstrap", bootstrap = 1000, parallel = "multicore", ncpus = 4)
+  # Using 1000 bootstraps for robust standard errors, with meanstructure = TRUE to get the constant
+  fit <- sem(sem_model, data = data, estimator = "ML", se = "bootstrap", bootstrap = 1000, parallel = "multicore", ncpus = 4, meanstructure = TRUE)
   return(fit)
 }
 
@@ -109,8 +109,8 @@ coef_SA_T2_sem <- function(data, R_start, R_end) {
     average_compliance_observed_ini_lag ~~ 0*belief_compliance_pm
   '
   
-  # Using 1000 bootstraps for robust standard errors
-  fit <- sem(sem_model, data = data, estimator = "ML", se = "bootstrap", bootstrap = 1000, parallel  = "multicore", ncpus = 4)
+  # Using 1000 bootstraps for robust standard errors, with meanstructure = TRUE to get the constant
+  fit <- sem(sem_model, data = data, estimator = "ML", se = "bootstrap", bootstrap = 1000, parallel  = "multicore", ncpus = 4, meanstructure = TRUE)
   return(fit)
 }
 
@@ -139,10 +139,10 @@ var_labels <- c(
   "average_compliance_observed_ini_lag" = "Observed Compliance (round 7)"
 )
 
-# Extract all coefficients into a single dataframe
+# Extract all coefficients (paths "~" and intercepts "~1") into a single dataframe
 all_coefs <- bind_rows(
-  parameterEstimates(fit_T1_R8) %>% filter(op == "~") %>% mutate(Stage = "Stage 1"),
-  parameterEstimates(fit_T2_R8) %>% filter(op == "~") %>% mutate(Stage = "Stage 2")
+  parameterEstimates(fit_T1_R8) %>% filter(op %in% c("~", "~1")) %>% mutate(Stage = "Stage 1"),
+  parameterEstimates(fit_T2_R8) %>% filter(op %in% c("~", "~1")) %>% mutate(Stage = "Stage 2")
 ) %>%
   mutate(
     # Classify the Dependent Variable type based on LHS to create 6 distinct models
@@ -153,15 +153,15 @@ all_coefs <- bind_rows(
     ),
     Column_Name = paste(Stage, "DV:", DV_Type),
     
-    # Assign human-readable Predictor names based on RHS
-    Predictor = ifelse(rhs %in% names(var_labels), var_labels[rhs], rhs),
+    # Assign human-readable Predictor names based on RHS (or name as "Constant" if it's an intercept)
+    Predictor = ifelse(op == "~1", "Constant", ifelse(rhs %in% names(var_labels), var_labels[rhs], rhs)),
     
     # Assign Significance Stars
     Significance = case_when(
       pvalue < 0.001 ~ "***",
-      pvalue < 0.01  ~ "**",
-      pvalue < 0.05  ~ "*",
-      pvalue < 0.1   ~ "†",  # You can replace "†" with "+" or "✝" if preferred
+      pvalue < 0.01 ~ "**",
+      pvalue < 0.05 ~ "*",
+      pvalue < 0.1  ~ "†",
       TRUE ~ ""
     ),
     
@@ -169,8 +169,8 @@ all_coefs <- bind_rows(
     Formatted = sprintf("%.3f%s (%.3f)", est, Significance, se)
   )
 
-# Set Predictor as a factor to retain a logical, non-alphabetical sorting order based on var_labels
-all_coefs$Predictor <- factor(all_coefs$Predictor, levels = unique(var_labels))
+# Set Predictor as a factor to retain a logical, non-alphabetical sorting order, putting Constant at the bottom
+all_coefs$Predictor <- factor(all_coefs$Predictor, levels = c(unique(var_labels), "Constant"))
 
 # Pivot to wide format to create the 6 requested columns
 wide_table <- all_coefs %>%
@@ -261,7 +261,7 @@ final_table <- bind_rows(wide_table, gof_table)
 # --- 6. Export to Word Table ---
 
 # Define path for the output Word file
-table_file_path_docx <- paste0(path_github, "Outputs/SEM_Round8_Summary_Table.docx")
+table_file_path_docx <- paste0(path_github, "Outputs/SEM_Round8_Summary_Table_with_constant.docx")
 
 # Export to Word using datasummary_df
 datasummary_df(
