@@ -1,19 +1,18 @@
 # ==============================================================================
-# Script: Tobit Regressions Round 8 Analysis
-# Description: Runs independent Tobit models for compliance decisions and beliefs 
-# in Round 8 for both Unknown (T1) and Known (T2) out-group scenarios and
-# exports the results into a combined summary table.
+# Script: Tobit Path Analysis Round 8
+# Description: Runs Tobit (Censored) Path models for compliance decisions [0,1]
+# specifically in Round 8 for both Unknown (T1) and Known (T2) out-group scenarios 
+# and exports the results into a combined summary table.
 # ==============================================================================
 
-# Ensure necessary packages are installed before running:
-# install.packages(c("AER", "dplyr", "tidyr", "modelsummary", "tinytable"))
-
 # Load necessary libraries
-library(AER)          # Used for Tobit regressions
 library(dplyr)
 library(tidyr)
 library(modelsummary)
 library(tinytable)
+library(rlang)
+library(pandoc)
+library(AER) # For tobit() estimation
 
 rm(list = ls())
 
@@ -39,8 +38,8 @@ declare_get_columns <- function(prefix, suffix, start, end = NULL, data) {
   return(cols)
 }
 
-# Data Preparation Function for Stage 1 (Unknown Out-group)
-prep_data_T1 <- function(data, R_start, R_end) {
+# Tobit Path Function for Stage 1 (Unknown Out-group)
+coef_SA_T1_tobit <- function(data, R_start, R_end) {
   cols <- declare_get_columns("T1juegoalgas", "T1_extraccion_libre", R_start, R_end, data)
   subset_ini <- data[, cols, drop = FALSE]
   
@@ -49,10 +48,10 @@ prep_data_T1 <- function(data, R_start, R_end) {
   data$belief_compliance_pm   <- 1 - data$beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini / 50
   data$belief_compliance_union<- 1 - data$beliefsT1inicial.1.player.T1_belief_caleta_en_libre_ini / 50
   
-  data$confianza_caleta <- as.numeric(scale(data$survey1.1.player.confianza_caleta))
-  data$conflicto_caleta <- as.numeric(scale(data$survey1.1.player.conflicto_caleta))
-  data$confianza_pm     <- as.numeric(scale(data$survey1.1.player.confianza_pm))
-  data$conflicto_pm     <- as.numeric(scale(data$survey1.1.player.conflicto_pm))
+  data$confianza_caleta<- as.numeric(scale(data$survey1.1.player.confianza_caleta))
+  data$conflicto_caleta<- as.numeric(scale(data$survey1.1.player.conflicto_caleta))
+  data$confianza_pm<- as.numeric(scale(data$survey1.1.player.confianza_pm))
+  data$conflicto_pm<- as.numeric(scale(data$survey1.1.player.conflicto_pm))
   
   if (R_start > 1) {
     cols_obs <- declare_get_columns("T1juegoalgas", "T1_extraccion_otros_libre", R_start - 1, R_start - 1, data)
@@ -62,11 +61,59 @@ prep_data_T1 <- function(data, R_start, R_end) {
   } else {
     data$average_compliance_observed_ini_lag <- NA
   }
-  return(data)
+  
+  # Select variables and perform listwise deletion (mimicking lavaan standard behavior)
+  vars <- c("belief_compliance_pm", "belief_compliance_union", "average_compliance_ini", 
+            "confianza_pm", "conflicto_pm", "confianza_caleta", "conflicto_caleta", 
+            "average_compliance_observed_ini_lag")
+  df_mod <- na.omit(data[, vars])
+  
+  # Estimate Equation-by-Equation Tobit bounded between 0 and 1
+  fit_pm    <- AER::tobit(belief_compliance_pm ~ confianza_pm + conflicto_pm, left = 0, right = 1, data = df_mod)
+  fit_union <- AER::tobit(belief_compliance_union ~ confianza_caleta + conflicto_caleta, left = 0, right = 1, data = df_mod)
+  fit_comp  <- AER::tobit(average_compliance_ini ~ belief_compliance_pm + belief_compliance_union + confianza_pm + conflicto_pm + confianza_caleta + conflicto_caleta + average_compliance_observed_ini_lag, left = 0, right = 1, data = df_mod)
+  
+  # Extract Coefficients, explicitly keeping Intercepts and Tobit Scale parameters
+  extract_coefs <- function(fit, lhs_name) {
+    cf <- summary(fit)$coefficients
+    data.frame(
+      lhs = lhs_name, op = "~", rhs = rownames(cf),
+      est = cf[, "Estimate"], se = cf[, "Std. Error"], pvalue = cf[, "Pr(>|z|)"],
+      stringsAsFactors = FALSE
+    )
+  }
+  
+  all_coefs <- bind_rows(
+    extract_coefs(fit_pm, "belief_compliance_pm"),
+    extract_coefs(fit_union, "belief_compliance_union"),
+    extract_coefs(fit_comp, "average_compliance_ini")
+  )
+  
+  # System Goodness of Fit measures
+  ll_sys  <- as.numeric(logLik(fit_pm)) + as.numeric(logLik(fit_union)) + as.numeric(logLik(fit_comp))
+  k_sys   <- length(coef(fit_pm)) + length(coef(fit_union)) + length(coef(fit_comp)) + 3 # +3 for Tobit scales
+  n_obs   <- nrow(df_mod)
+  aic_sys <- -2 * ll_sys + 2 * k_sys
+  bic_sys <- -2 * ll_sys + log(n_obs) * k_sys
+  
+  # Pseudo R-Squared (McFadden) - Computed inline to avoid NSE scope errors
+  fit_pm_null    <- AER::tobit(belief_compliance_pm ~ 1, left = 0, right = 1, data = df_mod)
+  fit_union_null <- AER::tobit(belief_compliance_union ~ 1, left = 0, right = 1, data = df_mod)
+  fit_comp_null  <- AER::tobit(average_compliance_ini ~ 1, left = 0, right = 1, data = df_mod)
+  
+  r2_pm    <- 1 - as.numeric(logLik(fit_pm)) / as.numeric(logLik(fit_pm_null))
+  r2_union <- 1 - as.numeric(logLik(fit_union)) / as.numeric(logLik(fit_union_null))
+  r2_comp  <- 1 - as.numeric(logLik(fit_comp)) / as.numeric(logLik(fit_comp_null))
+  
+  return(list(
+    coefs = all_coefs,
+    gof = c(ntotal = n_obs, logl = ll_sys, aic = aic_sys, bic = bic_sys),
+    r2 = c(belief_compliance_pm = r2_pm, belief_compliance_union = r2_union, average_compliance_ini = r2_comp)
+  ))
 }
 
-# Data Preparation Function for Stage 2 (Known Out-group)
-prep_data_T2 <- function(data, R_start, R_end) {
+# Tobit Path Function for Stage 2 (Known Out-group)
+coef_SA_T2_tobit <- function(data, R_start, R_end) {
   cols <- declare_get_columns("T2juegoalgas", "T2_extraccion_metat", R_start, R_end, data)
   subset_ini <- data[, cols, drop = FALSE]
   
@@ -75,10 +122,10 @@ prep_data_T2 <- function(data, R_start, R_end) {
   data$belief_compliance_pm   <- 1 - data$beliefsT2inicial.1.player.T2_belief_caleta_conocida_mean_ini / 50
   data$belief_compliance_union <- 1 - (data$beliefsT2inicial.1.player.T2_belief_caleta_ini / 50)
   
-  data$confianza_caleta <- as.numeric(scale(data$survey1.1.player.confianza_caleta))
-  data$conflicto_caleta <- as.numeric(scale(data$survey1.1.player.conflicto_caleta))
-  data$confianza_metat  <- as.numeric(scale(data$survey2.1.player.confianza_caleta_conocida_mean))
-  data$conflicto_metat  <- as.numeric(scale(data$survey2.1.player.conflicto_caleta_conocida_mean))
+  data$confianza_caleta<- as.numeric(scale(data$survey1.1.player.confianza_caleta))
+  data$conflicto_caleta<- as.numeric(scale(data$survey1.1.player.conflicto_caleta))
+  data$confianza_metat<- as.numeric(scale(data$survey2.1.player.confianza_caleta_conocida_mean))
+  data$conflicto_metat<- as.numeric(scale(data$survey2.1.player.conflicto_caleta_conocida_mean))
   
   if (R_start > 1) {
     cols_obs <- declare_get_columns("T2juegoalgas", "T2_extraccion_otros_metat", R_start - 1, R_start - 1, data)
@@ -88,78 +135,70 @@ prep_data_T2 <- function(data, R_start, R_end) {
   } else {
     data$average_compliance_observed_ini_lag <- NA
   }
-  return(data)
+  
+  vars <- c("belief_compliance_pm", "belief_compliance_union", "average_compliance_ini", 
+            "confianza_metat", "conflicto_metat", "confianza_caleta", "conflicto_caleta", 
+            "average_compliance_observed_ini_lag")
+  df_mod <- na.omit(data[, vars])
+  
+  # Estimate Equation-by-Equation Tobit bounded between 0 and 1
+  fit_pm    <- AER::tobit(belief_compliance_pm ~ confianza_metat + conflicto_metat, left = 0, right = 1, data = df_mod)
+  fit_union <- AER::tobit(belief_compliance_union ~ confianza_caleta + conflicto_caleta, left = 0, right = 1, data = df_mod)
+  fit_comp  <- AER::tobit(average_compliance_ini ~ belief_compliance_pm + belief_compliance_union + confianza_metat + conflicto_metat + confianza_caleta + conflicto_caleta + average_compliance_observed_ini_lag, left = 0, right = 1, data = df_mod)
+  
+  # Extract Coefficients, explicitly keeping Intercepts and Tobit Scale parameters
+  extract_coefs <- function(fit, lhs_name) {
+    cf <- summary(fit)$coefficients
+    data.frame(
+      lhs = lhs_name, op = "~", rhs = rownames(cf),
+      est = cf[, "Estimate"], se = cf[, "Std. Error"], pvalue = cf[, "Pr(>|z|)"],
+      stringsAsFactors = FALSE
+    )
+  }
+  
+  all_coefs <- bind_rows(
+    extract_coefs(fit_pm, "belief_compliance_pm"),
+    extract_coefs(fit_union, "belief_compliance_union"),
+    extract_coefs(fit_comp, "average_compliance_ini")
+  )
+  
+  # System Goodness of Fit measures
+  ll_sys  <- as.numeric(logLik(fit_pm)) + as.numeric(logLik(fit_union)) + as.numeric(logLik(fit_comp))
+  k_sys   <- length(coef(fit_pm)) + length(coef(fit_union)) + length(coef(fit_comp)) + 3 
+  n_obs   <- nrow(df_mod)
+  aic_sys <- -2 * ll_sys + 2 * k_sys
+  bic_sys <- -2 * ll_sys + log(n_obs) * k_sys
+  
+  # Pseudo R-Squared (McFadden) - Computed inline to avoid NSE scope errors
+  fit_pm_null    <- AER::tobit(belief_compliance_pm ~ 1, left = 0, right = 1, data = df_mod)
+  fit_union_null <- AER::tobit(belief_compliance_union ~ 1, left = 0, right = 1, data = df_mod)
+  fit_comp_null  <- AER::tobit(average_compliance_ini ~ 1, left = 0, right = 1, data = df_mod)
+  
+  r2_pm    <- 1 - as.numeric(logLik(fit_pm)) / as.numeric(logLik(fit_pm_null))
+  r2_union <- 1 - as.numeric(logLik(fit_union)) / as.numeric(logLik(fit_union_null))
+  r2_comp  <- 1 - as.numeric(logLik(fit_comp)) / as.numeric(logLik(fit_comp_null))
+  
+  return(list(
+    coefs = all_coefs,
+    gof = c(ntotal = n_obs, logl = ll_sys, aic = aic_sys, bic = bic_sys),
+    r2 = c(belief_compliance_pm = r2_pm, belief_compliance_union = r2_union, average_compliance_ini = r2_comp)
+  ))
 }
 
+# --- 3. Run Models for Round 8 Only ---
 
-# --- 3. Prepare Data and Run Independent Tobit Models ---
+cat("\nRunning Tobit System for Stage 1 (Unknown Out-group) Round 8...\n")
+set.seed(478)
+res_T1_R8 <- coef_SA_T1_tobit(df, 8, 8)
 
-cat("\nPreparing data for Stage 1 & 2 Round 8...\n")
-df_T1 <- prep_data_T1(df, 8, 8)
-df_T2 <- prep_data_T2(df, 8, 8)
+cat("\nRunning Tobit System for Stage 2 (Known Out-group) Round 8...\n")
+set.seed(4523)
+res_T2_R8 <- coef_SA_T2_tobit(df, 8, 8)
 
-cat("Running independent Tobit models...\n")
+# --- 4. Extract and Label Results ---
 
-# Stage 1 (Unknown Out-group) Tobits
-m1_beliefs_in  <- tobit(belief_compliance_union ~ confianza_caleta + conflicto_caleta, left = 0, right = 1, data = df_T1)
-m1_beliefs_out <- tobit(belief_compliance_pm ~ confianza_pm + conflicto_pm, left = 0, right = 1, data = df_T1)
-m1_compliance  <- tobit(average_compliance_ini ~ belief_compliance_pm + belief_compliance_union + 
-                          conflicto_pm + conflicto_caleta+ confianza_caleta + confianza_pm + average_compliance_observed_ini_lag, 
-                        left = 0, right = 1, data = df_T1)
-
-
-
-# Stage 2 (Known Out-group) Tobits
-m2_beliefs_in  <- tobit(belief_compliance_union ~ confianza_caleta + conflicto_caleta, left = 0, right = 1, data = df_T2)
-m2_beliefs_out <- tobit(belief_compliance_pm ~ confianza_metat + conflicto_metat, left = 0, right = 1, data = df_T2)
-m2_compliance  <- tobit(average_compliance_ini ~ belief_compliance_pm + belief_compliance_union + 
-                          conflicto_metat + conflicto_caleta + confianza_caleta + confianza_metat + average_compliance_observed_ini_lag, 
-                        left = 0, right = 1, data = df_T2)
-
-
-# --- 4. Format and Export Results ---
-
-# Create a named list of models to populate the column headers
-models <- list(
-  "Stage 1 DV: Beliefs In-group"  = m1_beliefs_in,
-  "Stage 1 DV: Beliefs Out-group" = m1_beliefs_out,
-  "Stage 1 DV: Compliance"        = m1_compliance,
-  "Stage 2 DV: Beliefs In-group"  = m2_beliefs_in,
-  "Stage 2 DV: Beliefs Out-group" = m2_beliefs_out,
-  "Stage 2 DV: Compliance"        = m2_compliance
-)
-
-# Helper function to calculate McFadden's Pseudo R-squared for Tobit models
-calc_pseudo_r2 <- function(model) {
-  # Fit a null model (intercept only) based on the original model
-  null_model <- update(model, . ~ 1)
-  
-  # Extract Log-Likelihoods
-  ll_full <- as.numeric(logLik(model))
-  ll_null <- as.numeric(logLik(null_model))
-  
-  # Calculate McFadden Pseudo R-squared
-  r2 <- 1 - (ll_full / ll_null)
-  return(sprintf("%.3f", r2))
-}
-
-# Calculate Pseudo R-squared for all models
-pseudo_r2_vals <- lapply(models, calc_pseudo_r2)
-
-# Create a custom row to add to the bottom of the table
-custom_gof <- data.frame(
-  "term" = "Pseudo R-squared (McFadden)",
-  pseudo_r2_vals,
-  check.names = FALSE
-)
-# Ensure column names exactly match those expected by modelsummary
-colnames(custom_gof) <- c("term", names(models))
-
-
-# Dictionary for mapping internal variable names to output labels.
-# modelsummary will automatically merge "confianza_metat" and "confianza_pm" 
-# onto the same "Trust Out-group" row based on this mapping!
-coef_mapping <- c(
+# Dictionary for formatting variable names (order matters for row sorting)
+var_labels <- c(
   "confianza_pm"                        = "Trust Out-group",
   "confianza_metat"                     = "Trust Out-group",
   "confianza_caleta"                    = "Trust In-group",
@@ -168,30 +207,138 @@ coef_mapping <- c(
   "conflicto_caleta"                    = "Conflict In-group",
   "belief_compliance_pm"                = "Prior Beliefs Out-group",
   "belief_compliance_union"             = "Prior Beliefs In-group",
-  "average_compliance_observed_ini_lag" = "Observed Compliance (round 7)"
+  "average_compliance_observed_ini_lag" = "Observed Compliance (round 7)",
+  "(Intercept)"                         = "Constant",
+  "Log(scale)"                          = "Log(scale)"
 )
 
-# Customize the Goodness of Fit statistics at the bottom of the table
-gof_mapping <- list(
-  list("raw" = "nobs", "clean" = "Num.Obs.", "fmt" = 0),
-  list("raw" = "logLik", "clean" = "Log Likelihood", "fmt" = 3),
-  list("raw" = "AIC", "clean" = "AIC", "fmt" = 3),
-  list("raw" = "BIC", "clean" = "BIC", "fmt" = 3)
+# Bind the custom coefficient outputs instead of using lavaan's parameterEstimates
+all_coefs <- bind_rows(
+  res_T1_R8$coefs %>% mutate(Stage = "Stage 1"),
+  res_T2_R8$coefs %>% mutate(Stage = "Stage 2")
+) %>%
+  mutate(
+    # Classify the Dependent Variable type based on LHS
+    DV_Type = case_when(
+      lhs == "average_compliance_ini" ~ "Compliance",
+      lhs == "belief_compliance_pm" ~ "Beliefs Out-group",
+      lhs == "belief_compliance_union" ~ "Beliefs In-group"
+    ),
+    Column_Name = paste(Stage, "DV:", DV_Type),
+    
+    # Assign human-readable Predictor names based on RHS
+    Predictor = ifelse(rhs %in% names(var_labels), var_labels[rhs], rhs),
+    
+    # Assign Significance Stars
+    Significance = case_when(
+      pvalue < 0.001 ~ "***",
+      pvalue < 0.01 ~ "**",
+      pvalue < 0.05 ~ "*",
+      pvalue < 0.1  ~ "†",
+      TRUE ~ ""
+    ),
+    
+    # Format Cell as: Estimate*** (SE)
+    Formatted = sprintf("%.3f%s (%.3f)", est, Significance, se)
+  )
+
+# Set Predictor as a factor to retain a logical, non-alphabetical sorting order
+all_coefs$Predictor <- factor(all_coefs$Predictor, levels = unique(var_labels))
+
+# Pivot to wide format to create the 6 requested columns
+wide_table <- all_coefs %>%
+  select(Predictor, Column_Name, Formatted) %>%
+  pivot_wider(
+    names_from = Column_Name,
+    values_from = Formatted,
+    values_fill = ""
+  ) %>%
+  arrange(Predictor) %>%
+  select(
+    Predictor,
+    `Stage 1 DV: Beliefs In-group`,
+    `Stage 1 DV: Beliefs Out-group`,
+    `Stage 1 DV: Compliance`,
+    `Stage 2 DV: Beliefs In-group`,
+    `Stage 2 DV: Beliefs Out-group`,
+    `Stage 2 DV: Compliance`
+  ) %>%
+  mutate(Predictor = as.character(Predictor))
+
+# --- 5. Extract Goodness of Fit Statistics ---
+
+gof_T1 <- res_T1_R8$gof
+gof_T2 <- res_T2_R8$gof
+r2_T1  <- res_T1_R8$r2
+r2_T2  <- res_T2_R8$r2
+
+gof_table <- data.frame(
+  Predictor = c(
+    "Num.Obs.",
+    "Log Likelihood",
+    "AIC",
+    "BIC",
+    "Pseudo R-squared" # Renamed slightly to clarify it's McFadden's R2
+  ),
+  `Stage 1 DV: Beliefs In-group` = c(
+    as.character(round(gof_T1["ntotal"])),
+    sprintf("%.3f", gof_T1["logl"]),
+    sprintf("%.3f", gof_T1["aic"]),
+    sprintf("%.3f", gof_T1["bic"]),
+    sprintf("%.3f", r2_T1["belief_compliance_union"])
+  ),
+  `Stage 1 DV: Beliefs Out-group` = c(
+    as.character(round(gof_T1["ntotal"])),
+    sprintf("%.3f", gof_T1["logl"]),
+    sprintf("%.3f", gof_T1["aic"]),
+    sprintf("%.3f", gof_T1["bic"]),
+    sprintf("%.3f", r2_T1["belief_compliance_pm"])
+  ),
+  `Stage 1 DV: Compliance` = c(
+    as.character(round(gof_T1["ntotal"])),
+    sprintf("%.3f", gof_T1["logl"]),
+    sprintf("%.3f", gof_T1["aic"]),
+    sprintf("%.3f", gof_T1["bic"]),
+    sprintf("%.3f", r2_T1["average_compliance_ini"])
+  ),
+  `Stage 2 DV: Beliefs In-group` = c(
+    as.character(round(gof_T2["ntotal"])),
+    sprintf("%.3f", gof_T2["logl"]),
+    sprintf("%.3f", gof_T2["aic"]),
+    sprintf("%.3f", gof_T2["bic"]),
+    sprintf("%.3f", r2_T2["belief_compliance_union"])
+  ),
+  `Stage 2 DV: Beliefs Out-group` = c(
+    as.character(round(gof_T2["ntotal"])),
+    sprintf("%.3f", gof_T2["logl"]),
+    sprintf("%.3f", gof_T2["aic"]),
+    sprintf("%.3f", gof_T2["bic"]),
+    sprintf("%.3f", r2_T2["belief_compliance_pm"])
+  ),
+  `Stage 2 DV: Compliance` = c(
+    as.character(round(gof_T2["ntotal"])),
+    sprintf("%.3f", gof_T2["logl"]),
+    sprintf("%.3f", gof_T2["aic"]),
+    sprintf("%.3f", gof_T2["bic"]),
+    sprintf("%.3f", r2_T2["average_compliance_ini"])
+  ),
+  check.names = FALSE
 )
+
+# Combine coefficients and Goodness of Fit statistics
+final_table <- bind_rows(wide_table, gof_table)
+
+# --- 6. Export to Word Table ---
 
 # Define path for the output Word file
 table_file_path_docx <- paste0(path_github, "Outputs/Tobit.docx")
 
-# Generate the Word Document
-cat("Exporting table to Word...\n")
-modelsummary(
-  models,
-  coef_map = coef_mapping,            # Renames and sorts coefficients, drops unmapped (like intercept & scale)
-  gof_map = gof_mapping,              # Formats standard goodness of fit rows
-  add_rows = custom_gof,              # Appends our custom Pseudo R-squared row
-  stars = c('*' = .05, '**' = .01, '***' = .001),
-  title = "Independent Tobit Models for Compliance and Beliefs in Round 8",
-  notes = "Standard errors in parentheses. Data left-censored at 0 and right-censored at 1.",
+# Export to Word using datasummary_df
+datasummary_df(
+  final_table,
+  title = "Tobit Path Models for Compliance and Beliefs in Round 8",
+  notes = c("† p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001",
+            "Models are Tobit regressions constrained between 0 and 1. Standard errors are classical, and Pseudo R-squared is McFadden's."),
   output = table_file_path_docx
 )
 

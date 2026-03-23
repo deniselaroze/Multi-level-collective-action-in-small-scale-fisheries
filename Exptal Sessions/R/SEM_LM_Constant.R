@@ -144,6 +144,8 @@ all_coefs <- bind_rows(
   parameterEstimates(fit_T1_R8) %>% filter(op %in% c("~", "~1")) %>% mutate(Stage = "Stage 1"),
   parameterEstimates(fit_T2_R8) %>% filter(op %in% c("~", "~1")) %>% mutate(Stage = "Stage 2")
 ) %>%
+  # Filter to ONLY include the 3 main endogenous variables to prevent duplicate exogenous intercepts from breaking pivot_wider
+  filter(lhs %in% c("average_compliance_ini", "belief_compliance_pm", "belief_compliance_union")) %>%
   mutate(
     # Classify the Dependent Variable type based on LHS to create 6 distinct models
     DV_Type = case_when(

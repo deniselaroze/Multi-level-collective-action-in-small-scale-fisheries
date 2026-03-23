@@ -10,13 +10,13 @@ rm(list=ls())
 # --- User Configuration ---
 # NOTE: Please update these paths to match the locations on your computer.
 # Path to the folder where you want to save the output map.
-#path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+path_github <-"C:/Users/DCCS2/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
 # Path to the folder containing the geographic shapefiles.
-#path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Geo"
+path_datos<-"C:/Users/DCCS2/Dropbox/CICS/Experiments/Islitas/Data/Geo"
 
-path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
+#path_github <-"C:/Users/Denise Laroze/Documents/GitHub/Multi-level-collective-action-in-small-scale-fisheries/Exptal Sessions/R/"
 # Path to the folder containing the geographic shapefiles.
-path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Geo"
+#path_datos<-"C:/Users/Denise Laroze/Dropbox/CICS/Experiments/Islitas/Data/Geo"
 # --- End of User Configuration ---
 
 
@@ -305,7 +305,7 @@ combined_map <- main_map + context_map +
 
 # Add a single, overarching title for the combined plot
 combined_map_with_title <- combined_map + 
-  plot_annotation(title = 'Locations included in the sample',
+  plot_annotation(title = '',
                   theme = theme(plot.title = element_text(size = 18, face = "bold", hjust = 0.5)))
 
 

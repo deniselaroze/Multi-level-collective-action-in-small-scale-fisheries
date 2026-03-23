@@ -15,6 +15,7 @@ library(dplyr)
 library(tidyr)
 library(modelsummary)
 library(tinytable)
+library(rlang)
 
 rm(list = ls())
 
@@ -171,10 +172,10 @@ B_iters <- 100
 cat(sprintf("Running cluster-bootstrapped OLS regressions with B = %d iterations (this may take a few minutes)...\n", B_iters))
 
 # Stage 1 (Unknown Out-group) OLS Regressions with Bootstrap
-res1_beliefs_in  <- bootstrap_ols(belief_compliance_union ~ confianza_caleta, df_T1, cluster_col, B = B_iters)
-res1_beliefs_out <- bootstrap_ols(belief_compliance_pm ~ confianza_pm, df_T1, cluster_col, B = B_iters)
+res1_beliefs_in  <- bootstrap_ols(belief_compliance_union ~ confianza_caleta + conflicto_caleta, df_T1, cluster_col, B = B_iters)
+res1_beliefs_out <- bootstrap_ols(belief_compliance_pm ~ confianza_pm + conflicto_pm , df_T1, cluster_col, B = B_iters)
 res1_compliance  <- bootstrap_ols(average_compliance_ini ~ belief_compliance_pm + belief_compliance_union + 
-                                    conflicto_pm + conflicto_caleta + average_compliance_observed_ini_lag, 
+                                    conflicto_pm + conflicto_caleta + confianza_pm + confianza_caleta + average_compliance_observed_ini_lag, 
                                   df_T1, cluster_col, B = B_iters)
 
 # Stage 2 (Known Out-group) OLS Regressions with Bootstrap
@@ -231,7 +232,7 @@ gof_mapping <- list(
 )
 
 # Define path for the output Word file
-table_file_path_docx <- paste0(path_github, "Outputs/OLS_Round8_Summary_Table_RG.docx")
+table_file_path_docx <- paste0(path_github, "Outputs/OLS.docx")
 
 # Generate the Word Document
 cat("Exporting table to Word...\n")

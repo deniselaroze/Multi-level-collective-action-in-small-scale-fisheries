@@ -159,9 +159,9 @@ all_coefs <- bind_rows(
     # Assign Significance Stars
     Significance = case_when(
       pvalue < 0.001 ~ "***",
-      pvalue < 0.01  ~ "**",
-      pvalue < 0.05  ~ "*",
-      pvalue < 0.1   ~ "†",  # You can replace "†" with "+" or "✝" if preferred
+      pvalue < 0.01 ~ "**",
+      pvalue < 0.05 ~ "*",
+      pvalue < 0.1  ~ "†",
       TRUE ~ ""
     ),
     
@@ -261,13 +261,13 @@ final_table <- bind_rows(wide_table, gof_table)
 # --- 6. Export to Word Table ---
 
 # Define path for the output Word file
-table_file_path_docx <- paste0(path_github, "Outputs/SEM_Round8_Summary_Table.docx")
+table_file_path_docx <- paste0(path_github, "Outputs/SEM_Round8_Summary_Table_RG.docx")
 
 # Export to Word using datasummary_df
 datasummary_df(
   final_table,
   title = "Structural Equation Models for Compliance and Beliefs in Round 8",
-  notes = c("† p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001",
+  notes = c("* p < 0.05, ** p < 0.01, *** p < 0.001",
             "Standard errors come from a bootstrapped model with 1000 iterations."),
   output = table_file_path_docx
 )
