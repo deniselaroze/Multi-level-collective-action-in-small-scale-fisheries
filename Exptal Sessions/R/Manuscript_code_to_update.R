@@ -47,12 +47,12 @@ load(paste0(path_datos, "/Datos_islitas_long.Rdata"))
 df <- df %>%
   mutate(
     # Scales (0–1)
-    Tst_sa_T1_scaled  = as.numeric(scale((survey1.1.player.confianza_pm))),
-    Cft_sa_T1_scaled  = as.numeric(scale((survey1.1.player.conflicto_pm))),
-    Tst_caleta_scaled = as.numeric(scale((survey1.1.player.confianza_caleta))),
-    Cft_caleta_scaled = as.numeric(scale((survey1.1.player.conflicto_caleta))),
-    Tst_sa_t2_scaled  = as.numeric(scale((survey2.1.player.confianza_caleta_conocida_mean))),
-    Cft_sa_t2_scaled  = as.numeric(scale((survey2.1.player.conflicto_caleta_conocida_mean))),
+    Tst_sa_T1_scaled  = (survey1.1.player.confianza_pm - 1) / 3,
+    Cft_sa_T1_scaled  = (survey1.1.player.conflicto_pm- 1) / 3,
+    Tst_caleta_scaled = (survey1.1.player.confianza_caleta- 1) / 3,
+    Cft_caleta_scaled = (survey1.1.player.conflicto_caleta- 1) / 3,
+    Tst_sa_t2_scaled  = (survey2.1.player.confianza_caleta_conocida_mean- 1) / 3,
+    Cft_sa_t2_scaled  = (survey2.1.player.conflicto_caleta_conocida_mean- 1) / 3,
     
     # Beliefs → compliance (0–1)
     belief_compliance_SA_T1    = 1 - (beliefsT1inicial.1.player.T1_belief_pm_en_libre_ini / 50),
@@ -163,18 +163,18 @@ summary_combined <- bind_rows(summary_num, cat_panel) %>%
 ######################### Exporting correctly
 var_labels <- c(
   # Trust / Conflict (scales 0–1)
-  "Tst_sa_T1_scaled"   = "Trust Unknown out-group (standarized)",
-  "Cft_sa_T1_scaled"   = "Conflict Unknown out-group (standarized)",
-  "Tst_caleta_scaled"  = "Trust in-group (standarized)",
-  "Cft_caleta_scaled"  = "Conflict in-group (standarized)",
-  "Tst_sa_t2_scaled"   = "Trust Known out-group (standarized)",
-  "Cft_sa_t2_scaled"   = "Conflict Known out-group (standarized)",
+  "Tst_sa_T1_scaled"   = "Trust Unknown out-group",
+  "Cft_sa_T1_scaled"   = "Conflict Unknown out-group",
+  "Tst_caleta_scaled"  = "Trust in-group",
+  "Cft_caleta_scaled"  = "Conflict in-group",
+  "Tst_sa_t2_scaled"   = "Trust Known out-group",
+  "Cft_sa_t2_scaled"   = "Conflict Known out-group",
   
   # Belief-based compliance (0–1)
-  "belief_compliance_SA_T1"    = "Prior Beliefs Shared Area Unknown out-group (rounds 1–8)",
-  "belief_compliance_union_T1" = "Prior Beliefs Shared Area in-group (rounds 1–8)",
-  "belief_compliance_SA_T2"    = "Prior Beliefs Shared Area Known out-group (rounds 9–16)",
-  "belief_compliance_union_T2" = "Prior Beliefs Shared Area in-group (rounds 9–16)",
+  "belief_compliance_SA_T1"    = "Prior Beliefs Shared Area Unknown out-group (stage 1)",
+  "belief_compliance_union_T1" = "Prior Beliefs Shared Area in-group (stage 1)",
+  "belief_compliance_SA_T2"    = "Prior Beliefs Shared Area Known out-group (stage 2)",
+  "belief_compliance_union_T2" = "Prior Beliefs Shared Area in-group (stage 2)",
   
   # Continuous demographic
   "survey3.1.player.horas_trabajo" = "Hours in loco fishing",
