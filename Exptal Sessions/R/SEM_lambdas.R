@@ -176,8 +176,8 @@ pred_order <- c(
   "Prior Beliefs Out-group", "Prior Beliefs In-group", 
   "Observed Compliance (round 7)", 
   "Sum Conditional Cooperation (Gamma)",
-  "Lambda 1 (Weight Beliefs Out-group)",
-  "Lambda 2 (Weight Beliefs In-group)",
+  "Lambda 1 (Weight Beliefs In-group)",
+  "Lambda 2 (Weight Beliefs Out-group)",
   "Lambda 3 (Weight Observed Comp.)",
   "Constant"
 )
