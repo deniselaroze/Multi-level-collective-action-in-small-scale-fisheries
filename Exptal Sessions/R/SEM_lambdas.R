@@ -235,3 +235,73 @@ datasummary_df(
 )
 
 message("\nSuccess! Summary table saved to: ", table_file_path_docx)
+
+
+
+
+
+# --- 7. Generate Coefficient Plot for Gamma and Lambdas (Corrected) ---
+
+# Load ggplot2 if not already loaded
+library(ggplot2)
+
+# Filter the all_coefs dataframe for just the recovered parameters (op == ":=")
+plot_data <- all_coefs %>%
+  filter(lhs %in% c("gamma_cc", "lambda_pm", "lambda_union", "lambda_obs")) %>%
+  mutate(
+    # Re-assign Predictor cleanly based on raw lhs to fix the NA factor issue
+    # Using Unicode characters for Gamma (\u03b3) and Lambda (\u03bb)
+    Predictor_Clean = case_when(
+      lhs == "gamma_cc"     ~ "Sum Conditional Cooperation (\u03b3)",
+      lhs == "lambda_union" ~ "\u03bb\u2081 (Weight Beliefs In-group)",
+      lhs == "lambda_pm"    ~ "\u03bb\u2082 (Weight Beliefs Out-group)",
+      lhs == "lambda_obs"   ~ "\u03bb\u2083 (Weight Observed Comp.)"
+    ),
+    # Calculate 95% Confidence Intervals using the bootstrapped standard errors
+    ci_lower = est - 1.96 * se,
+    ci_upper = est + 1.96 * se
+  )
+
+# Set factor levels for logical ordering in the plot (from top to bottom)
+plot_data$Predictor_Clean <- factor(plot_data$Predictor_Clean, levels = rev(c(
+  "Sum Conditional Cooperation (\u03b3)",
+  "\u03bb\u2081 (Weight Beliefs In-group)",
+  "\u03bb\u2082 (Weight Beliefs Out-group)",
+  "\u03bb\u2083 (Weight Observed Comp.)"
+)))
+
+# Generate the side-by-side coefficient plot
+p_coef <- ggplot(plot_data, aes(x = est, y = Predictor_Clean, color = Stage, shape = Stage)) +
+  # Add a vertical reference line at 0
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray50", linewidth = 0.8) +
+  
+  # Plot confidence intervals and point estimates (dodged side-by-side)
+  geom_errorbarh(aes(xmin = ci_lower, xmax = ci_upper), 
+                 height = 0.2, position = position_dodge(width = 0.5), linewidth = 1) +
+  geom_point(position = position_dodge(width = 0.5), size = 4) +
+  
+  # Apply styling and colors
+  scale_color_manual(values = c("Stage 1" = "#3F4A8A", "Stage 2" = "#21908CFF")) +
+  theme_minimal(base_size = 14) +
+  labs(
+    title = "Recovered SEM Parameters (Round 8)",
+    subtitle = "Comparing Total Conditional Cooperation (\u03b3) and Belief Weights (\u03bb)",
+    x = "Parameter Estimate (with 95% CI)",
+    y = ""
+  ) +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 12),
+    axis.text.y = element_text(face = "bold", size = 12),
+    panel.grid.minor = element_blank()
+  )
+
+# Print the plot to the R console
+print(p_coef)
+
+# Export the plot as a high-resolution image
+plot_file_path <- paste0(path_github, "Outputs/SEM_Round8_CoefPlot.jpg")
+ggsave(plot_file_path, plot = p_coef, width = 10, height = 6, dpi = 300)
+
+message("Success! Corrected coefficient plot saved to: ", plot_file_path)
