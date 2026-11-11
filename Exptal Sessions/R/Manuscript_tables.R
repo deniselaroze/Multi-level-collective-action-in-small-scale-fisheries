@@ -252,7 +252,7 @@ get_trend <- function(dv_col, stage) {
   mod <- lm(f, data = mod_data)
   
   # Calculate clustered standard errors by participant.code
-  clustered_vcov <- vcovCL(mod, cluster = mod_data$participant.code)
+  clustered_vcov <- vcovCL(mod, cluster = mod_data$gid.treat)
   coef_test <- coeftest(mod, vcov. = clustered_vcov)
   
   # Extract the clustered estimates, SEs, and p-values
@@ -498,7 +498,7 @@ datasummary_df(
     coef_map = coef_mapping,
     title = "OLS Regressions: Predictors of Change in Compliance (Shared Area)",
     gof_omit = "IC|Log.Lik|AIC|BIC|RMSE",
-    output = paste0(path_github, "Outputs/Compliance_Diffs_Regressions.docx")
+    output = paste0(path_github, "Outputs/Compliance_Diffs_Regressions_clusterGroup.docx")
   )
   
   # C. Export to Markdown File (.md)
