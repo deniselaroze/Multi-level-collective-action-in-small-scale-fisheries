@@ -1,11 +1,13 @@
 # ==============================================================================
 # Replication package -- 03_sem.R
-#   Table 3   Recovered conditional cooperation (gamma) and lambda parameters
-#   Table 4   Associations of trust and conflict with prior beliefs (delta)
-#   Table S5  Full SEM coefficient estimates for compliance (beta)
-#   Table S7  Cross-stage differences in gamma, lambda and beta
-#   Figure S2 Sensitivity of lambda to round selection and aggregation window
-#   Full parameter output and a gamma/lambda coefficient plot
+#   Table 3        Recovered conditional cooperation (gamma) and lambda parameters
+#   Table 4        Associations of trust and conflict with prior beliefs (delta)
+#   Table SM.D.5   Full SEM coefficient estimates for compliance (beta)
+#   Table SM.E.2   Cross-stage differences in gamma, lambda and beta
+#   Figure SM.E.1  Sensitivity of lambda to round selection and aggregation window
+#   Table SM.E.3   Estimates underlying Figure SM.E.1
+#   Not in the manuscript (files start with Extra_): full parameter output and a
+#   gamma/lambda coefficient plot
 #
 # Inference: wild cluster bootstrap with one weight per matching group (00_setup.R).
 # In each replication the outcomes of the three SEM equations are rebuilt as fitted
@@ -30,13 +32,13 @@ n_1  <- lavInspect(sem_main$fit1, "nobs");    n_2  <- lavInspect(sem_main$fit2, 
 sem_note  <- boot_note(sem_main$G, model = "sem")
 same_note <- "In each bootstrap replication the same cluster weights are used for Stage 1 and Stage 2."
 
-# Full parameter output (all equations, both stages)
+# Full parameter output (all equations, both stages; not in the manuscript)
 full_out <- bind_rows(pe1 %>% mutate(Stage = "Stage 1"), pe2 %>% mutate(Stage = "Stage 2")) %>%
   transmute(Stage, Parameter = ifelse(op == ":=", lhs, paste(lhs, op, rhs)),
             Estimate = sprintf("%.3f", est), `Bootstrap SE` = sprintf("%.3f", se),
             z = sprintf("%.2f", z), p = sprintf("%.3f", pvalue),
             `95% CI` = sprintf("[%.3f, %.3f]", ci.lower, ci.upper))
-export_table(full_out, "SEM_Round8_all_parameters",
+export_table(full_out, "Extra_SEM_Round8_all_parameters",
              "SEM parameter estimates, final round of each stage (all equations)",
              notes = c(paste("Estimates are based on the final round of each stage (Rounds 8 and 16).",
                              "Stage 1 corresponds to the unknown-identity condition and Stage 2 to the",
@@ -112,7 +114,7 @@ export_table(table4, "Table_4_SEM_belief_equations",
                        sem_note, star_note))
 
 # ------------------------------------------------------------------------------
-# Table S5: full compliance equation (beta)
+# Table SM.D.5: full compliance equation (beta)
 # ------------------------------------------------------------------------------
 cdv <- "average_compliance_ini"
 s6_cells <- function(pe, trust_out, conflict_out) c(
@@ -136,8 +138,8 @@ tableS5 <- data.frame(
                                   as.character(n_2), sprintf("%.3f", r2_2[cdv])),
   check.names = FALSE
 )
-export_table(tableS5, "Table_S5_SEM_full_compliance_equation",
-             "Table S5 | Full SEM coefficient estimates for individual compliance in the CPR-Shared Area",
+export_table(tableS5, "Table_SM.D.5_SEM_full_compliance_equation",
+             "Table SM.D.5 | Full SEM coefficient estimates for individual compliance in the CPR-Shared Area",
              notes = c(paste("The dependent variable is compliance in the final round of each stage (global",
                              "Rounds 8 and 16). Observed compliance is the other group members' average",
                              "compliance in the immediately preceding round (global Rounds 7 and 15). Trust and",
@@ -145,7 +147,7 @@ export_table(tableS5, "Table_S5_SEM_full_compliance_equation",
                        sem_note, star_note))
 
 # ------------------------------------------------------------------------------
-# Table S7: Stage 2 - Stage 1 differences, from the same bootstrap weights
+# Table SM.E.2: Stage 2 - Stage 1 differences, from the same bootstrap weights
 # ------------------------------------------------------------------------------
 diff_keys <- c(
   "Conditional cooperation (γ)"  = "gamma_cc",
@@ -167,18 +169,18 @@ tableS7 <- data.frame(
   `p-value` = ifelse(dsum$pvalue < 0.001, "< 0.001", sprintf("%.3f", dsum$pvalue)),
   check.names = FALSE
 )
-export_table(tableS7, "Table_S7_SEM_stage_differences",
-             "Table S7 | Differences in SEM parameters between identity-information conditions",
+export_table(tableS7, "Table_SM.E.2_SEM_stage_differences",
+             "Table SM.E.2 | Differences in SEM parameters between identity-information conditions",
              notes = c(paste("Differences between Stage 2 (known identity) and Stage 1 (unknown identity) in the",
                              "recovered parameters of Table 3 and the corresponding compliance-equation",
-                             "coefficients of Supplementary Table S5, based on the final round of each stage",
+                             "coefficients of Table SM.D.5, based on the final round of each stage",
                              "(Rounds 8 and 16)."),
                        sem_note, paste(same_note, "The difference is computed within each replication, so its",
                                        "bootstrap distribution accounts for the dependence between stages."),
                        "95% confidence intervals are bootstrap percentile intervals.", star_note))
 
 # ------------------------------------------------------------------------------
-# Figure (not in manuscript): gamma and lambdas with percentile CIs
+# Figure (not in the manuscript): gamma and lambdas with percentile CIs
 # ------------------------------------------------------------------------------
 
 par_labels <- c(gamma_cc = gamma_label, lam_labels)
@@ -195,19 +197,21 @@ p_main <- ggplot(plot_main, aes(est, Parameter, colour = Stage, shape = Stage)) 
   guides(colour = guide_legend(nrow = 2), shape = guide_legend(nrow = 2)) +
   labs(x = "Estimate (95% bootstrap percentile CI)", y = NULL) +
   fig_theme()
-ggsave(file.path(path_out, "Figure_SEM_gamma_lambda.jpg"), p_main, width = 14, height = 8, dpi = 300)
+ggsave(file.path(path_out, "Extra_Figure_SEM_gamma_lambda.jpg"), p_main, width = 14, height = 8, dpi = 300)
 
 # ------------------------------------------------------------------------------
-# Figure S2: sensitivity to round selection and aggregation window
+# Figure SM.E.1 (estimates in Table SM.E.3): sensitivity to round selection and
+# aggregation window
 #   Single rounds 2-8 (round 1 has no lagged feedback) and windows [a, 8].
 #   For a window [a, 8], compliance is averaged over rounds a..8 and observed
 #   compliance is taken from round a-1 (as in the original estimation function).
 # ------------------------------------------------------------------------------
 sens <- run_sensitivity(function(a, b, B, seed) run_sem_spec(a, b, B = B, seed = seed),
-                        main_res = sem_main, label = "Figure S2")
+                        main_res = sem_main, label = "Figure SM.E.1")
 
 export_table(sens_table(sens),
-             "Figure_S2_estimates", "Supplementary Figure S2 | Estimates underlying the sensitivity analysis",
+             "Table_SM.E.3_Lambda_sensitivity_estimates",
+             "Table SM.E.3 | Estimates underlying the sensitivity analysis in Figure SM.E.1",
              notes = c(paste("Information weighted expectation parameters (\u03bb\u2081, \u03bb\u2082, \u03bb\u2083) re-estimated",
                              "with compliance in each individual round (2\u20138) and averaged over windows of",
                              "rounds ending in the final round of each stage. For a window [a,8], observed",
@@ -217,4 +221,4 @@ export_table(sens_table(sens),
                               format(B_boot, big.mark = ","), " replications."),
                        "95% confidence intervals are bootstrap percentile intervals."))
 
-plot_lambda_sens(sens, "Figure_S2_Lambda_sensitivity.jpg")
+plot_lambda_sens(sens, "Figure_SM.E.1_Lambda_sensitivity.jpg")

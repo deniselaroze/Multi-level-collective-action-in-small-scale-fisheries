@@ -33,11 +33,12 @@ cluster_var     <- "gid.treat"         # matching group
 participant_var <- "participant.code"  # participant
 
 # WILD CLUSTER BOOTSTRAP -- used for every standard error in the package
-#   OLS:           Tables 1, 2, S4, S9, J1-J3, J5
-#   SEM:           Tables 3, 4, S5, S7, R2; Figures S2, R2
-#   Mixed models:  Table S6
-#   Tobit (score): Table R1; Figure R1
-#   Means:         Table S8
+#   OLS:           Tables 1, 2, SM.D.4, SM.F.2 (and the optional J1-J3, J5)
+#   SEM:           Tables 3, 4, SM.D.5, SM.E.2, SM.E.4; Figures SM.E.1, SM.E.2
+#                  (estimates in Tables SM.E.3, SM.E.5)
+#   Mixed models:  Table SM.E.1
+#   Tobit (score): Table SM.E.6; Figure SM.E.3 (estimates in Table SM.E.7)
+#   Means:         Table SM.F.1
 # In each replication, every cluster gets one random weight (mean 0, variance 1)
 # that is shared by all its observations: all participants, rounds, areas, stages
 # and equations. Outcomes are rebuilt as fitted value + residual x weight and the
@@ -50,7 +51,7 @@ boot_cluster <- cluster_var
 wild_weights <- "webb"
 
 B_boot <- 2000   # bootstrap replications for all tables
-B_sens <- 1000   # replications per specification in Figures S2, R1 and R2 (Round 8 uses B_boot)
+B_sens <- 1000   # replications per specification in Figures SM.E.1-SM.E.3 (Round 8 uses B_boot)
 
 # Bootstrap standard error shown in parentheses:
 #   "iqr" -> interquartile range of the bootstrap estimates / 1.349 (robust; recommended
@@ -136,7 +137,7 @@ star_note <- "†p < 0.1, *p < 0.05, **p < 0.01, ***p < 0.001."
 
 # Inference sentence used in every table note (manuscript style). model says how the
 # outcomes are rebuilt in each replication:
-#   "ols", "sem", "lmm" (mixed model), "tobit", "sem+tobit" (Table R1), "means" (Table S8)
+#   "ols", "sem", "lmm" (mixed model), "tobit", "sem+tobit" (Table SM.E.6), "means" (Table SM.F.1)
 boot_note <- function(G = n_units, B = B_boot, model = "ols") {
   w_txt <- if (boot_cluster == participant_var) "the weight of the participant" else
     paste0("the weight of the participant's ", boot_unit_one)
@@ -170,9 +171,11 @@ boot_note <- function(G = n_units, B = B_boot, model = "ols") {
 
 # --- Word export -----------------------------------------------------------------
 # Each table is written to its own .docx as: caption (bold, left-aligned),
-# table, notes. Supplementary items (Table S*, Figure S*) get the "Notes:" prefix
-# and the Supplementary caption style, as in the manuscript. run_all.R also
-# collects every table into All_tables.docx.
+# table, notes. File names start with the item's number in the manuscript
+# (Table_3_..., Table_SM.E.2_..., Figure_SM.E.1_...); outputs that are not in the
+# manuscript start with Extra_. Supplementary items (every name that does not start
+# with Table_<number>) get the "Notes:" prefix and the Supplementary caption style,
+# as in the manuscript. run_all.R also collects every table into All_tables.docx.
 #   header_top : optional spanning header row, e.g. c(" " = 1, "Stage 1" = 2, "Stage 2" = 2)
 #   col_labels : optional visible column labels (replaces the data frame names)
 word_tables <- list()
@@ -226,13 +229,18 @@ add_table_to_doc <- function(doc, item) {
   doc
 }
 
-# Writes every table exported in this session into one Word file, in manuscript order
+# Writes every table exported in this session into one Word file, in manuscript order:
+# main tables (Table_1_ ... Table_4_), Supplementary Material tables by section and
+# number (Table_SM.D.1_ ... Table_SM.F.2_), then the outputs not in the manuscript (Extra_)
 export_all_tables <- function(file = "All_tables.docx") {
   if (length(word_tables) == 0) return(invisible(NULL))
-  nm  <- names(word_tables)
-  sfx <- function(x) x[order(as.numeric(sub("^Table_S?([0-9]+).*", "\\1", x)))]
-  ord <- c(sfx(nm[grepl("^Table_[0-9]", nm)]), sfx(nm[grepl("^Table_S", nm)]),
-           sort(nm[grepl("^Table_[^0-9S]", nm)]), sort(nm[!grepl("^Table_", nm)]))
+  nm   <- names(word_tables)
+  main <- nm[grepl("^Table_[0-9]+_", nm)]
+  sm   <- nm[grepl("^Table_SM\\.[A-Z]\\.[0-9]+_", nm)]
+  main <- main[order(as.numeric(sub("^Table_([0-9]+)_.*", "\\1", main)))]
+  sm   <- sm[order(sub("^Table_SM\\.([A-Z])\\..*", "\\1", sm),
+                   as.numeric(sub("^Table_SM\\.[A-Z]\\.([0-9]+)_.*", "\\1", sm)), method = "radix")]
+  ord  <- c(main, sm, sort(setdiff(nm, c(main, sm)), method = "radix"))
   doc <- officer::read_docx()
   for (k in seq_along(ord)) {
     doc <- add_table_to_doc(doc, word_tables[[ord[k]]])
@@ -251,7 +259,8 @@ export_all_tables <- function(file = "All_tables.docx") {
 
 # Weights: B x G matrix, one row per replication and one column per cluster
 # (clusters_all). The same seed gives the same weights, so analyses run with the same
-# seed (Stage 1 and Stage 2, or Table 3 and Tables R1-R2) share them in every replication.
+# seed (Stage 1 and Stage 2, or Table 3 and Tables SM.E.4 and SM.E.6) share them in every
+# replication.
 wild_weight_matrix <- function(B, seed) {
   vals <- if (wild_weights == "webb") c(-sqrt(1.5), -1, -sqrt(0.5), sqrt(0.5), 1, sqrt(1.5)) else c(-1, 1)
   set.seed(seed)
@@ -317,7 +326,7 @@ score_wild_draws <- function(S, V, theta, g, W) {
   out
 }
 
-# Statistics that are functions of sample means (Table S8). Each variable is rebuilt as
+# Statistics that are functions of sample means (Table SM.F.1). Each variable is rebuilt as
 # mean + (x - mean) x weight (an intercept-only regression), so its bootstrap mean is
 # mean + sum_i (x_i - mean) w_g(i) / n. stat() takes a named vector of means.
 wild_means <- function(data, vars, stat, B = B_boot, seed = seed_main) {
@@ -526,7 +535,7 @@ wild_data <- function(eq, w) {
 }
 
 # Runs the two-stage SEM for one outcome window. Stage 1 and Stage 2 are re-estimated
-# with the same weights in every replication, so cross-stage differences (Table S7)
+# with the same weights in every replication, so cross-stage differences (Table SM.E.2)
 # can be tested.
 run_sem_spec <- function(R_start, R_end, B, seed, obs_k = 1) {
   d1 <- prep_T1(df_wide, R_start, R_end, obs_k)
@@ -563,7 +572,7 @@ pe_cell <- function(pe, lhs, op, rhs = NULL) {
   fmt_coef(r$est[1], r$se[1], r$pvalue[1])
 }
 
-# --- 9. Figures: labels, theme, and lambda sensitivity (Figure S2, R1, R2) -------
+# --- 9. Figures: labels, theme, and lambda sensitivity (Figures SM.E.1-SM.E.3) --
 # Labels follow the manuscript notation (Table 3).
 lam_labels <- c(lambda_union = "Prior belief in-groups (λ₁)",
                 lambda_pm    = "Prior belief out-groups (λ₂)",

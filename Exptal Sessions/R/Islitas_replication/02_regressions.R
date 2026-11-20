@@ -1,8 +1,8 @@
 # ==============================================================================
 # Replication package -- 02_regressions.R
-#   Table 2   Average compliance across areas and identity conditions (OLS)
-#   Table S4  Predictors of changes in CPR-Shared Area compliance (OLS)
-#   Table S6  Round-level mixed-effects models of compliance
+#   Table 2       Average compliance across areas and identity conditions (OLS)
+#   Table SM.D.4  Predictors of changes in CPR-Shared Area compliance (OLS)
+#   Table SM.E.1  Round-level mixed-effects models of compliance
 # All standard errors: wild cluster bootstrap with one weight per boot_cluster
 # (matching group by default; set in 00_setup.R).
 # ==============================================================================
@@ -40,7 +40,7 @@ export_table(table2, "Table_2_Average_compliance_OLS",
                        "The reference category is the TURF game in Stage 1.", star_note))
 
 # ------------------------------------------------------------------------------
-# Table S4: Changes in Shared Area compliance between stages (one row per participant)
+# Table SM.D.4: Changes in Shared Area compliance between stages (one row per participant)
 # ------------------------------------------------------------------------------
 T1_SA_cols <- paste0("T1juegoalgas.", 1:8, ".player.T1_extraccion_libre")
 T2_SA_cols <- paste0("T2juegoalgas.", 1:8, ".player.T2_extraccion_metat")
@@ -73,8 +73,8 @@ tableS4 <- reg_table(fits_s4, c(
   "diff_trust_out"    = "Change in trust, out-group",
   "diff_conflict_out" = "Change in conflict, out-group"
 ), gof = c("nobs", "r2", "adj_r2", "F"))
-export_table(tableS4, "Table_S4_Compliance_change_OLS",
-             "Table S4 | Predictors of changes in CPR-Shared Area compliance",
+export_table(tableS4, "Table_SM.D.4_Compliance_change_OLS",
+             "Table SM.D.4 | Predictors of changes in CPR-Shared Area compliance",
              notes = c("OLS; one observation per participant (Stage 2 minus Stage 1).",
                        boot_note(fits_s4[[1]]$G, model = "ols"),
                        paste("F statistic: Wald test that all slopes are zero, using the bootstrap",
@@ -82,7 +82,7 @@ export_table(tableS4, "Table_S4_Compliance_change_OLS",
                        star_note))
 
 # ------------------------------------------------------------------------------
-# Table S6: Round-level mixed-effects models (participant random intercept)
+# Table SM.E.1: Round-level mixed-effects models (participant random intercept)
 # ------------------------------------------------------------------------------
 lmm_data <- df_long %>%
   mutate(pid = .data[[participant_var]],
@@ -105,7 +105,7 @@ lmm_fits <- lapply(lmm_forms, function(f) lmer(f, data = lmm_data, control = lmm
 # marginal residual (random intercept + error) times the cluster weight, and the
 # mixed model is re-fitted (lmm_wild() in 00_setup.R).
 lmm_res <- lapply(seq_along(lmm_fits), function(k) {
-  message("Table S6: wild bootstrap of ", names(lmm_fits)[k], " ...")
+  message("Table SM.E.1: wild bootstrap of ", names(lmm_fits)[k], " ...")
   lmm_wild(lmm_fits[[k]], lmm_data, B = B_boot, seed = seed_main + 6 + k, control = lmm_ctrl)
 })
 names(lmm_res) <- names(lmm_fits)
@@ -137,8 +137,8 @@ tableS6 <- data.frame(
   do.call(cbind, s6_cols), check.names = FALSE
 )
 names(tableS6)[-1] <- names(lmm_fits)
-export_table(tableS6, "Table_S6_Mixed_effects",
-             "Table S6 | Round-level mixed-effects models of compliance",
+export_table(tableS6, "Table_SM.E.1_Mixed_effects",
+             "Table SM.E.1 | Round-level mixed-effects models of compliance",
              notes = c("Linear mixed models with a participant random intercept (REML).",
                        boot_note(lmm_res[[1]]$G, model = "lmm"),
                        star_note))

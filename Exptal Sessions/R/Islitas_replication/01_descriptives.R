@@ -1,9 +1,9 @@
 # ==============================================================================
 # Replication package -- 01_descriptives.R
-#   Table 1   Descriptive compliance and prior beliefs across conditions
-#   Table S1  Sample characteristics
-#   Table S2  Trust and previous conflict by group-affiliation condition
-#   Table S3  Changes in prior beliefs across identity-information conditions
+#   Table 1       Descriptive compliance and prior beliefs across conditions
+#   Table SM.D.1  Sample characteristics
+#   Table SM.D.2  Trust and previous conflict by group-affiliation condition
+#   Table SM.D.3  Changes in prior beliefs across identity-information conditions
 #
 # Inference (Table 1 trends): wild cluster bootstrap of 00_setup.R.
 # ==============================================================================
@@ -11,7 +11,7 @@
 if (!exists("setup_done")) source("00_setup.R")
 
 # ------------------------------------------------------------------------------
-# Table S1: Sample characteristics
+# Table SM.D.1: Sample characteristics
 # ------------------------------------------------------------------------------
 edu_props <- prop.table(table(df_wide$survey3.1.player.estudios))
 exp_props <- prop.table(table(df_wide$survey3.1.player.experiencia))
@@ -40,11 +40,11 @@ tableS1 <- data.frame(
     sprintf("%.1f hours", mean(df_wide$survey3.1.player.horas_trabajo, na.rm = TRUE))
   )
 )
-export_table(tableS1, "Table_S1_Sample_characteristics", "Table S1 | Sample characteristics",
+export_table(tableS1, "Table_SM.D.1_Sample_characteristics", "Table SM.D.1 | Sample characteristics",
              notes = "Percentages are proportions of participants, unless otherwise stated.")
 
 # ------------------------------------------------------------------------------
-# Table S2: Trust and previous conflict (four-point scales rescaled to [0,1])
+# Table SM.D.2: Trust and previous conflict (four-point scales rescaled to [0,1])
 # ------------------------------------------------------------------------------
 rescale01 <- function(x) (x - 1) / 3
 att <- list(
@@ -65,8 +65,8 @@ tableS2 <- data.frame(
   check.names = FALSE
 )
 tableS2$`Attitudinal measure` <- sub(" +$", "", tableS2$`Attitudinal measure`)
-export_table(tableS2, "Table_S2_Trust_conflict",
-             "Table S2 | Trust and previous conflict by group-affiliation condition",
+export_table(tableS2, "Table_SM.D.2_Trust_conflict",
+             "Table SM.D.2 | Trust and previous conflict by group-affiliation condition",
              notes = paste("Four-point scales rescaled to [0,1] as (x - 1)/3. In the SEM these",
                            "measures enter standardized (mean 0, SD 1)."))
 
@@ -122,7 +122,7 @@ export_table(table1, "Table_1_Compliance_beliefs_trends",
                        boot_note(trend_fits[[1]]$G, model = "ols"), star_note))
 
 # ------------------------------------------------------------------------------
-# Table S3: Changes in prior beliefs between stages (Shared Area)
+# Table SM.D.3: Changes in prior beliefs between stages (Shared Area)
 # ------------------------------------------------------------------------------
 change_dist <- function(after, before) {
   d <- after - before; d <- d[!is.na(d)]
@@ -138,6 +138,6 @@ tableS3 <- data.frame(
   `More optimistic`  = fmt_pct(s3[, 3], 1),
   check.names = FALSE
 )
-export_table(tableS3, "Table_S3_Belief_changes",
-             "Table S3 | Changes in prior beliefs across identity-information conditions",
+export_table(tableS3, "Table_SM.D.3_Belief_changes",
+             "Table SM.D.3 | Changes in prior beliefs across identity-information conditions",
              notes = "Share of participants whose elicited belief about compliance fell, did not change, or rose.")

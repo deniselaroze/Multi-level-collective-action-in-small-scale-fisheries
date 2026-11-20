@@ -11,9 +11,10 @@
 # Stage 1. Beliefs were elicited at the start and end of each stage, and the
 # TURF is a benchmark without any change in identity information.
 #
-#   Table S8   Level reset of beliefs and restart of compliance (Shared Area vs TURF)
-#   Table S9   Individual carry-over of Stage 1 updating, out-group vs in-group
-#   Optional identity-content tables (trust, conflict, reputations): J1-J5
+#   Table SM.F.1  Level reset of beliefs and restart of compliance (Shared Area vs TURF)
+#   Table SM.F.2  Individual carry-over of Stage 1 updating, out-group vs in-group
+#   Optional identity-content tables (trust, conflict, reputations): J1-J5, not in
+#   the manuscript (files Extra_Table_J1_... to Extra_Table_J5_...)
 #
 # Beliefs are expected extraction (0-50), converted to compliance as 1 - x/50,
 # so a positive change means a more optimistic belief.
@@ -164,8 +165,8 @@ for (k in 1:2) {
 # ==============================================================================
 # 3. Supplementary Material F: are prior beliefs about named unions anchored on
 #    Stage 1 experience?
-#    Table S8   Level reset of beliefs and restart of compliance between stages
-#    Table S9   Carry-over of individual Stage 1 updating into Stage 2 priors
+#    Table SM.F.1  Level reset of beliefs and restart of compliance between stages
+#    Table SM.F.2  Carry-over of individual Stage 1 updating into Stage 2 priors
 # ==============================================================================
 # Own Shared Area compliance in round 1 of Stage 1: chosen before any feedback (disposition)
 w$own_r1 <- c01(df_wide$T1juegoalgas.1.player.T1_extraccion_libre)
@@ -181,7 +182,7 @@ fmt_ratio <- function(r) sprintf("%.2f [%.2f, %.2f]", r$est, r$ci.lower, r$ci.up
 stars_note <- star_note
 
 # ------------------------------------------------------------------------------
-# Table S8. Level reset of beliefs (Panel A) and restart of compliance (Panel B)
+# Table SM.F.1. Level reset of beliefs (Panel A) and restart of compliance (Panel B)
 #   Change within Stage 1, change between stages, net change (start of Stage 2 -
 #   start of Stage 1), and the share of the Stage 1 change reversed between stages
 #   (minus change between / change within; 1 = full reset).
@@ -224,8 +225,8 @@ tableS8 <- as.data.frame(rbind(
 names(tableS8) <- c(" ", "Start of Stage 1 (Round 1)", "End of Stage 1 (Round 8)", "Start of Stage 2 (Round 9)",
                     "Change within Stage 1", "Change between stages", "Net change",
                     "Share of Stage 1 change reversed [95% CI]")
-export_table(tableS8, "Table_S8_Reset_beliefs_compliance",
-             "Table S8 | Level reset of prior beliefs and restart of compliance between stages",
+export_table(tableS8, "Table_SM.F.1_Reset_beliefs_compliance",
+             "Table SM.F.1 | Level reset of prior beliefs and restart of compliance between stages",
              notes = c(paste("Panel A reports mean beliefs about compliance in the CPR-Shared Area (one minus expected",
                              "extraction divided by 50), elicited at the start and end of Stage 1 and at the start of Stage 2;",
                              "out-group beliefs refer to a generic fisher from another union in Stage 1 and to the named",
@@ -236,7 +237,7 @@ export_table(tableS8, "Table_S8_Reset_beliefs_compliance",
                        "Confidence intervals are bootstrap percentile intervals.", stars_note))
 
 # ------------------------------------------------------------------------------
-# Table S9. Carry-over of individual Stage 1 updating
+# Table SM.F.2. Carry-over of individual Stage 1 updating
 #   Belief_S2start = a + rho * Belief_S1end + kappa * Belief_S1start
 #                    + theta * own Round-1 compliance + matching-group FE.
 #   rho = share of the participant's own Stage 1 updating retained at the start
@@ -266,8 +267,8 @@ tableS9 <- data.frame(
   inn = c(cB("i_rho"), cB("i_kappa"), cB("i_own"), "Yes", as.character(nrow(wb)), r2B(Xi, wb$in_T2ini)),
   dif = c(cB("d_rho"), cB("d_kappa"), cB("d_own"), "", "", ""),
   check.names = FALSE, stringsAsFactors = FALSE)
-export_table(tableS9, "Table_S9_Belief_carryover",
-             "Table S9 | Carry-over of individual Stage 1 updating into prior beliefs at the start of Stage 2",
+export_table(tableS9, "Table_SM.F.2_Belief_carryover",
+             "Table SM.F.2 | Carry-over of individual Stage 1 updating into prior beliefs at the start of Stage 2",
              col_labels = c("Predictor", "Out-group (named unions)", "In-group", "Difference (out-group − in-group)"),
              notes = c(paste("OLS; dependent variable: prior belief about compliance at the start of Stage 2 (one minus",
                              "expected extraction divided by 50)."), scope_note,
@@ -275,7 +276,8 @@ export_table(tableS9, "Table_S9_Belief_carryover",
                        "Both equations use the same bootstrap weights in each replication.", stars_note))
 
 # ==============================================================================
-# Optional: identity-content tables (Tables J1-J5). Off by default.
+# Optional: identity-content tables (Tables J1-J5). Off by default. Not in the
+# manuscript, so their files start with Extra_.
 #   They ask what the identity information contains (trust, conflict, union
 #   reputations), not whether expectations reset. Set run_identity_content <- TRUE.
 # ==============================================================================
@@ -292,7 +294,7 @@ if (run_identity_content) {
     "d_conflict"  = "Previous conflict: named unions − generic out-group",
     "d_exper"     = "Experience: named unions − generic out-group",
     "L_out"       = "Stage 1 learning, out-group"), gof = c("nobs", "r2"))
-  export_table(tableJ1, "Table_J1_Identity_shift_predictors",
+  export_table(tableJ1, "Extra_Table_J1_Identity_shift_predictors",
                "Table J1 | Predictors of the identity shift in beliefs about out-group compliance",
                notes = c(paste("OLS; one observation per participant. Dependent variable: identity shift, the change",
                                "in the out-group belief between the end of Stage 1 and the start of Stage 2 minus the same change",
@@ -322,7 +324,7 @@ if (run_identity_content) {
     "dd_exper"    = "Difference in experience",
     "dd_exp"      = "Difference in Stage 1 compliance of members met (placebo)",
     "dd_act"      = "Difference in Stage 1 compliance of the union (placebo)"), gof = c("nobs", "r2"))
-  export_table(tableJ2, "Table_J2_Within_person_named_unions",
+  export_table(tableJ2, "Extra_Table_J2_Within_person_named_unions",
                "Table J2 | Within-person differences in prior beliefs about the two named out-group unions",
                notes = c(paste("OLS; one observation per participant with two named unions present in the matching group.",
                                "Dependent variable: prior belief about the compliance of named union 1 minus that about named",
@@ -351,7 +353,7 @@ if (run_identity_content) {
     "I"           = "Identity shift",
     "d_trust"     = "Trust: named unions − generic out-group",
     "d_conflict"  = "Previous conflict: named unions − generic out-group"), gof = c("nobs", "r2"))
-  export_table(tableJ3, "Table_J3_DiD_TURF",
+  export_table(tableJ3, "Extra_Table_J3_DiD_TURF",
                "Table J3 | Changes in CPR-Shared Area compliance relative to the CPR-TURF, by component of belief change",
                notes = c(paste("OLS; one observation per participant. Dependent variable in Models 1–3: change in average",
                                "CPR-Shared Area compliance between stages minus the change in average CPR-TURF compliance",
@@ -382,7 +384,7 @@ if (run_identity_content) {
                       "Belief about named unions, start of Stage 2",
                       "Named unions vs end of Stage 1: more pessimistic", "Unchanged", "More optimistic",
                       "Mean identity shift")
-  export_table(tableJ4, "Table_J4_Experience_typology",
+  export_table(tableJ4, "Extra_Table_J4_Experience_typology",
                "Table J4 | Stage 1 experience with out-group members and prior beliefs about the named unions",
                notes = c(paste("Negative experience: the out-group members a participant was grouped with in Stage 1 (identified",
                                "from the reconstructed groups of each round) complied less, on average, than the participant's",
@@ -437,7 +439,7 @@ if (run_identity_content) {
       "E_out:stage2" = "   × Stage 2 (difference)",
       "n_in"         = "In-group members in the group",
       "stage2:n_in"  = "   × Stage 2"), gof = c("nobs"))
-    export_table(tableJ5, "Table_J5_Round_composition",
+    export_table(tableJ5, "Extra_Table_J5_Round_composition",
                  "Table J5 | Round-level compliance and the identity composition of the group",
                  notes = c(paste("OLS of individual CPR-Shared Area compliance in each round. Expected compliance of out-group",
                                  "members: the mean, over the out-group members in the participant's group that round, of the",

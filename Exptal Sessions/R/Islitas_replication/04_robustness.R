@@ -1,18 +1,20 @@
 # ==============================================================================
 # Replication package -- 04_robustness.R
-# Robustness versions of Table 3 and Supplementary Figure S2.
+# Robustness versions of Table 3 and Figure SM.E.1 (Supplementary Material E).
 #
 #   R1  Tobit compliance equation. Compliance is bounded in [0,1]; the
 #       compliance equation of the SEM is re-estimated as a two-limit tobit
 #       (censored at 0 = full extraction and 1 = full compliance).
-#         Table_R1_Tobit_gamma_lambda.docx
-#         Figure_R1_Tobit_lambda_sensitivity.jpg (+ Figure_R1_estimates.docx)
+#         Table SM.E.6   Table_SM.E.6_Tobit_gamma_lambda.docx
+#         Figure SM.E.3  Figure_SM.E.3_Tobit_lambda_sensitivity.jpg
+#         Table SM.E.7   Table_SM.E.7_Tobit_lambda_sensitivity_estimates.docx
 #
 #   R2  Observed compliance over the last three rounds. Observed compliance of
 #       the other group members is averaged over the three rounds preceding the
 #       decision round, instead of the immediately preceding round.
-#         Table_R2_Obs3_gamma_lambda.docx
-#         Figure_R2_Obs3_lambda_sensitivity.jpg (+ Figure_R2_estimates.docx)
+#         Table SM.E.4   Table_SM.E.4_Obs3_gamma_lambda.docx
+#         Figure SM.E.2  Figure_SM.E.2_Obs3_lambda_sensitivity.jpg
+#         Table SM.E.5   Table_SM.E.5_Obs3_lambda_sensitivity_estimates.docx
 #
 # Why the tobit only replaces the compliance equation: the SEM is recursive and
 # the compliance-equation error is uncorrelated with the errors of the belief
@@ -23,7 +25,7 @@
 # with the two-limit tobit likelihood and keeps everything else.
 #
 # Inference: the wild cluster bootstrap of 00_setup.R, with the same seeds and
-# therefore the same weights as Table 3 / Figure S2 in every replication.
+# therefore the same weights as Table 3 / Figure SM.E.1 in every replication.
 #   R2: the SEM wild bootstrap (outcomes rebuilt, SEM re-estimated).
 #   R1: a censored outcome cannot be rebuilt as fitted value + residual x weight,
 #       so the tobit uses the score version of the wild bootstrap (Kline and
@@ -35,8 +37,8 @@
 
 if (!exists("setup_done")) source("00_setup.R")
 
-run_R1_tobit <- TRUE   # robustness 1: tobit compliance equation
-run_R2_obs3  <- TRUE   # robustness 2: observed compliance over the last obs_k rounds
+run_R1_tobit <- TRUE   # R1, tobit compliance equation: Tables SM.E.6-SM.E.7, Figure SM.E.3
+run_R2_obs3  <- TRUE   # R2, observed compliance over the last obs_k rounds: Tables SM.E.4-SM.E.5, Figure SM.E.2
 obs_k_R2     <- 3      # number of preceding rounds averaged in R2
 
 # Main specification (Table 3). Reused if 03_sem.R has already run in this session.
@@ -53,7 +55,7 @@ tb_cell <- function(tab, name) {
 }
 
 # ==============================================================================
-# R1. Tobit compliance equation
+# R1. Tobit compliance equation (Tables SM.E.6-SM.E.7, Figure SM.E.3)
 # ==============================================================================
 
 # Regressors of the compliance equation (same as in the SEM)
@@ -142,7 +144,7 @@ run_tobit_spec <- function(R_start, R_end, B, seed, obs_k = 1) {
 }
 
 if (run_R1_tobit) {
-  message("R1 (tobit): main specification, ", B_boot, " replications ...")
+  message("Table SM.E.6 (tobit): main specification, ", B_boot, " replications ...")
   tob_main <- run_tobit_spec(8, 8, B = B_boot, seed = seed_main)
 
   n_1 <- lavInspect(sem_main$fit1, "nobs"); n_2 <- lavInspect(sem_main$fit2, "nobs")
@@ -169,8 +171,8 @@ if (run_R1_tobit) {
     S2_sem = sem_col(sem_main$pe2, n_2, r2_2, tob_main$info2), S2_tob = tob_col(tob_main$pe2, tob_main$info2),
     check.names = FALSE)
 
-  export_table(tableR1, "Table_R1_Tobit_gamma_lambda",
-               "Table R1 | Recovered conditional cooperation and information weighted expectation parameters: tobit compliance equation",
+  export_table(tableR1, "Table_SM.E.6_Tobit_gamma_lambda",
+               "Table SM.E.6 | Recovered conditional cooperation and information weighted expectation parameters: tobit compliance equation",
                header_top = c(" " = 1, "Stage 1" = 2, "Stage 2" = 2),
                col_labels = c("", "SEM (Table 3)", "Tobit", "SEM (Table 3)", "Tobit"),
                notes = c(paste("The compliance equation of the SEM is estimated as a two-limit tobit model censored at",
@@ -186,25 +188,26 @@ if (run_R1_tobit) {
                          boot_note(tob_main$G, model = "sem+tobit"), star_note))
 
   sens_R1 <- run_sensitivity(function(a, b, B, seed) run_tobit_spec(a, b, B = B, seed = seed),
-                             main_res = tob_main, label = "Figure R1 (tobit)")
-  export_table(sens_table(sens_R1), "Figure_R1_estimates",
-               "Figure R1 | Estimates underlying the sensitivity analysis with a tobit compliance equation",
-               notes = c(paste("As Supplementary Figure S2, with the compliance equation estimated as a two-limit",
+                             main_res = tob_main, label = "Figure SM.E.3 (tobit)")
+  export_table(sens_table(sens_R1), "Table_SM.E.7_Tobit_lambda_sensitivity_estimates",
+               "Table SM.E.7 | Estimates underlying the sensitivity analysis in Figure SM.E.3: tobit compliance equation",
+               notes = c(paste("As Table SM.E.3, with the compliance equation estimated as a two-limit",
                                "tobit model censored at 0 and 1. For a window [a,8], compliance is averaged over",
                                "rounds a–8 (censoring applies at the bounds of the average) and observed compliance is",
                                "taken from round a − 1."),
                          paste0(boot_note(tob_main$G, B_sens, model = "tobit"),
-                                " Round 8 is the main specification (Table R1) and uses ",
+                                " Round 8 is the main specification (Table SM.E.6) and uses ",
                                 format(B_boot, big.mark = ","), " replications."),
                          "95% confidence intervals are bootstrap percentile intervals."))
-  plot_lambda_sens(sens_R1, "Figure_R1_Tobit_lambda_sensitivity.jpg")
+  plot_lambda_sens(sens_R1, "Figure_SM.E.3_Tobit_lambda_sensitivity.jpg")
 }
 
 # ==============================================================================
-# R2. Observed compliance averaged over the last obs_k rounds
+# R2. Observed compliance averaged over the last obs_k rounds (Tables SM.E.4-SM.E.5,
+#     Figure SM.E.2)
 # ==============================================================================
 if (run_R2_obs3) {
-  message("R2 (observed compliance over ", obs_k_R2, " rounds): main specification ...")
+  message("Table SM.E.4 (observed compliance over ", obs_k_R2, " rounds): main specification ...")
   obs_main <- run_sem_spec(8, 8, B = B_boot, seed = seed_main, obs_k = obs_k_R2)
 
   col3 <- function(res, stage) {
@@ -227,8 +230,8 @@ if (run_R2_obs3) {
     S2_main = col3(sem_main, 2), S2_obs = col3(obs_main, 2),
     check.names = FALSE)
 
-  export_table(tableR2, "Table_R2_Obs3_gamma_lambda",
-               sprintf("Table R2 | Recovered conditional cooperation and information weighted expectation parameters: observed compliance over the last %d rounds", obs_k_R2),
+  export_table(tableR2, sprintf("Table_SM.E.4_Obs%d_gamma_lambda", obs_k_R2),
+               sprintf("Table SM.E.4 | Recovered conditional cooperation and information weighted expectation parameters: observed compliance over the last %d rounds", obs_k_R2),
                header_top = c(" " = 1, "Stage 1" = 2, "Stage 2" = 2),
                col_labels = c("", "Round 7 (Table 3)", obs_lbl, "Round 7 (Table 3)", obs_lbl),
                notes = c(paste0("Observed compliance is the other group members' average compliance over the ", obs_k_R2,
@@ -240,18 +243,18 @@ if (run_R2_obs3) {
                          "Both specifications use the same bootstrap weights in each replication.", star_note))
 
   sens_R2 <- run_sensitivity(function(a, b, B, seed) run_sem_spec(a, b, B = B, seed = seed, obs_k = obs_k_R2),
-                             main_res = obs_main, label = sprintf("Figure R2 (observed compliance, %d rounds)", obs_k_R2))
+                             main_res = obs_main, label = sprintf("Figure SM.E.2 (observed compliance, %d rounds)", obs_k_R2))
   lab_R2 <- lam_labels
   lab_R2["lambda_obs"] <- sprintf("Compliance in previous %d rounds (λ₃)", obs_k_R2)
-  export_table(sens_table(sens_R2, lab_R2), "Figure_R2_estimates",
-               sprintf("Figure R2 | Estimates underlying the sensitivity analysis with observed compliance over the last %d rounds", obs_k_R2),
-               notes = c(paste0("As Supplementary Figure S2, with observed compliance averaged over the ", obs_k_R2,
+  export_table(sens_table(sens_R2, lab_R2), sprintf("Table_SM.E.5_Obs%d_lambda_sensitivity_estimates", obs_k_R2),
+               sprintf("Table SM.E.5 | Estimates underlying the sensitivity analysis in Figure SM.E.2: observed compliance over the last %d rounds", obs_k_R2),
+               notes = c(paste0("As Table SM.E.3, with observed compliance averaged over the ", obs_k_R2,
                                 " rounds preceding the decision round (for a window [a,8], rounds a − ", obs_k_R2,
                                 " to a − 1). When fewer than ", obs_k_R2, " preceding rounds exist (decision rounds 2 and ",
                                 obs_k_R2, ", or windows starting there), all available preceding rounds are used."),
                          paste0(boot_note(sem_main$G, B_sens, model = "sem"),
-                                " Round 8 is the main specification (Table R2) and uses ",
+                                " Round 8 is the main specification (Table SM.E.4) and uses ",
                                 format(B_boot, big.mark = ","), " replications."),
                          "95% confidence intervals are bootstrap percentile intervals."))
-  plot_lambda_sens(sens_R2, sprintf("Figure_R2_Obs%d_lambda_sensitivity.jpg", obs_k_R2), labels = lab_R2)
+  plot_lambda_sens(sens_R2, sprintf("Figure_SM.E.2_Obs%d_lambda_sensitivity.jpg", obs_k_R2), labels = lab_R2)
 }
